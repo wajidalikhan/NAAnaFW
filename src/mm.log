@@ -1,0 +1,42 @@
+Reading cached build data
+>> Local Products Rules ..... started
+>> Local Products Rules ..... done
+>> Creating project symlinks
+>> Entering Package Analysis/NAAnaFW
+  src/Analysis/B2GAnaFW/python -> python/Analysis/B2GAnaFW
+  src/Analysis/NAAnaFW/python -> python/Analysis/NAAnaFW
+  src/JMEAnalysis/JetToolbox/python -> python/JMEAnalysis/JetToolbox
+Entering library rule at Analysis/NAAnaFW
+>> Compiling  /afs/cern.ch/work/o/oiorio/CMSSW_8_0_10_patch2/src/Analysis/NAAnaFW/src/mt2bl_bisect.cc 
+>> Compiling  /afs/cern.ch/work/o/oiorio/CMSSW_8_0_10_patch2/src/Analysis/NAAnaFW/src/DMAnalysisTreeMaker.cc 
+>> Compiling  /afs/cern.ch/work/o/oiorio/CMSSW_8_0_10_patch2/src/Analysis/NAAnaFW/src/mt2w_bisect.cc 
+>> Compiling  /afs/cern.ch/work/o/oiorio/CMSSW_8_0_10_patch2/src/Analysis/NAAnaFW/src/Mt2Com_bisect.cc 
+>> Compiling  /afs/cern.ch/work/o/oiorio/CMSSW_8_0_10_patch2/src/Analysis/NAAnaFW/src/MT2Utility.cc 
+In file included from /afs/cern.ch/work/o/oiorio/CMSSW_8_0_10_patch2/src/Analysis/NAAnaFW/src/Mt2Com_bisect.cc:2:0:
+/afs/cern.ch/work/o/oiorio/CMSSW_8_0_10_patch2/src/Analysis/NAAnaFW/src/Mt2Com_bisect.h:7:22: fatal error: TVector2.h: No such file or directory
+compilation terminated.
+In file included from /afs/cern.ch/work/o/oiorio/CMSSW_8_0_10_patch2/src/Analysis/NAAnaFW/src/Mt2Com_bisect.cc:2:0:
+/afs/cern.ch/work/o/oiorio/CMSSW_8_0_10_patch2/src/Analysis/NAAnaFW/src/Mt2Com_bisect.h:7:22: fatal error: TVector2.h: No such file or directory
+compilation terminated.
+config/SCRAM/GMake/Makefile.rules:1917: recipe for target 'tmp/slc6_amd64_gcc530/src/Analysis/NAAnaFW/src/AnalysisNAAnaFW/Mt2Com_bisect.o' failed
+gmake: *** [tmp/slc6_amd64_gcc530/src/Analysis/NAAnaFW/src/AnalysisNAAnaFW/Mt2Com_bisect.o] Error 1
+gmake: *** Waiting for unfinished jobs....
+In file included from /cvmfs/cms.cern.ch/slc6_amd64_gcc530/cms/cmssw-patch/CMSSW_8_0_10_patch2/src/FWCore/Utilities/interface/TypeWithDict.h:12:0,
+                 from /cvmfs/cms.cern.ch/slc6_amd64_gcc530/cms/cmssw-patch/CMSSW_8_0_10_patch2/src/DataFormats/Provenance/interface/BranchDescription.h:16,
+                 from /cvmfs/cms.cern.ch/slc6_amd64_gcc530/cms/cmssw-patch/CMSSW_8_0_10_patch2/src/DataFormats/Provenance/interface/Provenance.h:11,
+                 from /cvmfs/cms.cern.ch/slc6_amd64_gcc530/cms/cmssw-patch/CMSSW_8_0_10_patch2/src/DataFormats/Common/interface/BasicHandle.h:29,
+                 from /cvmfs/cms.cern.ch/slc6_amd64_gcc530/cms/cmssw-patch/CMSSW_8_0_10_patch2/src/FWCore/Framework/interface/Event.h:20,
+                 from /afs/cern.ch/work/o/oiorio/CMSSW_8_0_10_patch2/src/Analysis/NAAnaFW/src/DMAnalysisTreeMaker.cc:19:
+/cvmfs/cms.cern.ch/slc6_amd64_gcc530/cms/cmssw-patch/CMSSW_8_0_10_patch2/src/FWCore/Utilities/interface/IterWithDict.h:10:19: fatal error: TList.h: No such file or directory
+compilation terminated.
+In file included from /cvmfs/cms.cern.ch/slc6_amd64_gcc530/cms/cmssw-patch/CMSSW_8_0_10_patch2/src/FWCore/Utilities/interface/TypeWithDict.h:12:0,
+                 from /cvmfs/cms.cern.ch/slc6_amd64_gcc530/cms/cmssw-patch/CMSSW_8_0_10_patch2/src/DataFormats/Provenance/interface/BranchDescription.h:16,
+                 from /cvmfs/cms.cern.ch/slc6_amd64_gcc530/cms/cmssw-patch/CMSSW_8_0_10_patch2/src/DataFormats/Provenance/interface/Provenance.h:11,
+                 from /cvmfs/cms.cern.ch/slc6_amd64_gcc530/cms/cmssw-patch/CMSSW_8_0_10_patch2/src/DataFormats/Common/interface/BasicHandle.h:29,
+                 from /cvmfs/cms.cern.ch/slc6_amd64_gcc530/cms/cmssw-patch/CMSSW_8_0_10_patch2/src/FWCore/Framework/interface/Event.h:20,
+                 from /afs/cern.ch/work/o/oiorio/CMSSW_8_0_10_patch2/src/Analysis/NAAnaFW/src/DMAnalysisTreeMaker.cc:19:
+/cvmfs/cms.cern.ch/slc6_amd64_gcc530/cms/cmssw-patch/CMSSW_8_0_10_patch2/src/FWCore/Utilities/interface/IterWithDict.h:10:19: fatal error: TList.h: No such file or directory
+compilation terminated.
+config/SCRAM/GMake/Makefile.rules:1917: recipe for target 'tmp/slc6_amd64_gcc530/src/Analysis/NAAnaFW/src/AnalysisNAAnaFW/DMAnalysisTreeMaker.o' failed
+gmake: *** [tmp/slc6_amd64_gcc530/src/Analysis/NAAnaFW/src/AnalysisNAAnaFW/DMAnalysisTreeMaker.o] Error 1
+gmake: *** [There are compilation/build errors. Please see the detail log above.] Error 2
