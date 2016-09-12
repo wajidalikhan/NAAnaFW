@@ -17,6 +17,7 @@
 #include "FWCore/Utilities/interface/InputTag.h"
 #include "DataFormats/Common/interface/Handle.h"
 #include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/Run.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/EDMException.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
@@ -80,7 +81,9 @@ private:
     //}
   
   virtual void analyze(const edm::Event &, const edm::EventSetup & );
+  virtual void beginRun(const edm::Run  &, const edm::EventSetup & );
   virtual void endJob();
+  
   vector<string> additionalVariables(string);
   string makeName(string label,string pref,string var);
   string makeBranchNameCat(string label, string cat, string pref, string var);
@@ -145,6 +148,10 @@ private:
   edm::EDGetTokenT< std::vector<string> > t_triggerNames_;
   edm::EDGetTokenT< std::vector<float> > t_triggerBits_;
   edm::EDGetTokenT< std::vector<int> > t_triggerPrescales_;
+  
+  //testing it read from Run
+  edm::EDGetTokenT<std::vector<string> > t_triggerNamesR_;
+  
   edm::EDGetTokenT< unsigned int > t_lumiBlock_;
   edm::EDGetTokenT< unsigned int > t_runNumber_;
   edm::EDGetTokenT< ULong64_t > t_eventNumber_;
@@ -152,7 +159,6 @@ private:
   edm::EDGetTokenT< bool > t_HBHEIsoFilter_;
   edm::EDGetTokenT< std::vector<string> > t_metNames_;
   edm::EDGetTokenT< std::vector<float> > t_metBits_;
-
   edm::EDGetTokenT< std::vector<float> > t_pvZ_,t_pvChi2_,t_pvRho_;
   edm::EDGetTokenT< std::vector<int> > t_pvNdof_;
 
@@ -261,6 +267,7 @@ private:
   edm::Handle<std::vector<float> > triggerBits;
   edm::Handle<std::vector<string> > triggerNames;
   edm::Handle<std::vector<int> > triggerPrescales;
+  edm::Handle<std::vector<string> > triggerNamesR ;  
   edm::Handle<bool> HBHE;
   edm::Handle<bool> HBHEIso;
   
@@ -274,6 +281,8 @@ private:
   
   edm::Handle<std::vector<float> > pvZ,pvChi2,pvRho;
   edm::Handle<std::vector<int> > pvNdof;
+
+  edm::InputTag metNames_;
 
   //edm::Handle<vector<float> > topSubjetsPtHandle;
   //edm::Handle<vector<float> > topSubjetsEtaHandle;
@@ -293,6 +302,10 @@ private:
   edm::Handle<std::vector<float> > partEta;
   edm::Handle<std::vector<float> > partPhi;
   edm::Handle<std::vector<float> > partE;
+
+  //edm::InputTag triggerNames]R_;
+  //edm::InputTag triggerNames]R_;
+
   //cout << "genParticles defined" << endl;
 
   // edm::Handle<std::vector<float> > pvZ,pvChi2,pvRho;
@@ -545,15 +558,22 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
   
   if(useTriggers){
     //t_triggerBits_ = iConfig.getParameter<edm::InputTag>("triggerBits");
-    //t_triggerNames_ = iConfig.getParameter<edm::InputTag>("triggerNames");
+    //t_triiRuggerNames_ = iConfig.getParameter<edm::InputTag>("triggerNames");
     //t_triggerPrescales_ = iConfig.getParameter<edm::InputTag>("triggerPrescales");
+
     edm::InputTag triggerBits_ = iConfig.getParameter<edm::InputTag>("triggerBits");
     t_triggerBits_ = consumes< std::vector<float> >( triggerBits_ );
-    edm::InputTag triggerNames_ = iConfig.getParameter<edm::InputTag>("triggerNames");
-    t_triggerNames_ = consumes< std::vector<string> >( triggerNames_ );
+    
+    //edm::InputTag triggerNames_ = iConfig.getParameter<edm::InputTag>("triggerNames");
+    //t_triggerNames_ = consumes< std::vector<string> >( triggerNames_ );
+    
     edm::InputTag triggerPrescales_ = iConfig.getParameter<edm::InputTag>("triggerPrescales");
     t_triggerPrescales_ = consumes< std::vector<int> >( triggerPrescales_ );
 
+    //testing to read from Run
+    edm::InputTag triggerNamesR_ = iConfig.getParameter<edm::InputTag>("triggerNames");
+    t_triggerNamesR_ = mayConsume< std::vector<string>, edm::InRun>(edm::InputTag("TriggerUserData","triggerNameTree"));
+    
     SingleElTriggers= channelInfo.getParameter<std::vector<string> >("SingleElTriggers");
     SingleMuTriggers= channelInfo.getParameter<std::vector<string> >("SingleMuTriggers");
     PhotonTriggers= channelInfo.getParameter<std::vector<string> >("PhotonTriggers");
@@ -571,12 +591,14 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
     metFilters = channelInfo.getParameter<std::vector<string> >("metFilters");
     edm::InputTag metBits_ = iConfig.getParameter<edm::InputTag>("metBits");
     t_metBits_ = consumes< std::vector<float> >( metBits_ );
-    edm::InputTag metNames_ = iConfig.getParameter<edm::InputTag>("metNames");
-    t_metNames_ = consumes< std::vector<string> >( metNames_ );
-    edm::InputTag HBHEFilter_ = iConfig.getParameter<edm::InputTag>("HBHEFilter");
-    t_HBHEFilter_ = consumes< bool >( HBHEFilter_ );
-    edm::InputTag HBHEIsoFilter_ = iConfig.getParameter<edm::InputTag>("HBHEIsoFilter");
-    t_HBHEIsoFilter_ = consumes< bool >( HBHEIsoFilter_ );
+
+    metNames_ = iConfig.getParameter<edm::InputTag>("metNames");
+    t_metNames_ = mayConsume< std::vector<string>, edm::InRun>( metNames_ );
+
+    //edm::InputTag HBHEFilter_ = iConfig.getParameter<edm::InputTag>("HBHEFilter");
+    //t_HBHEFilter_ = consumes< bool >( HBHEFilter_ );
+    //edm::InputTag HBHEIsoFilter_ = iConfig.getParameter<edm::InputTag>("HBHEIsoFilter");
+    //t_HBHEIsoFilter_ = consumes< bool >( HBHEIsoFilter_ );
   }
   
   addPV = iConfig.getUntrackedParameter<bool>("addPV",true);
@@ -990,6 +1012,15 @@ hs.txt","Fall15_25nsV2_DATA_L2Relative_AK4PFchs.txt"]
 
 }
 
+void DMAnalysisTreeMaker::beginRun(const edm::Run& iRun, const edm::EventSetup& iSetup) {
+    iRun.getByLabel(edm::InputTag("TriggerUserData","triggerNameTree"), triggerNamesR);
+    iRun.getByLabel(metNames_, metNames);
+    for(size_t bt = 0; bt < triggerNamesR->size();++bt){
+      std::string tname = triggerNamesR->at(bt);
+      //cout << "trigger test tname "<< tname <<endl; 
+    }
+}
+
 void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
 
   std::vector<edm::ParameterSet >::const_iterator itPsets = physObjects.begin();
@@ -1028,10 +1059,10 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
   //G}
   
   //G
-  useLHE=false;
+  //useLHE=false;
   useLHEWeights=false;
   if(getPartonW || getPartonTop || doWReweighting || doTopReweighting){
-    if(!useLHE)return;
+    //    if(!useLHE)return;
     genlep.clear();
     gentop.clear();
     genantitop.clear();
@@ -1323,7 +1354,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
   //Part 0: trigger preselection
   if(useTriggers){
     iEvent.getByToken(t_triggerBits_,triggerBits );
-    iEvent.getByToken(t_triggerNames_,triggerNames );
+    //iEvent.getByToken(t_triggerNames_,triggerNames );
     iEvent.getByToken(t_triggerPrescales_,triggerPrescales );
     //iEvent.getByLabel(t_triggerBits_,triggerBits );
     //iEvent.getByLabel(t_triggerNames_,triggerNames );
@@ -1331,9 +1362,9 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     bool triggerOr = getEventTriggers();
     
     if(isFirstEvent){
-      for(size_t bt = 0; bt < triggerNames->size();++bt){
-	std::string tname = triggerNames->at(bt);
-	//cout << "trigger test tname "<< tname << " passes "<< triggerBits->at(bt)<< endl;
+      for(size_t bt = 0; bt < triggerNamesR->size();++bt){
+	std::string tname = triggerNamesR->at(bt);
+	cout << "trigger test tname "<< tname << " passes "<< triggerBits->at(bt)<< endl;
       }
     }
     
@@ -1346,9 +1377,9 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     //iEvent.getByLabel(t_HBHEFilter_ ,HBHE);
     //iEvent.getByLabel(t_HBHEIsoFilter_ ,HBHEIso);
     iEvent.getByToken(t_metBits_,metBits );
-    iEvent.getByToken(t_metNames_,metNames );
-    iEvent.getByToken(t_HBHEFilter_ ,HBHE);
-    iEvent.getByToken(t_HBHEFilter_ ,HBHEIso);
+    //iEvent.getByToken(t_metNames_,metNames );
+    //    iEvent.getByToken(t_HBHEFilter_ ,HBHE); FIXME: check whether they were removed
+    //iEvent.getByToken(t_HBHEFilter_ ,HBHEIso);
     if(isFirstEvent){
       for(size_t bt = 0; bt < metNames->size();++bt){
 	std::string tname = metNames->at(bt);
@@ -1978,7 +2009,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
         //float muEnFrac = vfloats_values[makeName(jets_label,pref,"muonEnergyFrac")][j];
         float neuEmEnFrac = vfloats_values[makeName(jets_label,pref,"neutralEmEnergyFrac")][j];
         float neuHadEnFrac = vfloats_values[makeName(jets_label,pref,"neutralHadronEnergyFrac")][j];
-        float numConst = vfloats_values[makeName(jets_label,pref,"NumConstituents")][j];
+        float numConst = 10.;//vfloats_values[makeName(jets_label,pref,"numberOfDaughters")][j];
         //passesID =  (nDau >1.0 && fabs(eta) < 4.7 && (fabs(eta)>=2.4 ||(chHadEnFrac>0.0 && chMulti>0 && chEmEnFrac<0.99)) && neuEmEnFrac<0.99 && neuHadEnFrac <0.99 && muEnFrac<0.8) ;
         if(fabs(eta)<=3){
           passesID =  (neuHadEnFrac<0.99 && neuEmEnFrac<0.99 && numConst>1) && ( (abs(eta)<=2.4 && chHadEnFrac>0 && chMulti>0 && chEmEnFrac<0.99) || abs(eta)>2.4);
@@ -2187,11 +2218,11 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     vfloats_values[met_label+"_CorrPhi"][0]=metphiCorr;
 
     //Preselection part
-
     if(doPreselection){
       bool passes = true;
-      bool metCondition = (metptCorr >100.0);
-      //      double metPtLepY = metptCorr;
+      //bool metCondition = (metptCorr >100.0); 
+      bool metCondition;
+      //double metPtLepY = metptCorr;
       float lep1phi = float_values["Event_Lepton1_Phi"];
       float lep1pt = float_values["Event_Lepton1_Pt"];
 
@@ -2206,53 +2237,52 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       float metPyLep=metPy;
       
       if(lep1pt>0.0){
-	lep1px = lep1pt*cos(lep1phi);
-	lep1py = lep1pt*sin(lep1phi);
+	    lep1px = lep1pt*cos(lep1phi);
+	    lep1py = lep1pt*sin(lep1phi);
 
-	if(lep2pt>0.0){
-	  lep2px = lep2pt*cos(lep2phi);
-	  lep2py = lep2pt*sin(lep2phi);
-	}	
+	    if(lep2pt>0.0){
+	    lep2px = lep2pt*cos(lep2phi);
+	    lep2py = lep2pt*sin(lep2phi);
+	      }	
       } 
-    
       metPxLep+=lep1px;
       metPyLep+=lep1py;
-
       metPxLep+=lep2px;
       metPyLep+=lep2py;
-      
       double metLep=sqrt(metPxLep*metPxLep+metPyLep*metPyLep);
 
       if(metptCorr<100.0 && metLep >100.0){
-	;	//	cout << " lep1 pt " << lep1pt << " lep 1 phi "<< lep1phi << " met "<< metptCorr <<endl;
-	//	cout << " leppx " << lep1px << " metpx "<< metPx << " leppy "<<lep1py << " metpy "<< metPy<<endl;
-	//	cout << " metLep "<< metLep<<endl;
+	    ;	
+      //	cout << " lep1 pt " << lep1pt << " lep 1 phi "<< lep1phi << " met "<< metptCorr <<endl;
+	    //	cout << " leppx " << lep1px << " metpx "<< metPx << " leppy "<<lep1py << " metpy "<< metPy<<endl;
+	    //	cout << " metLep "<< metLep<<endl;
       }
-      
       metPxLep+=lep1px;
-
       metCondition = metCondition || (metLep>100.0);
-	
-      passes = passes && metCondition;
-      passes = passes && nTightJets>=3;
+      
+      //passes = passes && metCondition; //comented out for testing 
+      passes = passes && nTightJets>=1;
       if (!passes ) {
-	//Reset event weights/#objects
-	string nameshortv= "Event";
-	vector<string> extravars = additionalVariables(nameshortv);
-	for(size_t addv = 0; addv < extravars.size();++addv){
-	  string name = nameshortv+"_"+extravars.at(addv);
+	    //Reset event weights/#objects
+	    string nameshortv= "Event";
+	    vector<string> extravars = additionalVariables(nameshortv);
+	    
+      for(size_t addv = 0; addv < extravars.size();++addv){
+	    string name = nameshortv+"_"+extravars.at(addv);
 	  
-	  //	  std::cout << "syst is "<< syst<< " resetting variable "<< name<< " before "<< float_values[name];
-	  //      bool isTriggerVar
-	  //      if(isTriggerVar) continue;
-	  //      float_values[name]=0;
-	  if(!isMCWeightName(extravars.at(addv))) float_values[name]=0.0;
-	  //if (name==)
-	  //      std::cout << " after "<< Float_values[name]<<endl;
-	}
-	continue;
+	    //std::cout << "syst is "<< syst<< " resetting variable "<< name<< " before "<< float_values[name];
+	    //bool isTriggerVar
+	    //if(isTriggerVar) continue;
+	    //float_values[name]=0;
+	    
+      if(!isMCWeightName(extravars.at(addv))) float_values[name]=0.0;
+	    //if (name==)
+	    //std::cout << " after "<< Float_values[name]<<endl;
+	    }
+	    
+      continue;
       }
-    }
+      }
     
     //==================== MET NoHF ==========================
 
@@ -2313,11 +2343,10 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       subjet.SetPtEtaPhiE(pt, eta, phi, e);       
       double minDR=999;
       float subjcsv = vfloats_values[makeName(boosted_tops_subjets_label,pref,"CSVv2")][s];
-     
       bool isCSVM = (subjcsv>0.800);
-      // bool isCSVT = csv  > 0.970;
-	//	  bool isCSVM = csv  > 0.890;
-	//	bool isCSVL = csv  > 0.605;
+      //bool isCSVT = csv  > 0.970;
+	    //bool isCSVM = csv  > 0.890;
+	    //bool isCSVL = csv  > 0.605;
 	
 	
 	for(int t = 0;t < min(max_instances[boosted_tops_label],sizes[boosted_tops_label]) ;++t){
@@ -3168,8 +3197,11 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
      float_values["Event_nPV"]=(float)(nPV);
     }
     
-    float_values["Event_passesHBHE"]=(float)(*HBHE);
-    float_values["Event_passesHBHEIso"]=(float)(*HBHEIso);
+    //    float_values["Event_passesHBHE"]=(float)(*HBHE);
+    //float_values["Event_passesHBHEIso"]=(float)(*HBHEIso); FIXME check whether it was removed
+
+    float_values["Event_passesHBHE"]=(float)(1.0);
+    float_values["Event_passesHBHEIso"]=(float)(1.0);
 
     //technical event informationx
     double_values["Event_EventNumber"]=*eventNumber;
@@ -3225,7 +3257,7 @@ int DMAnalysisTreeMaker::eventFlavour(bool getFlavour, int nb, int nc, int nl)
       if ( flavourFilter("WJets_wcc", nb, nc, nl) ) return 2;
       if ( flavourFilter("WJets_wbb", nb, nc, nl) ) return 3;
     }
-  return 0;
+    return 0;
 }
 
 
@@ -3759,8 +3791,8 @@ bool DMAnalysisTreeMaker::getEventTriggers(){
   bool eleOR=false, muOR=false, hadronOR=false, phOR=false;
   for(size_t lt =0; lt< SingleElTriggers.size();++lt){
     string lname = SingleElTriggers.at(lt);
-    for(size_t bt = 0; bt < triggerNames->size();++bt){
-      std::string tname = triggerNames->at(bt);
+    for(size_t bt = 0; bt < triggerNamesR->size();++bt){
+      std::string tname = triggerNamesR->at(bt);
       if(tname.find(lname)!=std::string::npos){
 	eleOR = muOR || (triggerBits->at(bt)>0);
 	float_values["Event_passes"+lname]=triggerBits->at(bt);
@@ -3771,8 +3803,8 @@ bool DMAnalysisTreeMaker::getEventTriggers(){
   for(size_t lt =0; lt< SingleMuTriggers.size();++lt){
     string lname = SingleMuTriggers.at(lt);
     //std::cout << lname << std::endl;
-    for(size_t bt = 0; bt < triggerNames->size();++bt){
-      std::string tname = triggerNames->at(bt);
+    for(size_t bt = 0; bt < triggerNamesR->size();++bt){
+      std::string tname = triggerNamesR->at(bt);
       if(tname.find(lname)!=std::string::npos){
 	muOR = muOR || (triggerBits->at(bt)>0);
 	float_values["Event_passes"+lname]=triggerBits->at(bt);
@@ -3783,8 +3815,8 @@ bool DMAnalysisTreeMaker::getEventTriggers(){
   for(size_t pt =0; pt< PhotonTriggers.size();++pt){
     string pname = PhotonTriggers.at(pt);
     //std::cout << pname << std::endl;
-    for(size_t bt = 0; bt < triggerNames->size();++bt){
-      std::string tname = triggerNames->at(bt);
+    for(size_t bt = 0; bt < triggerNamesR->size();++bt){
+      std::string tname = triggerNamesR->at(bt);
       if(tname.find(pname)!=std::string::npos){
 	phOR = phOR || (triggerBits->at(bt)>0);
 	float_values["Event_passes"+pname]=triggerBits->at(bt);
@@ -3796,8 +3828,8 @@ bool DMAnalysisTreeMaker::getEventTriggers(){
   for(size_t ht =0; ht< hadronicTriggers.size();++ht){
     string hname = hadronicTriggers.at(ht);
     //std::cout << hname << std::endl;
-    for(size_t bt = 0; bt < triggerNames->size();++bt){
-      std::string tname = triggerNames->at(bt);
+    for(size_t bt = 0; bt < triggerNamesR->size();++bt){
+      std::string tname = triggerNamesR->at(bt);
       if(tname.find(hname)!=std::string::npos){
 	//bool before = hadronOR;
 	hadronOR = hadronOR || (triggerBits->at(bt)>0);

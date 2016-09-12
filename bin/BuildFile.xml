@@ -1,0 +1,17 @@
+<use  name="PhysicsTools/Utilities"/>
+<use  name="DataFormats/Math"/>
+<use  name="rootgraphics"/>
+<use  name="rootphysics"/>
+<use  name="rootminuit"/>
+<use  name="rootminuit2"/>
+<use  name="root"/>
+<use  name="roottmva"/>
+<use  name="Tprime/TprimeAnalysis/"/>
+<export>
+  <lib name="1"/>
+</export>
+<flags cxxflags="-g -ggdb -O0" />
+<environment>
+  <bin  file="SingleTopAnalysis.cpp" name="SingleTopAnalysis"></bin>
+</environment>
+<flags  EDM_PLUGIN="1"/>

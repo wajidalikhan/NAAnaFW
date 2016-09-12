@@ -3,7 +3,7 @@ import commands, os
 ### Usage:
 ###
 ### cmsRun topplusdmanaEDMntuples_cfg.py maxEvts=N sample="mySample/sample.root" version="1"7 outputLabel="myoutput"
-###
+### cmsRun topplusdmTrees_cfg.py maxEvts=-1 sample="file:/afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_16/src/Analysis/B2GAnaFW/test/B2GEDMNtuple.root" outputLabel='ntuple.root'
 ### Default values for the options are set:
 ### maxEvts     = -1
 ### sample      = 'file:/scratch/decosa/ttDM/testSample/tlbsm_53x_v3_mc_10_1_qPV.root'
@@ -28,7 +28,6 @@ hadronTriggers = []
 
 
 chan = "MET_Prompt"
-
 chan = "TTbarDMJets_scalar_Mchi-50_Mphi-50"
 #chan = "TTbarDMJets_scalar_Mchi-1_Mphi-50"
 #chan = "TTbarDMJets_scalar_Mchi-10_Mphi-50"
@@ -44,6 +43,7 @@ files = []
 #files = ["file:"+filedir+"MET_Prompt/"+l for l in listFiles]
 files = ["file:"+filedir+"/"+chan+"/"+l for l in listFiles]
 options.register('sample',
+                 '/store/group/lpctlbsm/B2GAnaFW_80X_V2p0/ST_t-channel_antitop_4f_leptonDecays_13TeV-powheg-pythia8_TuneCUETP8M1/RunIISpring16MiniAODv2_B2GAnaFW_80x_V2p0/160723_155301/0000/B2GEDMNtuple_1.root',
                  #                 files,
                  #'root://xrootd.ba.infn.it//store/user/grauco/Ntuples_Fwk76v1_wPileUpJet/QCD_Pt-15to3000_TuneCUETP8M1_Flat_13TeV_pythia8/b2ganafw76x_QCD_Pt-15to3000_TuneCUETP8M1_Flat_13TeV_pythia8_JetMet_18Mar_v1/160318_104000/0000/B2GEDMNtuple_1.root',
                  #/store/user/grauco/Ntuples_Fwk76v1_wPileUpJet/QCD_Pt-15to3000_TuneCUETP8M1_Flat_13TeV_pythia8/b2ganafw76x_QCD_Pt-15to3000_TuneCUETP8M1_Flat_13TeV_pythia8_JetMet_18Mar_v1/160318_104000/0000/B2GEDMNtuple_1.root
@@ -70,7 +70,7 @@ options.register('sample',
 #                 'root://xrootd.ba.infn.it//store/user/dpinna/TTDM_Fwv7.4.x_v6.1_25ns/TTbarDMJets_pseudoscalar_Mchi-1_Mphi-500_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/psDMtt_Mchi1Mphi500_1Oct/150930_221122/0000/B2GEDMNtuple_1.root',
                  
 #                 'root://xrootd.ba.infn.it//store/user/grauco/Ntuples_Fwk76v1_wPileUpJet/QCD_Pt-15to7000_TuneCUETHS1_Flat_13TeV_herwigpp/b2ganafw76x_QCD_Pt-15to7000_TuneCUETHS1_Flat_13TeV_herwigpp_02Mar_v3/160302_134653/0000/B2GEDMNtuple_1.root',
-                 'file:/tmp/oiorio/B2GEDMNtuple.root',
+#                 'file:B2GEDMNtuple.root',
                  #'file:B2GEDMNtuple_QCD.root',
                  #'file:B2GEDMNtuple_DoubleMuon.root',  
 #                 'file:B2GEDMNtuple_test.root',
@@ -191,10 +191,12 @@ if(options.isData):
 process = cms.Process("ttDManalysisTrees")
 
 process.load("FWCore.MessageService.MessageLogger_cfi")
-process.MessageLogger.cerr.FwkReport.reportEvery = 100
+process.MessageLogger.cerr.FwkReport.reportEvery = 1
 process.MessageLogger.categories.append('HLTrigReport')
 ### Output Report
-process.options = cms.untracked.PSet( wantSummary = cms.untracked.bool(True) )
+process.options = cms.untracked.PSet( wantSummary = cms.untracked.bool(True)
+                #,SkipEvent = cms.untracked.vstring('ProductNotFound') 
+                )
 ### Number of maximum events to process
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(options.maxEvts) )
 ### Source file
@@ -250,6 +252,7 @@ process.DMTreesDumper.applyRes = cms.untracked.bool(options.applyRes)#This adds 
 process.DMTreesDumper.channelInfo.useLHE = cms.untracked.bool(False)
 #G
 process.DMTreesDumper.channelInfo.useLHEWeights = cms.untracked.bool(False)
+
 
 if options.channel == "ttbar":
     process.DMTreesDumper.getPartonTop  = cms.untracked.bool(True)
