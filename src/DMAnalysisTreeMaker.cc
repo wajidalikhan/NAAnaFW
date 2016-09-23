@@ -37,7 +37,7 @@
 #include "./mt2bl_bisect.h"
 #include "./Mt2Com_bisect.h"
 //#include "./EquationSolver.h"
-#include "./DMTopVariables.h"
+//#include "./DMTopVariables.h"
 
 #include "TFile.h"
 #include "TTree.h"
@@ -74,16 +74,10 @@ public:
 
 private:
 
-  //virtual void beginJob() {
-    //std::string distr = "pileUp" + dataPUFile_ + ".root";
-    
-    //LumiWeights_ = edm::LumiReWeighting(distr,"PUdata_19468.3.root",std::string("pileup"),std::string("pileup"));
-    //}
-  
   virtual void analyze(const edm::Event &, const edm::EventSetup & );
   virtual void beginRun(const edm::Run  &, const edm::EventSetup & );
   virtual void endJob();
-  
+
   vector<string> additionalVariables(string);
   string makeName(string label,string pref,string var);
   string makeBranchNameCat(string label, string cat, string pref, string var);
@@ -96,7 +90,15 @@ private:
 
   void initCategoriesSize(string label);
   void setCategorySize(string label, string category, size_t size);
-  void fillCategory(string label, string category, int pos_nocat, int pos_cat);
+  void fillCategory(string label, string category, int pos_nocat,int pos_cat);
+  
+  void fillScanCuts(string label, string category, int pos_nocat);
+  bool passesScanCut(string label, string category, string scanCut, int pos_nocat);
+  string parseScanCut(string category, int obj);
+
+  void setEventBTagSF(string label, string category);
+  void setEventLeptonSF(string label, string category);
+
 
   double getWPtWeight(double ptW);
   double getZPtWeight(double ptZ);
@@ -137,21 +139,17 @@ private:
   bool isMCWeightName(std::string s);
   std::vector<edm::ParameterSet > physObjects;
   std::vector<edm::InputTag > variablesFloat, variablesInt, singleFloat,  singleInt;
-  //  std::map<string, string> les;
   
   std::vector<edm::InputTag > variablesDouble, singleDouble;
 
-  //MIGRATION TO 76X but missing genParticles
-  
   edm::EDGetTokenT< LHEEventProduct > t_lhes_;
   edm::EDGetTokenT< GenEventInfoProduct > t_genprod_;
   edm::EDGetTokenT< std::vector<string> > t_triggerNames_;
   edm::EDGetTokenT< std::vector<float> > t_triggerBits_;
   edm::EDGetTokenT< std::vector<int> > t_triggerPrescales_;
-  
-  //testing it read from Run
+
   edm::EDGetTokenT<std::vector<string> > t_triggerNamesR_;
-  
+
   edm::EDGetTokenT< unsigned int > t_lumiBlock_;
   edm::EDGetTokenT< unsigned int > t_runNumber_;
   edm::EDGetTokenT< ULong64_t > t_eventNumber_;
@@ -159,6 +157,7 @@ private:
   edm::EDGetTokenT< bool > t_HBHEIsoFilter_;
   edm::EDGetTokenT< std::vector<string> > t_metNames_;
   edm::EDGetTokenT< std::vector<float> > t_metBits_;
+
   edm::EDGetTokenT< std::vector<float> > t_pvZ_,t_pvChi2_,t_pvRho_;
   edm::EDGetTokenT< std::vector<int> > t_pvNdof_;
 
@@ -169,10 +168,6 @@ private:
   edm::EDGetTokenT< std::vector<float> > jetAK8topSubjetIndex1;
   edm::EDGetTokenT< std::vector<float> > jetAK8topSubjetIndex2;
   edm::EDGetTokenT< std::vector<float> > jetAK8topSubjetIndex3;
-  //  edm::EDGetTokenT< std::vector<float> > subjetCmsTopTagPt;
-  //edm::EDGetTokenT< std::vector<float> > subjetCmsTopTagEta;
-  //edm::EDGetTokenT< std::vector<float> > subjetCmsTopTagPhi;
-  //edm::EDGetTokenT< std::vector<float> > subjetCmsTopTagMass;
 
   edm::EDGetTokenT< std::vector<float> > genPartID ;
   edm::EDGetTokenT< std::vector<float> > genPartStatus;
@@ -182,12 +177,6 @@ private:
   edm::EDGetTokenT< std::vector<float> > genPartEta;
   edm::EDGetTokenT< std::vector<float> > genPartE;
 
-   //----------------------------- Soureek adding for PU info -------------------------
-  //bool doPU_;
-  //std::string dataPUFile_;
-  //edm::Handle<int> npv, ntrpu;
-  //edm::Handle<std::vector<int> > pubx, puNInt; 
-  //int nTruePU;
   //--------------------------------------------------------------------------------------
 
   edm::LumiReWeighting LumiWeights_, LumiWeightsUp_, LumiWeightsDown_;
@@ -202,7 +191,7 @@ private:
   map< string , vector<string> > obj_to_floats,obj_to_ints, obj_to_doubles;
   map< string , string > obs_to_obj;
   map< string , string > obj_to_pref;
-  map< string , std::vector<string> > obj_cats;
+  map< string , std::vector<string> > obj_cats, obj_scanCuts;
 
   map< string , double[100] > vdoubles_values;
   map< string , double[100] > vdouble_values;
@@ -211,7 +200,6 @@ private:
 
   map< string , float > float_values;
   map< string , int > int_values;
-  //  map< string , ULong64_t > int_values;
   map< string , int > sizes;
 
   map< string , bool > got_label; 
@@ -246,9 +234,6 @@ private:
   int n0;
 
   //EffectiveAreas
-  //  EffectiveAreas effAreaChHadrons_;
-  //  EffectiveAreas effAreaNeuHadrons_;
-  //  EffectiveAreas effAreaPhotons_;
   bool recalculateEA;
 
   //MC info:
@@ -284,11 +269,6 @@ private:
 
   edm::InputTag metNames_;
 
-  //edm::Handle<vector<float> > topSubjetsPtHandle;
-  //edm::Handle<vector<float> > topSubjetsEtaHandle;
-  //edm::Handle<vector<float> > topSubjetsPhiHandle;
-  //  edm::Handle<vector<float> > topSubjetsMassHandle;
-
   edm::Handle<std::vector<float> > ak8jetSubjetIndex0;
   edm::Handle<std::vector<float> > ak8jetSubjetIndex1;
   edm::Handle<std::vector<float> > ak8jetSubjetIndex2;
@@ -302,13 +282,6 @@ private:
   edm::Handle<std::vector<float> > partEta;
   edm::Handle<std::vector<float> > partPhi;
   edm::Handle<std::vector<float> > partE;
-
-  //edm::InputTag triggerNames]R_;
-  //edm::InputTag triggerNames]R_;
-
-  //cout << "genParticles defined" << endl;
-
-  // edm::Handle<std::vector<float> > pvZ,pvChi2,pvRho;
 
   float nPV;
   edm::Handle<int> ntrpu;
@@ -326,9 +299,6 @@ private:
   JetCorrectorParameters *jecParsL1, *jecParsL1RC, *jecParsL2, *jecParsL3, *jecParsL2L3Residuals;
   JetCorrectionUncertainty *jecUnc;
   FactorizedJetCorrector *jecCorr;
-  //  float pdf_weights[140];
-  //float lhe_weights[20];  
-  // std::string lhe_weights_id[20];  
 
   bool isFirstEvent;
   //Do preselection
@@ -457,12 +427,10 @@ private:
   double TagScaleFactor(string algo, int flavor, string syst,double pt);
  
   
-  //
   bool doBTagSF;
   bool doPU;
   
   string season;
-  //  season = dataPUFile_;
   
   string distr;
   
@@ -479,7 +447,6 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
   boosted_tops_label = iConfig.getParameter<std::string >("boostedTopsLabel");
   boosted_tops_subjets_label = iConfig.getParameter<std::string >("boostedTopsSubjetsLabel");
   met_label = iConfig.getParameter<std::string >("metLabel");
-  //metNoHF_label = iConfig.getParameter<std::string >("metNoHFLabel");
   physObjects = iConfig.template getParameter<std::vector<edm::ParameterSet> >("physicsObjects");
   
   channelInfo = iConfig.getParameter<edm::ParameterSet >("channelInfo"); // The physics of the channel, e.g. the cross section, #original events, etc.
@@ -504,23 +471,11 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
   doResolvedTopSemiLep = iConfig.getUntrackedParameter<bool>("doResolvedTopSemiLep",false);
   doResolvedTopHad = iConfig.getUntrackedParameter<bool>("doResolvedTopHad",false);
 
-  // if( addLHAPDFWeights ){
-    edm::InputTag genprod_ = iConfig.getParameter<edm::InputTag>( "genprod" );
-    t_genprod_ = consumes<GenEventInfoProduct>( genprod_ );
-    //}
-  //t_genprod_ = iConfig.getParameter<edm::InputTag>( "genprod" );
+  edm::InputTag genprod_ = iConfig.getParameter<edm::InputTag>( "genprod" );
+  t_genprod_ = consumes<GenEventInfoProduct>( genprod_ );
   
   useTriggers = iConfig.getUntrackedParameter<bool>("useTriggers",true);
   cutOnTriggers = iConfig.getUntrackedParameter<bool>("cutOnTriggers",true);
-
-  //edm::InputTag topSubjetsPt_ = iConfig.getParameter<edm::InputTag>("topSubjetsPt");
-  //subjetCmsTopTagPt = consumes< std::vector<float> >( topSubjetsPt_);
-  //edm::InputTag topSubjetsEta_ = iConfig.getParameter<edm::InputTag>("topSubjetsEta");
-  //subjetCmsTopTagEta = consumes< std::vector<float> >( topSubjetsEta_);
-  //edm::InputTag topSubjetsPhi_ = iConfig.getParameter<edm::InputTag>("topSubjetsPhi");
-  //subjetCmsTopTagPhi = consumes< std::vector<float> >( topSubjetsPhi_);
-  //edm::InputTag topSubjetsMass_ = iConfig.getParameter<edm::InputTag>("topSubjetsMass");
-  //subjetCmsTopTagMass = consumes< std::vector<float> >( topSubjetsMass_);
 
   edm::InputTag ak8jetSubjetIndex0_ = iConfig.getParameter<edm::InputTag>("ak8jetSubjetIndex0");
   jetAK8topSubjetIndex0 = consumes< std::vector<float> >( ak8jetSubjetIndex0_);
@@ -546,9 +501,6 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
   edm::InputTag PartE_ = iConfig.getParameter<edm::InputTag>("partE");
   genPartE = consumes< std::vector<float> >( PartE_);
   
-  //t_lumiBlock_ = iConfig.getParameter<edm::InputTag>("lumiBlock");
-  //t_runNumber_ = iConfig.getParameter<edm::InputTag>("runNumber");
-  //t_eventNumber_ = iConfig.getParameter<edm::InputTag>("eventNumber");
   edm::InputTag lumiBlock_ = iConfig.getParameter<edm::InputTag>("lumiBlock");
   t_lumiBlock_ = consumes< unsigned int >( lumiBlock_ );
   edm::InputTag runNumber_ = iConfig.getParameter<edm::InputTag>("runNumber");
@@ -557,23 +509,15 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
   t_eventNumber_ = consumes< ULong64_t >( eventNumber_ );
   
   if(useTriggers){
-    //t_triggerBits_ = iConfig.getParameter<edm::InputTag>("triggerBits");
-    //t_triiRuggerNames_ = iConfig.getParameter<edm::InputTag>("triggerNames");
-    //t_triggerPrescales_ = iConfig.getParameter<edm::InputTag>("triggerPrescales");
-
     edm::InputTag triggerBits_ = iConfig.getParameter<edm::InputTag>("triggerBits");
     t_triggerBits_ = consumes< std::vector<float> >( triggerBits_ );
-    
-    //edm::InputTag triggerNames_ = iConfig.getParameter<edm::InputTag>("triggerNames");
-    //t_triggerNames_ = consumes< std::vector<string> >( triggerNames_ );
-    
     edm::InputTag triggerPrescales_ = iConfig.getParameter<edm::InputTag>("triggerPrescales");
     t_triggerPrescales_ = consumes< std::vector<int> >( triggerPrescales_ );
 
     //testing to read from Run
     edm::InputTag triggerNamesR_ = iConfig.getParameter<edm::InputTag>("triggerNames");
     t_triggerNamesR_ = mayConsume< std::vector<string>, edm::InRun>(edm::InputTag("TriggerUserData","triggerNameTree"));
-    
+
     SingleElTriggers= channelInfo.getParameter<std::vector<string> >("SingleElTriggers");
     SingleMuTriggers= channelInfo.getParameter<std::vector<string> >("SingleMuTriggers");
     PhotonTriggers= channelInfo.getParameter<std::vector<string> >("PhotonTriggers");
@@ -584,21 +528,10 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
   useMETFilters = iConfig.getUntrackedParameter<bool>("useMETFilters",true);
   if(useMETFilters){
     metFilters = channelInfo.getParameter<std::vector<string> >("metFilters");
-    //t_metBits_ = iConfig.getParameter<edm::InputTag>("metBits");
-    //t_metNames_ = iConfig.getParameter<edm::InputTag>("metNames");
-    //t_HBHEFilter_ = iConfig.getParameter<edm::InputTag>("HBHEFilter");
-    //t_HBHEIsoFilter_ = iConfig.getParameter<edm::InputTag>("HBHEIsoFilter");
-    metFilters = channelInfo.getParameter<std::vector<string> >("metFilters");
     edm::InputTag metBits_ = iConfig.getParameter<edm::InputTag>("metBits");
     t_metBits_ = consumes< std::vector<float> >( metBits_ );
-
     metNames_ = iConfig.getParameter<edm::InputTag>("metNames");
-    t_metNames_ = mayConsume< std::vector<string>, edm::InRun>( metNames_ );
-
-    //edm::InputTag HBHEFilter_ = iConfig.getParameter<edm::InputTag>("HBHEFilter");
-    //t_HBHEFilter_ = consumes< bool >( HBHEFilter_ );
-    //edm::InputTag HBHEIsoFilter_ = iConfig.getParameter<edm::InputTag>("HBHEIsoFilter");
-    //t_HBHEIsoFilter_ = consumes< bool >( HBHEIsoFilter_ );
+    t_metNames_ = consumes< std::vector<string>, edm::InRun >( metNames_ );
   }
   
   addPV = iConfig.getUntrackedParameter<bool>("addPV",true);
@@ -609,15 +542,10 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
   applyRes = iConfig.getUntrackedParameter<bool>("applyRes",false);
   isV2= iConfig.getUntrackedParameter<bool>("isV2",false);
   
-  //if( changeJECs ){
-    t_Rho_ = consumes<double>( edm::InputTag( "fixedGridRhoFastjetAll" ) ) ;
-    //}
+  t_Rho_ = consumes<double>( edm::InputTag( "fixedGridRhoFastjetAll" ) ) ;
   
   if(addPV || changeJECs){
-    //t_pvZ_ = iConfig.getParameter<edm::InputTag >("vertexZ");
-    //t_pvChi2_ = iConfig.getParameter<edm::InputTag >("vertexChi2");
-    //t_pvNdof_ = iConfig.getParameter<edm::InputTag >("vertexNdof");
-    //t_pvRho_ = iConfig.getParameter<edm::InputTag >("vertexRho");
+  
     edm::InputTag pvZ_ = iConfig.getParameter<edm::InputTag >("vertexZ");
     t_pvZ_ = consumes< std::vector<float> >( pvZ_ );
     edm::InputTag pvChi2_ = iConfig.getParameter<edm::InputTag >("vertexChi2");
@@ -631,14 +559,6 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
   if (doPU)
     t_ntrpu_ = consumes< int >( edm::InputTag( "eventUserData","puNtrueInt" ) );
 
-  //---------------- Soureek adding PU info -----------------------------------------
-  //doPU_=iConfig.getParameter<bool>("doPU");
-  //dataPUFile_=iConfig.getParameter<std::string>("dataPUFile");
-  //if( doPU_ )
-  //  t_ntrpu_ = consumes< int >( edm::InputTag( "eventUserData","puNtrueInt" ) );
-  //---------------------------------------------------------------------------------
-
-  
   maxWeights = 9;
   if(useLHEWeights){
     maxWeights = channelInfo.getUntrackedParameter<int>("maxWeights",9);//Usually we do have 9 weights for the scales, might vary depending on the lhe
@@ -679,25 +599,19 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
   TFileDirectory DMTrees;// = fs->mkdir( "systematics_trees" );
 
   if(addNominal){
-    //Service<TFileService> fs;
     DMTrees = fs->mkdir( "systematics_trees" );
   }
-  //  treesBase = new TTree("TreeBase", "TreeBase");
   trees["noSyst"] =  new TTree((channel+"__noSyst").c_str(),(channel+"__noSyst").c_str());
 
   nInitEventsHisto = new TH1D("initialEvents","initalEvents",10,0,10);
   
-  //t_lhes_ = iConfig.getParameter<edm::InputTag>( "lhes" );
-  //if( useLHE ){
-    edm::InputTag lhes_ = iConfig.getParameter<edm::InputTag>( "lhes" );
-    t_lhes_ = consumes< LHEEventProduct >( lhes_ );
-    //}
+  edm::InputTag lhes_ = iConfig.getParameter<edm::InputTag>( "lhes" );
+  t_lhes_ = consumes< LHEEventProduct >( lhes_ );
   
   for (;itPsets!=physObjects.end();++itPsets){ 
     int maxI = itPsets->getUntrackedParameter< int >("maxInstances",10);
     variablesFloat = itPsets->template getParameter<std::vector<edm::InputTag> >("variablesF"); 
     variablesInt = itPsets->template getParameter<std::vector<edm::InputTag> >("variablesI");
-    //variablesDouble = itPsets->template getParameter<std::vector<edm::InputTag> >("variablesD");
     singleFloat = itPsets->template getParameter<std::vector<edm::InputTag> >("singleF"); 
     singleDouble = itPsets->template getParameter<std::vector<edm::InputTag> >("singleD"); 
     singleInt = itPsets->template getParameter<std::vector<edm::InputTag> >("singleI"); 
@@ -707,57 +621,35 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
     bool saveNoCat = itPsets->getUntrackedParameter<bool>("saveNoCat",true);
 
     std::vector<std::string > categories = itPsets->getParameter<std::vector<std::string> >("categories");
+    std::vector<std::string > scanCuts = itPsets->getParameter<std::vector<std::string> >("scanCuts");
     std::vector<std::string > toSave= itPsets->getParameter<std::vector<std::string> >("toSave");
-    //std::vector<std::string> categorySizes = itPsets->getUntrackedParameter<std::vector<int> >("categorySizes");
-    
+        
     std::vector<edm::InputTag >::const_iterator itF = variablesFloat.begin();
     std::vector<edm::InputTag >::const_iterator itI = variablesInt.begin();
-    // std::vector<edm::InputTag >::const_iterator itD = variablesDouble.begin();
+    
     std::vector<edm::InputTag >::const_iterator itsF = singleFloat.begin();
     std::vector<edm::InputTag >::const_iterator itsD = singleDouble.begin();
     std::vector<edm::InputTag >::const_iterator itsI = singleInt.begin();
 
     for(size_t sc = 0; sc< categories.size() ;++sc){
       string category = categories.at(sc);
+      if(scanCuts.size() >=1){
+	for(size_t sccut = 0; sccut< scanCuts.size() ;++sccut){
+	  string scanCut = scanCuts.at(sccut);
+	  obj_cats[namelabel].push_back(category+"_"+scanCut);
+	}
+      }
       obj_cats[namelabel].push_back(category);
     }
+    for(size_t sccut = 0; sccut< scanCuts.size() ;++sccut){
+      string scanCut = scanCuts.at(sccut);
+      obj_scanCuts[namelabel].push_back(scanCut);
+    }    
     stringstream max_instance_str;
     max_instance_str<<maxI;
     max_instances[namelabel]=maxI;
     string nameobs = namelabel;
     string prefix = nameprefix;
-
-    //GIORGIA
-       
-    /*for (;itD != variablesDouble.end();++itD){
-      
-      string name=itD->instance()+"_"+itD->label();
-      string nameinstance=itD->instance();
-      string nameshort=itD->instance();
-  
-      string nametobranch = makeBranchName(namelabel,prefix,nameinstance);
-      
-      name = nametobranch;
-      nameshort = nametobranch;
-
-      if(saveNoCat && (saveBaseVariables|| isInVector(toSave,itD->instance()))) trees["noSyst"]->Branch(nameshort.c_str(), &vdoubles_values[name],(nameshort+"["+max_instance_str.str()+"]/D").c_str());
-      names.push_back(name);
-      obj_to_doubles[namelabel].push_back(name);
-      obs_to_obj[name] = nameobs;
-      obj_to_pref[nameobs] = prefix;
-      cout << " branching name "<< name<< " for obs "<< nameobs << " instance "<< nameinstance << endl;
-
-      t_doubles[ name ] = consumes< std::vector<double> >( *itD );
-      
-      for(size_t sc = 0; sc< categories.size() ;++sc){
-	string category = categories.at(sc);
-	string nametobranchcat = makeBranchNameCat(namelabel,category,prefix,nameinstance);
-	string namecat = nametobranchcat;
-	nameshort = nametobranch;
-	if(saveBaseVariables|| isInVector(toSave,itD->instance())) trees["noSyst"]->Branch(namecat.c_str(), &vdoubles_values[namecat],(namecat+"["+max_instance_str.str()+"]/D").c_str());
-      }
- 
-      }*/
 
     for (;itF != variablesFloat.end();++itF){
       
@@ -765,14 +657,10 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
       string nameinstance=itF->instance();
       string nameshort=itF->instance();
       
-      //if(nameobs!=itF->label())cout<<" warning! label not matching the module! check if members of pset are consistent. If intentional , ignore this warning";
-      //cout << "nameobs "<< nameobs<< " name " << name <<" nameshort " <<nameshort << " strsizw "<< (nameshort+"["+max_instance_str.str()+"]/F").c_str()<<endl;
-      //      std::cout << " label is " << itF->instance()<< " is in vector? "<< isInVector(toSave,itF->instance())<< endl;
+
       string nametobranch = makeBranchName(namelabel,prefix,nameinstance);
-      
       name = nametobranch;
       nameshort = nametobranch;
-      //      cout << " name for the branch is now: "<< nametobranch<<endl;
       //      if(saveBaseVariables|| isInVector(toSave,itF->instance())) trees["noSyst"]->Branch(nameshort.c_str(), &vfloats_values[name],(nameshort+"["+max_instance_str.str()+"]/F").c_str());
       if(saveNoCat && (saveBaseVariables|| isInVector(toSave,itF->instance()))) trees["noSyst"]->Branch(nameshort.c_str(), &vfloats_values[name],(nameshort+"["+max_instance_str.str()+"]/F").c_str());
       names.push_back(name);
@@ -783,14 +671,14 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
 
       t_floats[ name ] = consumes< std::vector<float> >( *itF );
       
-      for(size_t sc = 0; sc< categories.size() ;++sc){
-	string category = categories.at(sc);
+      for(size_t sc = 0; sc< obj_cats[namelabel].size() ;++sc){
+	string category = obj_cats[namelabel].at(sc);
 	string nametobranchcat = makeBranchNameCat(namelabel,category,prefix,nameinstance);
 	string namecat = nametobranchcat;
 	nameshort = nametobranch;
 	if(saveBaseVariables|| isInVector(toSave,itF->instance())) trees["noSyst"]->Branch(namecat.c_str(), &vfloats_values[namecat],(namecat+"["+max_instance_str.str()+"]/F").c_str());
+	//	cout << " branching category "<< category<< " for label "<< namelabel<< " name "<<namecat<< endl;
       }
-      //      if(useTightObs && (saveBaseVariables|| isInVector(toSave,itF->instance()))) trees["noSyst"]->Branch(nameshort.c_str(), &vfloats_values[name],(nameshort+"["+max_instance_str.str()+"]/F").c_str());
     }
   
     for (;itI != variablesInt.end();++itI){
@@ -799,11 +687,9 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
       string nametobranch = makeBranchName(namelabel,prefix,nameshort);
       name = nametobranch;
       nameshort = nametobranch;
-      //      if(saveNoCat && (saveBaseVariables|| isInVector(toSave,itF->instance()))) trees["noSyst"]->Branch(nameshort.c_str(), &vfloats_values[name],(nameshort+"["+max_instance_str.str()+"]/F").c_str());
-
       if(saveNoCat && (saveBaseVariables|| isInVector(toSave,itI->instance())) ) trees["noSyst"]->Branch(nameshort.c_str(), &vints_values[name],(nameshort+"["+max_instance_str.str()+"]/I").c_str());
-      for(size_t sc = 0; sc< categories.size() ;++sc){
-	string category = categories.at(sc);
+      for(size_t sc = 0; sc< obj_cats[namelabel].size() ;++sc){
+	string category = obj_cats[namelabel].at(sc);
 	string nametobranchcat = makeBranchNameCat(namelabel,category,prefix,nameshort);
 	string namecat = nametobranchcat;
 	nameshort = nametobranch;
@@ -825,12 +711,12 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
       for(size_t addv = 0; addv < extravars.size();++addv){
 	string name = nameshortv+"_"+extravars.at(addv);
 	if (saveNoCat && (saveBaseVariables || isInVector(toSave, extravars.at(addv)) || isInVector(toSave, "allExtra") ) )trees["noSyst"]->Branch(name.c_str(), &vfloats_values[name],(name+"["+max_instance_str.str()+"]/F").c_str());
-	for(size_t sc = 0; sc< categories.size() ;++sc){
-	  string category = categories.at(sc);
+	for(size_t sc = 0; sc< obj_cats[namelabel].size() ;++sc){
+	  string category = obj_cats[namelabel].at(sc);
 	  string nametobranchcat = nameshortv+category+"_"+extravars.at(addv);
 	  string namecat = nametobranchcat;
-	  cout << "extra var "<< extravars.at(addv)<<endl;
-	  cout << " namecat "<< namecat<< endl;
+	  //	  cout << "extra var "<< extravars.at(addv)<<endl;
+	  //	  cout << " namecat "<< namecat<< endl;
 	  if(saveBaseVariables|| isInVector(toSave,extravars.at(addv)) || isInVector(toSave,"allExtra")) trees["noSyst"]->Branch(namecat.c_str(), &vfloats_values[namecat],(namecat+"["+max_instance_str.str()+"]/F").c_str());
 	}
 
@@ -841,10 +727,10 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
       }
     }
     names.push_back(nameobs);
-    cout << "size part: nameobs is  "<< nameobs<<endl;
+    //    cout << "size part: nameobs is  "<< nameobs<<endl;
     if(saveNoCat) trees["noSyst"]->Branch((nameobs+"_size").c_str(), &sizes[nameobs]);
-    for(size_t sc = 0; sc< categories.size() ;++sc){
-      string category = categories.at(sc);
+    for(size_t sc = 0; sc< obj_cats[namelabel].size() ;++sc){
+      string category = obj_cats[namelabel].at(sc);
       trees["noSyst"]->Branch((nameobs+category+"_size").c_str(), &sizes[nameobs+category]);
     }
     
@@ -885,7 +771,7 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
     max_instances[nameshortv]=max_instances_top;
     stringstream mtop;
     mtop << max_instances_top;
-    cout << " max instances top is "<< max_instances_top << " max_leading_jets_for_top "<< max_leading_jets_for_top << " max_instances[jets_label]  " <<max_instances[jets_label]<<endl;
+    //    cout << " max instances top is "<< max_instances_top << " max_leading_jets_for_top "<< max_leading_jets_for_top << " max_instances[jets_label]  " <<max_instances[jets_label]<<endl;
     for(size_t addv = 0; addv < extravarstop.size();++addv){
       string name = nameshortv+"_"+extravarstop.at(addv);
       trees["noSyst"]->Branch(name.c_str(), &vfloats_values[name],(name+"["+mtop.str()+"]/F").c_str());
@@ -899,7 +785,7 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
     max_instances[nameshortv]=max_instances_top;
     stringstream mtop;
     mtop << max_instances_top;
-    cout << " max instances top is "<< max_instances_top<< " max_leading_jets_for_top "<< max_leading_jets_for_top << " max_instances[jets_label]  " <<max_instances[jets_label]<<endl;
+    //    cout << " max instances top is "<< max_instances_top<< " max_leading_jets_for_top "<< max_leading_jets_for_top << " max_instances[jets_label]  " <<max_instances[jets_label]<<endl;
     for(size_t addv = 0; addv < extravarstop.size();++addv){
       string name = nameshortv+"_"+extravarstop.at(addv);
       trees["noSyst"]->Branch(name.c_str(), &vfloats_values[name],(name+"["+mtop.str()+"]/F").c_str());
@@ -913,7 +799,7 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
     string name = nameshortv+"_"+extravars.at(addv);
 
     if (name.find("EventNumber")!=std::string::npos){
-      std::cout<<"=====================sto riempendo il branch event number"<<std::endl;
+      //      std::cout<<"=====================sto riempendo il branch event number"<<std::endl;
       trees["noSyst"]->Branch(name.c_str(), &double_values[name],(name+"/D").c_str());
     }
     else trees["noSyst"]->Branch(name.c_str(), &float_values[name],(name+"/F").c_str());
@@ -938,17 +824,9 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
   }
 
   initTreeWeightHistory(useLHEWeights);
-  /*if((getPartonW || getPartonTop || doWReweighting || doTopReweighting)){
-    if(!useLHE)return;
-    //    cout << " yourtreesarebelongtous "<<endl;
-    }*/
 
-  /*  ["Fall15_25nsV2_MC_L2L3Residual_AK4PFchs.txt","Fall15_25nsV2_MC_L3Absolute_AK4PFchs.txt","Fall15_25nsV2_MC_L2Relative_AK4PFchs.txt","Fall15_25nsV2_DATA_UncertaintySources_AK4PFchs.txt" \
-   ,"Fall15_25nsV2_DATA_L2L3Residual_AK4PFchs.txt","Fall15_25nsV2_DATA_L3Absolute_AK4PFchs.txt","Fall15_25nsV2_DATA_L1FastJet_AK4PFc\
-hs.txt","Fall15_25nsV2_DATA_L2Relative_AK4PFchs.txt"]
-  */
-    string L1Name = "Fall15_25nsV2_MC_L1FastJet_AK4PFchs.txt"; //
-    string L1RCName = "Fall15_25nsV2_MC_L1RC_AK4PFchs.txt"; 
+  string L1Name = "Fall15_25nsV2_MC_L1FastJet_AK4PFchs.txt"; //
+  string L1RCName = "Fall15_25nsV2_MC_L1RC_AK4PFchs.txt"; 
   string L2Name = "Fall15_25nsV2_MC_L2Relative_AK4PFchs.txt";
   string L3Name = "Fall15_25nsV2_MC_L3Absolute_AK4PFchs.txt";
   string L2L3ResName = "Fall15_25nsV2_MC_L2L3Residual_AK4PFchs.txt";
@@ -966,26 +844,7 @@ hs.txt","Fall15_25nsV2_DATA_L2Relative_AK4PFchs.txt"]
       L3Name = "Fall15_25nsV2_MC_L3Absolute_AK4PFchs.txt";
       L2L3ResName = "Fall15_25nsV2_MC_L2L3Residual_AK4PFchs.txt"; 
   }
-  /*string L1Name = "Summer15_25nsV7_MC_L1FastJet_AK4PFchs.txt";
-  string L1RCName = "Summer15_25nsV7_MC_L1RC_AK4PFchs.txt";
-  string L2Name = "Summer15_25nsV7_MC_L2Relative_AK4PFchs.txt";
-  string L3Name = "Summer15_25nsV7_MC_L3Absolute_AK4PFchs.txt";
-  string L2L3ResName = "Summer15_25nsV7_DATA_L2L3Residual_AK4PFchs.txt";
-  if(isData){
-    L1Name   = "Summer15_25nsV7_DATA_L1FastJet_AK4PFchs.txt";
-    L1RCName = "Summer15_25nsV7_DATA_L1RC_AK4PFchs.txt";
-    L2Name   = "Summer15_25nsV7_DATA_L2Relative_AK4PFchs.txt";
-    L3Name   = "Summer15_25nsV7_DATA_L3Absolute_AK4PFchs.txt";
-    L2L3ResName = "Summer15_25nsV7_DATA_L2L3Residual_AK4PFchs.txt";
-  }
 
-  if(isV2){
-      L1Name = "Summer15_25nsV2_MC_L1FastJet_AK4PFchs.txt";
-      L2Name = "Summer15_25nsV2_MC_L2Relative_AK4PFchs.txt";
-      L3Name = "Summer15_25nsV2_MC_L3Absolute_AK4PFchs.txt";
-      L2L3ResName = "Summer15_25nsV2_MC_L2L3Residual_AK4PFchs.txt";
-  }
-  */
   string jecDir="JEC/";
   jecParsL1  = new JetCorrectorParameters(jecDir+L1Name);
   //  jecParsL1RC  = new JetCorrectorParameters(L1RCName);
@@ -1006,10 +865,9 @@ hs.txt","Fall15_25nsV2_DATA_L2Relative_AK4PFchs.txt"]
   if(isData)doPU= false;
   
   season = "Summer11";
-  //  season = dataPUFile_;
-  
+    
   distr = "pileUpDistr" + season + ".root";
-
+  //  cout << " end build "<<endl;
 }
 
 void DMAnalysisTreeMaker::beginRun(const edm::Run& iRun, const edm::EventSetup& iSetup) {
@@ -1029,9 +887,6 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
   nInitEvents+=1;
   
   // event info
-  //  iEvent.getByLabel(t_lumiBlock_,lumiBlock );
-  //iEvent.getByLabel(t_runNumber_,runNumber );
-  //iEvent.getByLabel(t_eventNumber_,eventNumber );
   iEvent.getByToken(t_lumiBlock_,lumiBlock );
   iEvent.getByToken(t_runNumber_,runNumber );
   iEvent.getByToken(t_eventNumber_,eventNumber );
@@ -1048,7 +903,6 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
   vector<TLorentzVector> pare,parebar,parmu,parmubar,parnumu,parnumubar,partau,partaubar,parnue,parnuebar,parnutau,parnutaubar,parz,parw;
   
   //Parton-level info
-  //Gif(isData==true){
   getPartonW=false;
   getParticleWZ=false;
   getPartonTop=false;
@@ -1056,13 +910,11 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
   doTopReweighting=false;
   useLHE=false;
   useLHEWeights=false;
-  //G}
-  
-  //G
-  //useLHE=false;
+
+  useLHE=false;
   useLHEWeights=false;
   if(getPartonW || getPartonTop || doWReweighting || doTopReweighting){
-    //    if(!useLHE)return;
+    if(!useLHE)return;
     genlep.clear();
     gentop.clear();
     genantitop.clear();
@@ -1071,17 +923,8 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     gena.clear();
     gennu.clear();
     pare.clear();parebar.clear();parmu.clear();parmubar.clear();parnumu.clear();parnumubar.clear();parnue.clear();parnuebar.clear();parnutau.clear();parnutaubar.clear();parz.clear();parw.clear();
-    //    cout<<endl << " gpwz 1 "<<endl;
+
     if(getParticleWZ){
-      //      cout<<endl << " gpwz "<<endl;
-      //      edm::Handle<std::vector<float> > partID,partStatus,partMomID,partPt;
-      //iEvent.getByToken("genPart","genPartID", partID);
-      //iEvent.getByToken("genPart","genPartStatus", partStatus);
-      //iEvent.getByToken("genPart","genPartMom0ID", partMomID);
-      //iEvent.getByToken("genPart","genPartPt", partPt);
-      //iEvent.getByToken("genPart","genPartPhi", partPhi);
-      //iEvent.getByToken("genPart","genPartEta", partEta);
-      //iEvent.getByToken("genPart","genPartE", partE);
       iEvent.getByToken(genPartID, partID);
       iEvent.getByToken(genPartStatus, partStatus);
       iEvent.getByToken(genPartMom0ID, partMom0ID);
@@ -1090,8 +933,8 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       iEvent.getByToken(genPartEta, partEta);
       iEvent.getByToken(genPartE, partE);
     
-      }
-
+    }
+    
     float_values["Event_Z_EW_Weight"]= 1.0;
     float_values["Event_W_EW_Weight"]= 1.0;
     float_values["Event_Z_QCD_Weight"]= 1.0;
@@ -1100,10 +943,8 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     float_values["Event_W_Weight"]= 1.0;
     float_values["Event_T_Weight"]= 1.0;
     float_values["Event_T_Ext_Weight"]= 1.0;
-    //    cout <<" lhes "<<t_lhes_<<endl;
     size_t nup=lhes->hepeup().NUP;
-    //    cout << " nup " << nup<< endl;
-
+    
     for( size_t i=0;i<nup;++i){
       //      cout << " particle number " << i << endl;
       int id = lhes->hepeup().IDUP[i];
@@ -1225,16 +1066,10 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 
 
     if( (getParticleWZ)) {
-      //      int ne=0, nmu=0, ntau=0;
-      //      int nnue=0, nnumu=0, nnutau=0;
-      
-      //      cout << " in part loop "<<endl;
-      //      cout << " before loop "<<endl;      
       for(size_t p=0;p<partID->size();++p){
  	if(partID->at(p)==partMom0ID->at(p) && isEWKID(partID->at(p)) ){
 	  TLorentzVector vec;
 	  vec.SetPtEtaPhiE(partPt->at(p),partEta->at(p),partPhi->at(p),partE->at(p));
-	  //	  cout << " in loop 1: p= "<<p<<endl;      
 	  if(partID->at(p)==11  && partStatus->at(p)==1){
 	    pare.push_back(vec);	  }
 	  if(partID->at(p)==-11  && partStatus->at(p)==1){
@@ -1276,14 +1111,15 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 
 	}
       }
-//      cout << " parmusize "<< parmu.size()<< " parnumubarsize"<<parnumubar.size()<<endl;
-//      cout << " paresize "<< pare.size()<< " parnuebarsize"<<parnuebar.size()<<endl;
-//      cout << " partausize "<< partau.size()<< " parnutaubarsize"<<parnutaubar.size()<<endl;
-//      cout << " parnumusize "<< parnumu.size()<< " parmubarsize"<<parmubar.size()<<endl;
-//      cout << " parnuesize "<< parnue.size()<< " parebarsize"<<parebar.size()<<endl;
-//      cout << " parnutausize "<< parnutau.size()<< " partaubarsize"<<partaubar.size()<<endl;
-//      cout << "parw size "<< parw.size()<<endl;
-//      cout << "parz size "<< parz.size()<<endl;
+      //      cout << " parmusize "<< parmu.size()<< " parnumubarsize"<<parnumubar.size()<<endl;
+      //      cout << " paresize "<< pare.size()<< " parnuebarsize"<<parnuebar.size()<<endl;
+      //      cout << " partausize "<< partau.size()<< " parnutaubarsize"<<parnutaubar.size()<<endl;
+      //      cout << " parnumusize "<< parnumu.size()<< " parmubarsize"<<parmubar.size()<<endl;
+      //      cout << " parnuesize "<< parnue.size()<< " parebarsize"<<parebar.size()<<endl;
+      //      cout << " parnutausize "<< parnutau.size()<< " partaubarsize"<<partaubar.size()<<endl;
+      //      cout << "parw size "<< parw.size()<<endl;
+      //      cout << "parz size "<< parz.size()<<endl;
+
       //Z
       if(parmu.size()>0&& parmubar.size()>0){parz.push_back(parmu.at(0)+parmubar.at(0)) ;}
       if(pare.size()>0&& parebar.size()>0){parz.push_back(pare.at(0)+parebar.at(0)) ;}
@@ -1308,7 +1144,6 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 
 
       if(parnutau.size()>0&& partaubar.size()>0){parw.push_back(parnutau.at(0)+partaubar.at(0)) ;}
-      //      cout << "parw size "<< parw.size()<<endl;
 
       if(   float_values["Event_W_EW_Weight"] ==1 &&parw.size()>0 )    {
 	//	cout << "parw size "<< parw.size()<<endl;
@@ -1338,33 +1173,17 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
   iEvent.getByToken(jetAK8topSubjetIndex2, ak8jetSubjetIndex2);
   iEvent.getByToken(jetAK8topSubjetIndex3, ak8jetSubjetIndex3);
 
-  //edm::Handle<vector<float> > topSubjetsPtHandle;
-  //edm::Handle<vector<float> > topSubjetsEtaHandle;
-  //edm::Handle<vector<float> > topSubjetsPhiHandle;
-  //edm::Handle<vector<float> > topSubjetsMassHandle;
-  //iEvent.getByToken("subjetsCmsTopTag", "subjetCmsTopTagPt", topSubjetsPtHandle);
-  //iEvent.getByToken("subjetsCmsTopTag", "subjetCmsTopTagEta", topSubjetsEtaHandle);
-  //iEvent.getByToken("subjetsCmsTopTag", "subjetCmsTopTagPhi", topSubjetsPhiHandle);
-  //iEvent.getByToken("subjetsCmsTopTag", "subjetCmsTopTagMass", topSubjetsMassHandle);
-  //  iEvent.getByToken(subjetCmsTopTagPt, topSubjetsPtHandle);
-  //iEvent.getByToken(subjetCmsTopTagEta, topSubjetsEtaHandle);
-  //iEvent.getByToken(subjetCmsTopTagPhi, topSubjetsPhiHandle);
-  //iEvent.getByToken(subjetCmsTopTagMass, topSubjetsMassHandle);
-
   //Part 0: trigger preselection
   if(useTriggers){
+    //Trigger names are retrieved from the run tree
     iEvent.getByToken(t_triggerBits_,triggerBits );
-    //iEvent.getByToken(t_triggerNames_,triggerNames );
     iEvent.getByToken(t_triggerPrescales_,triggerPrescales );
-    //iEvent.getByLabel(t_triggerBits_,triggerBits );
-    //iEvent.getByLabel(t_triggerNames_,triggerNames );
-    //iEvent.getByLabel(t_triggerPrescales_,triggerPrescales );
     bool triggerOr = getEventTriggers();
     
     if(isFirstEvent){
       for(size_t bt = 0; bt < triggerNamesR->size();++bt){
 	std::string tname = triggerNamesR->at(bt);
-	cout << "trigger test tname "<< tname << " passes "<< triggerBits->at(bt)<< endl;
+	//cout << "trigger test tname "<< tname << " passes "<< triggerBits->at(bt)<< endl;
       }
     }
     
@@ -1372,14 +1191,8 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
   }
 
   if(useMETFilters){
-    //iEvent.getByLabel(t_metBits_,metBits );
-    //iEvent.getByLabel(t_metNames_,metNames );
-    //iEvent.getByLabel(t_HBHEFilter_ ,HBHE);
-    //iEvent.getByLabel(t_HBHEIsoFilter_ ,HBHEIso);
     iEvent.getByToken(t_metBits_,metBits );
-    //iEvent.getByToken(t_metNames_,metNames );
-    //    iEvent.getByToken(t_HBHEFilter_ ,HBHE); FIXME: check whether they were removed
-    //iEvent.getByToken(t_HBHEFilter_ ,HBHEIso);
+    //    iEvent.getByToken(t_metNames_,metNames );
     if(isFirstEvent){
       for(size_t bt = 0; bt < metNames->size();++bt){
 	std::string tname = metNames->at(bt);
@@ -1389,8 +1202,6 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     getMETFilters();
   }
   if(changeJECs || recalculateEA){
-    //iEvent.getByToken("ll",rho);
-    //t_Rho_ = consumes<double>( edm::InputTag( "fixedGridRhoFastjetAll" ) ) ;
     iEvent.getByToken(t_Rho_ ,rho);
     Rho = *rho; 
   }
@@ -1399,10 +1210,6 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
   }
     
   if( addPV || changeJECs){
-    //iEvent.getByLabel(t_pvZ_,pvZ);
-    // iEvent.getByLabel(t_pvChi2_,pvChi2);
-    //iEvent.getByLabel(t_pvNdof_,pvNdof);
-    // iEvent.getByLabel(t_pvRho_,pvRho);
     iEvent.getByToken(t_pvZ_,pvZ);
     iEvent.getByToken(t_pvChi2_,pvChi2);
     iEvent.getByToken(t_pvNdof_,pvNdof);
@@ -1412,7 +1219,6 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
   
 
 
-  //  cout << " after loop 3 "<<endl;
   //Part 1 taking the obs values from the edm file
   for (;itPsets!=physObjects.end();++itPsets){ 
     variablesFloat = itPsets->template getParameter<std::vector<edm::InputTag> >("variablesF"); 
@@ -1441,16 +1247,12 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       string varname=itF->instance();
       
       string name = makeBranchName(namelabel,nameprefix,varname);
-      
-      //string namelabel;
+      //Getting the names for the floats of the object
       float tmp =1.0;
       iEvent.getByToken(t_floats[name] ,h_floats[name]);
-      //iEvent.getByLabel(*(itF),h_floats[name]);
-      //      cout << "name "<< name <<endl;
       for (size_t fi = 0;fi < maxInstance ;++fi){
 	if(fi <h_floats[name]->size()){tmp = h_floats[name]->at(fi);}
 	else { tmp = -9999.; }
-	//	cout << " setting name "<< name<< " at instance "<< fi <<" to value "<< tmp <<endl;
 	vfloats_values[name][fi]=tmp;
 	for (size_t sc=0;sc< obj_cats[namelabel].size();++sc){
 	  string category = obj_cats[namelabel].at(sc);
@@ -1458,29 +1260,27 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	  vfloats_values[namecat][fi]=-9999.;
 	}
       }
+      //Getting the sizes for the object
       sizes[namelabel]=h_floats[name]->size();
-      //      cout<< " size for "<< namelabel <<" is then "<< sizes[namelabel]<<endl; 
+      initCategoriesSize(namelabel);
     }
-    
-    //    std::cout << " checkpoint floats"<<endl;
 
+    
+      
+    //    std::cout << " checkpoint floats"<<endl;
     for (;itD != variablesDouble.end();++itD){
       string varname=itD->instance();
       string name = makeBranchName(namelabel,nameprefix,varname);
-      //string namelabel;
       float tmp =1.0;
       iEvent.getByToken(t_doubles[name] ,h_doubles[name]);
-      //iEvent.getByLabel(*(itD),h_doubles[name]);
-      //      cout << "name "<< name <<endl;
       for (size_t fi = 0;fi < maxInstance ;++fi){
 	if(fi <h_doubles[name]->size()){tmp = h_doubles[name]->at(fi);}
 	else { tmp = -9999.; }
-	//	cout << " setting name "<< name<< " at instance "<< fi <<" to value "<< tmp <<endl;
 	vdoubles_values[name][fi]=tmp;
       }
       sizes[namelabel]=h_doubles[name]->size();
-      //      cout<< " size for "<< namelabel <<" is then "<< sizes[namelabel]<<endl; 
     }
+    
     //Vectors of ints
     for (;itI != variablesInt.end();++itI){
       string varname=itI->instance();
@@ -1495,13 +1295,11 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       }
     }  
     
-    //    std::cout << " checkpoint ints"<<endl;
     //Single floats/ints
     for (;itsF != singleFloat.end();++itsF){
       string varname=itsF->instance();
       string name = makeBranchName(namelabel,nameprefix,varname);
       iEvent.getByToken(t_float[name],h_float[name]);
-      //iEvent.getByLabel(*(itsF),h_float[name]);
       float_values[name]=*h_float[name];
     }
 
@@ -1509,26 +1307,21 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       string varname=itsD->instance();
       string name = makeBranchName(namelabel,nameprefix,varname);
       iEvent.getByToken(t_double[name] ,h_double[name]);
-      //iEvent.getByLabel(*(itsD),h_double[name]);
       double_values[name]=*h_double[name];
     }
     for (;itsI != singleInt.end();++itsI){
       string varname=itsI->instance();
       string name = makeBranchName(namelabel,nameprefix,varname);
       iEvent.getByToken(t_int[name],h_int[name]);
-      //iEvent.getByLabel(*(itsI),h_int[name]);
       int_values[name]=*h_int[name];
     }
-    //    std::cout << " checkpoint singles"<<endl;
   }
 
-  //  std::cout << " checkpoint part 1"<<endl;
 
 
   //Part 2: selection and analysis-level changes
   //This might change for each particular systematics, 
   //e.g. for each jet energy scale variation, for MET or even lepton energy scale variations
-
 
   vector<TLorentzVector> photons;
   vector<TLorentzVector> electrons;
@@ -1551,6 +1344,8 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 
   for (size_t s = 0; s< systematics.size();++s){
 
+    //    cout << "syst"<< systematics.at(s)<<endl;
+
     int nb=0,nc=0,nudsg=0;
     int ncsvl_tags=0,ncsvt_tags=0,ncsvm_tags=0;//, njets_tottag=0;
     getEventTriggers();
@@ -1570,55 +1365,24 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     string syst = systematics.at(s);
     nTightJets=0;
 
-    jsfscsvt.clear();
-    jsfscsvt_b_tag_up.clear(); 
-    jsfscsvt_b_tag_down.clear(); 
-    jsfscsvt_mistag_up.clear(); 
-    jsfscsvt_mistag_down.clear();
-
-    jsfscsvm.clear(); 
-    jsfscsvm_b_tag_up.clear(); 
-    jsfscsvm_b_tag_down.clear(); 
-    jsfscsvm_mistag_up.clear(); 
-    jsfscsvm_mistag_down.clear();
-    
-    jsfscsvl.clear(); 
-    jsfscsvl_b_tag_up.clear(); 
-    jsfscsvl_b_tag_down.clear(); 
-    jsfscsvl_mistag_up.clear();
-    jsfscsvl_mistag_down.clear();
-
-
-    //---------------- Soureek Adding PU Info ------------------------------
-    //if(doPU_){
-    //  iEvent.getByToken(t_ntrpu_,ntrpu);
-    //  nTruePU=*ntrpu;
-    //  getPUSF();
-    //}
-    
-    int mapBJets[20], mapEle[20], mapMu[20];
-    for(int i = 0; i<20;++i){
-      mapBJets[i]=-1; mapEle[i]=-1; mapMu[i]=-1;
-    } 
     int lepidx=0;
     int bjetidx=0;
-    //    std::cout << " checkpoint part 2 bef muons"<<endl;
-    //    std::cout << " checkpoint part 2 mu label"<< mu_label<< " mu pref "<< obj_to_pref[mu_label]<<endl;
     
+    
+    initCategoriesSize(jets_label);
+    initCategoriesSize(mu_label);
+    initCategoriesSize(ele_label);
 
     //Photons
-    //    cout << "photons size "<< cout <<  sizes[photon_label]<<endl;
-
-     //      cout << "j is " <<j<< "label "<< jets_label << " maxinstances "<< max_instances[jets_label]<< "size "<< 
+    //    initCategoriesSize(photon_label);
+ 
     for(int ph = 0;ph < max_instances[photon_label] ;++ph){
-      //      cout << " in photon loop "<<endl;
       string pref = obj_to_pref[photon_label];
       
       
       float pt = vfloats_values[makeName(photon_label,pref,"Pt")][ph];
       float eta = vfloats_values[makeName(photon_label,pref,"Eta")][ph];
-      //      float sceta = vfloats_values[makeName(photon_label,pref,"SClusterEta")][ph];
-      //      float sciso = vfloats_values[makeName(photon_label,pref,"SClusterPhi")][ph];      
+      
       
       float sieie = vfloats_values[makeName(photon_label,pref,"SigmaIEtaIEta")][ph];      
       float hoe = vfloats_values[makeName(photon_label,pref,"HoverE")][ph];      
@@ -1662,14 +1426,13 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     }
     
     //Muons
+    //    initCategoriesSize(mu_label);
     for(int mu = 0;mu < max_instances[mu_label] ;++mu){
       string pref = obj_to_pref[mu_label];
-      //      std::cout << " now checking name " << makeName(mu_label,pref,"IsTightMuon")<<std::endl;
       float isTight = vfloats_values[makeName(mu_label,pref,"IsTightMuon")][mu];
       float isLoose = vfloats_values[makeName(mu_label,pref,"IsLooseMuon")][mu];
       float isSoft = vfloats_values[makeName(mu_label,pref,"IsSoftMuon")][mu];
-     
-      //      float isVeto = vfloats_values[makeName(ele_label,pref,"isVeto")][el];
+      
       float pt = vfloats_values[makeName(mu_label,pref,"Pt")][mu];
       float eta = vfloats_values[makeName(mu_label,pref,"Eta")][mu];
       float phi = vfloats_values[makeName(mu_label,pref,"Phi")][mu];
@@ -1677,9 +1440,8 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       float iso = vfloats_values[makeName(mu_label,pref,"Iso04")][mu];
       
       float muCharge = vfloats_values[makeName(mu_label,pref,"Charge")][mu];
-      //      std::cout << " muon #"<<el<< " pt " << pt << " isTight/Loose/Soft?"<< isTight<<isSoft<<isLoose<<std::endl;
-
-
+      
+      
       if(isTight>0 && pt> 30 && abs(eta) < 2.1 && iso <0.15){
 	++float_values["Event_nTightMuons"];
 	TLorentzVector muon;
@@ -1690,10 +1452,12 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	
 	leptonsCharge.push_back(muCharge);
 	
-	mapMu[lepidx]=mu; 
-	//	string namecat = makeBranchNameCat(mu_label,tight,pref,"Pt");
 	if(isInVector(obj_cats[mu_label],"Tight")){
 	  fillCategory(mu_label,"Tight",mu,float_values["Event_nTightMuons"]-1);
+	  
+	  if(obj_scanCuts[mu_label].size()>=1) {
+	    fillScanCuts(mu_label,"Tight",mu);
+	  }
 	}
 	++lepidx;
       }
@@ -1707,6 +1471,10 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	  ++float_values["Event_nLooseMuons"];
 	  if(isInVector(obj_cats[mu_label],"Loose")){
 	    fillCategory(mu_label,"Loose",mu,float_values["Event_nLooseMuons"]-1);
+
+	    if(obj_scanCuts[mu_label].size()>=1) {
+	      fillScanCuts(mu_label,"Loose",mu);
+	  }
 	  }
 	}
       }
@@ -1723,25 +1491,20 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	loosemuons.push_back(muon);
       }
     }
-
+    //    cout << "testing electrons now"<<endl;
     //Electrons:
     for(int el = 0;el < max_instances[ele_label] ;++el){
       string pref = obj_to_pref[ele_label];
       float pt = vfloats_values[makeName(ele_label,pref,"Pt")][el];
-      //      if(pt<0)continue;
       float isTight = vfloats_values[makeName(ele_label,pref,"isTight")][el];
-      //cout<<"isTight: "<<isTight<<endl;
       float isLoose = vfloats_values[makeName(ele_label,pref,"isLoose")][el];
       float isMedium = vfloats_values[makeName(ele_label,pref,"isMedium")][el];
       float isVeto = vfloats_values[makeName(ele_label,pref,"isVeto")][el];
 
-      //      if(isData){
       isTight = vfloats_values[makeName(ele_label,pref,"vidTight")][el];
-      //cout<<"New isTight: "<<isTight<<endl;
       isLoose = vfloats_values[makeName(ele_label,pref,"vidLoose")][el];
       isMedium = vfloats_values[makeName(ele_label,pref,"vidMedium")][el];
       isVeto = vfloats_values[makeName(ele_label,pref,"vidVeto")][el];
-	 //      }
       float eta = vfloats_values[makeName(ele_label,pref,"Eta")][el];
       float scEta = vfloats_values[makeName(ele_label,pref,"scEta")][el];
       float phi = vfloats_values[makeName(ele_label,pref,"Phi")][el];
@@ -1750,17 +1513,14 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 
       float elCharge = vfloats_values[makeName(ele_label,pref,"Charge")][el];
 
-      //      std::cout << " electron #"<<el<< " pt " << pt << " isTight/Mid/Loose/Veto?"<< isTight<<isMedium<<isLoose<<isVeto<<std::endl;
-
       bool passesDRmu = true;
       bool passesTightCuts = false;
       if(fabs(scEta)<=1.479){
 	passesTightCuts = isTight >0.0 && iso < 0.0354 ;
-	//passesTightCuts = isTight >0.0  ;
+
       } //is barrel electron
       if (fabs(scEta)>1.479 && fabs(scEta)<2.5){
 	passesTightCuts = isTight >0.0 && iso < 0.0646 ;
-	//passesTightCuts = isTight >0.0  ;
       }
 
       if(pt> 30 && fabs(eta) < 2.1 && passesTightCuts){
@@ -1781,7 +1541,6 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	  leptonsCharge.push_back(elCharge);
 
 	  ++float_values["Event_nTightElectrons"];
-	  mapEle[lepidx]=el;
 	  ++lepidx;
 	  if(isInVector(obj_cats[ele_label],"Tight")){
 	    fillCategory(ele_label,"Tight",el,float_values["Event_nTightElectrons"]-1);
@@ -1821,7 +1580,6 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     double maxpt=0.0;
 
     for(size_t l =0; l< leptons.size();++l){
-      //double maxpt= 0.0;
       double lpt= leptons.at(l).Pt();
       if(lpt>maxpt){maxpt = lpt;firstidx=l;}
       
@@ -1829,7 +1587,6 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 
     maxpt=0.0;
     for(size_t l =0; l< leptons.size();++l){
-      //double maxpt= 0.0;
       double lpt= leptons.at(l).Pt();
       if(lpt>maxpt&&firstidx!=(int)l){maxpt = lpt;secondidx=l;}
     }
@@ -1857,8 +1614,6 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     double Ht=0;
     double corrMetPx =0;
     double corrMetPy =0;
-    //double corrMetPxNoHF =0;
-    //double corrMetPyNoHF =0;
     double DUnclusteredMETPx=0.0;
     double DUnclusteredMETPy=0.0;
 
@@ -1872,28 +1627,17 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       string pref = obj_to_pref[jets_label];
       float pt = vfloats_values[makeName(jets_label,pref,"Pt")][j];
       float ptzero = vfloats_values[makeName(jets_label,pref,"Pt")][j];
-      //      if(pt<0)continue;
       float genpt = vfloats_values[makeName(jets_label,pref,"GenJetPt")][j];
       float eta = vfloats_values[makeName(jets_label,pref,"Eta")][j];
       float phi = vfloats_values[makeName(jets_label,pref,"Phi")][j];
       float energy = vfloats_values[makeName(jets_label,pref,"E")][j];
-      //      float mass = vfloats_values[makeName(jets_label,pref,"Mass")][j];
       float ptCorr = -9999;
       float energyCorr = -9999;
       float smearfact = -9999;
 
-      //      cout << "j is " <<j<< "label "<< jets_label << " maxinstances "<< max_instances[jets_label]<< "size "<< sizes[jets_label]<< " pt "<< vfloats_values[makeName(jets_label,pref,"Pt")][j]<< " eta "<< eta<< " phi "<< phi << " e "<< energy <<endl;
       float jecscale = vfloats_values[makeName(jets_label,pref,"jecFactor0")][j];
       float area = vfloats_values[makeName(jets_label,pref,"jetArea")][j];
       
-      // if(pt>0){
-      // 	ptCorr = smearPt(pt, genpt, eta, syst);
-	
-      // 	float unc = jetUncertainty(ptCorr,eta,syst);
-      // 	//cout << "genpt? "<< genpt <<" pt ? "<< pt<<" ptcorr? "<< ptCorr<<"unc? "<< unc<<endl;
-      // 	ptCorr = ptCorr * (1 + unc);
-      // 	energyCorr = energy * (1 + unc);
-      // }
       float juncpt=0.;
       float junce=0.;
       if(pt>0){
@@ -1909,22 +1653,17 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	  junce=jetUncorr.E();
 
 	  if(changeJECs){
-	    
-	    //	    if(abs(eta)>3.0 && abs(pt)>20){cout << "jet "<< j <<" standard pt "<<pt<< " eta "<< eta << " zero correction "<< jecscale<<endl;
-	    //	      cout << " area "<< area << " rho "<< Rho << " nPV "<< nPV<<endl;}
-	    //  jetUncorr= jetUncorr*jecscale;
-	    //	  cout << " uncorrected "<<jetUncorr.Pt()<<endl;
+
 	    jecCorr->setJetPhi(jetUncorr.Phi());
 	    jecCorr->setJetEta(jetUncorr.Eta());
 	    jecCorr->setJetE(jetUncorr.E());
 	    jecCorr->setJetPt(jetUncorr.Perp());
-	    //jecCorr->setJetA(0);
 	    jecCorr->setJetA(area);
 	    jecCorr->setRho(Rho);
 	    jecCorr->setNPV(nPV);
 	    double recorr =  jecCorr->getCorrection();
 	    jetUncorr = jetUncorr *recorr;
-	    //if(abs(eta)>3.0 && abs(pt)>20)cout << " recorrection "<<recorr << " corrected Pt "<< jetUncorr.Pt()<< " eta "<< jetUncorr.Eta()<<endl;
+
 	    pt = jetUncorr.Pt();
 	    eta = jetUncorr.Eta();
 	    energy = jetUncorr.Energy();
@@ -1932,34 +1671,18 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	  }
 
 	smearfact = smear(pt, genpt, eta, syst);
-	//	smearfact=1.0;
+
 	ptCorr = pt * smearfact;
 	energyCorr = energy * smearfact;
 	float unc = jetUncertainty(ptCorr,eta,syst);
-	//cout << "genpt? "<< genpt <<" pt ? "<< pt<<" ptcorr? "<< ptCorr<<"unc? "<< unc<<endl;
-	//if(unc != 0){
-	//corrMetPx -=unc*(cos(phi)*ptCorr);
-	//corrMetPy -=unc*(sin(phi)*ptCorr);
-	//corrMetPxNoHF -=unc*(cos(phi)*ptCorr);
-	//corrMetPyNoHF -=unc*(sin(phi)*ptCorr);
-	//}
+
 	ptCorr = ptCorr * (1 + unc);
 	energyCorr = energyCorr * (1 + unc);
 	
 	corrMetPx -=(cos(phi)*(ptCorr-ptzero));
         corrMetPy -=(sin(phi)*(ptCorr-ptzero));
-
-	//cout<< "Met correction? "<<corrMetPx<<endl;
-
-	if(fabs(eta)<3.0){
-	  //	  corrMetPxNoHF -=(cos(phi)*(ptCorr-ptzero));
-	  //corrMetPyNoHF -=(sin(phi)*(ptCorr-ptzero));
-	}
       }
           
-      
-      //      ptCorr = ptCorr;
-      //      energyCorr = energyCorr;
       float csv = vfloats_values[makeName(jets_label,pref,"CSVv2")][j];
       float partonFlavour = vfloats_values[makeName(jets_label,pref,"PartonFlavour")][j];
       int flavor = int(partonFlavour);
@@ -1970,8 +1693,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	  else {++nudsg;}
 	}
       }
-      //      vfloats_values[jets_label+"_CorrPt"][j]=ptCorr;
-      ///      vfloats_values[jets_label+"_CorrE"][j]=energyCorr;
+
       vfloats_values[jets_label+"_NoCorrPt"][j]=juncpt;
       vfloats_values[jets_label+"_NoCorrE"][j]=junce;
 
@@ -1979,10 +1701,9 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       vfloats_values[jets_label+"_CorrE"][j]=energyCorr;
       vfloats_values[jets_label+"_CorrEta"][j]=eta;
       vfloats_values[jets_label+"_CorrPhi"][j]=phi;
-      // https://twiki.cern.ch/twiki/bin/viewauth/CMS/BTagPerformanceOP
+
       bool isCSVT = csv  > 0.935;
       bool isCSVM = csv  > 0.800;
-      //      bool isCSVM = csv  > 0.814;
       bool isCSVL = csv  > 0.460;
       vfloats_values[jets_label+"_IsCSVT"][j]=isCSVT;
       vfloats_values[jets_label+"_IsCSVM"][j]=isCSVM;
@@ -1997,20 +1718,18 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       vfloats_values[jets_label+"_BSFDown"][j]=bsfdown;
       
       bool passesID = true;
-
-      
+  
       if(!(jecscale*energy > 0))passesID = false;
       else{
-     //float nDau = vfloats_values[makeName(jets_label,pref,"numberOfDaughters")][j];
         float neuMulti = vfloats_values[makeName(jets_label,pref,"neutralMultiplicity")][j];
         float chMulti = vfloats_values[makeName(jets_label,pref,"chargedMultiplicity")][j];
         float chHadEnFrac = vfloats_values[makeName(jets_label,pref,"chargedHadronEnergyFrac")][j];
         float chEmEnFrac = vfloats_values[makeName(jets_label,pref,"chargedEmEnergyFrac")][j];
-        //float muEnFrac = vfloats_values[makeName(jets_label,pref,"muonEnergyFrac")][j];
         float neuEmEnFrac = vfloats_values[makeName(jets_label,pref,"neutralEmEnergyFrac")][j];
         float neuHadEnFrac = vfloats_values[makeName(jets_label,pref,"neutralHadronEnergyFrac")][j];
-        float numConst = 10.;//vfloats_values[makeName(jets_label,pref,"numberOfDaughters")][j];
+        float numConst = 10.;//vfloats_values[makeName(jets_label,pref,"NumConstituents")][j];
         //passesID =  (nDau >1.0 && fabs(eta) < 4.7 && (fabs(eta)>=2.4 ||(chHadEnFrac>0.0 && chMulti>0 && chEmEnFrac<0.99)) && neuEmEnFrac<0.99 && neuHadEnFrac <0.99 && muEnFrac<0.8) ;
+
         if(fabs(eta)<=3){
           passesID =  (neuHadEnFrac<0.99 && neuEmEnFrac<0.99 && numConst>1) && ( (abs(eta)<=2.4 && chHadEnFrac>0 && chMulti>0 && chEmEnFrac<0.99) || abs(eta)>2.4);
         }
@@ -2021,8 +1740,6 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 
       
       vfloats_values[jets_label+"_PassesID"][j]=(float)passesID;
-      
-
       //Remove overlap with tight electrons/muons
       double minDR=9999;
       double minDRThrEl=0.3;
@@ -2036,7 +1753,6 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       }
       for (size_t m = 0; m < (size_t)muons.size(); ++m){
 	minDR = min(minDR,deltaR(math::PtEtaPhiELorentzVector(muons.at(m).Pt(),muons.at(m).Eta(),muons.at(m).Phi(),muons.at(m).Energy() ) ,math::PtEtaPhiELorentzVector(ptCorr, eta, phi, energyCorr)));
-	//minDR = min(minDR,deltaR(muons.at(m) ,math::PtEtaPhiELorentzVector(ptCorr, eta, phi, energyCorr)));
 	if(minDR<minDRThrMu)passesDR = false;
       }
       
@@ -2051,133 +1767,78 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       if(passesID && passesDR && pt>50 && abs(eta)<2.4){
 	Ht+=pt;
       }
-
-      float_values["Event_Ht"] = (float)Ht;
-
       
-      for (size_t ji = 0; ji < (size_t)jetScanCuts.size(); ++ji){
-	stringstream j_n;
-	double jetval = jetScanCuts.at(ji);
-	j_n << "Cut" <<jetval;
-	bool passesCut = ( ptCorr > jetval && fabs(eta) < 4.);
-	//	bool passesCut = ( ptCorr > jetval && fabs(eta) < 4.0);
-	if(!passesID || !passesCut || !passesDR) continue;
-	if(ji==0){
-	  vfloats_values[jets_label+"_IsTight"][j]=1.0;
-	  TLorentzVector jet;
-	  jet.SetPtEtaPhiE(ptCorr, eta, phi, energyCorr);
-	  jets.push_back(jet);
+      float_values["Event_Ht"] = (float)Ht;
+      
 
-	  if(!isCSVM)     jetsnob.push_back(jet);
-	  //double MCTagEFFiciency(int flavor); 
-	  //	  double TagScaleFactor(int flavor, string syst);
-	  
-	  
-
-	  //	  jsfscsvt_b_tag_up;
-	  //    jsfscsvt_b_tag_down, 
-	  //    jsfscsvt_mistag_up, 
-	  //    jsfscsvt_mistag_down;
-
-
-	  //	    partonFlavour = vfloats_values[makeName(jets_label,pref,"PartonFlavour")][j];
-	  
-	}
-	//	cout << " syst "<< syst<< " jet "<< j << " pt "<< ptCorr <<"cut "<< jetScanCuts.at(ji)<< " extra jet with pt "<< ptCorr<< "eventNJets before is" << float_values["Event_nJets"+j_n.str()]<< " csv "<< csv<< " isCSVM? "<< isCSVM<<endl;
-	if(passesCut &&  passesID && passesDR){	
-	  float_values["Event_nJets"+j_n.str()]+=1;if(ji==0){
-	    nTightJets+=1;
-	    if(isInVector(obj_cats[jets_label],"Tight")){
-	      fillCategory(jets_label,"Tight",j,float_values["Event_nJets"+j_n.str()]-1);
-	    }
-	  }
-	}
-	//	cout<<  "after: "<< float_values["Event_nJets"+j_n.str()]<<" ntighjets "<< nTightJets <<endl;
-	if(passesCut &&  passesID && passesDR){
-	  double csvteff = MCTagEfficiency("csvt",flavor, ptCorr);
-	  double sfcsvt = TagScaleFactor("csvt", flavor, "noSyst", ptCorr);
-	  
-	  double csvleff = MCTagEfficiency("csvl",flavor,ptCorr);
-	  double sfcsvl = TagScaleFactor("csvl", flavor, "noSyst", ptCorr);
-
-	  double csvmeff = MCTagEfficiency("csvm",flavor,ptCorr);
-	  double sfcsvm = TagScaleFactor("csvm", flavor, "noSyst", ptCorr);
-
-
-	  double sfcsvt_mistag_up = TagScaleFactor("csvt", flavor, "mistag_up", ptCorr);
-	  double sfcsvl_mistag_up = TagScaleFactor("csvl", flavor, "mistag_up", ptCorr);
-	  double sfcsvm_mistag_up = TagScaleFactor("csvm", flavor, "mistag_up", ptCorr);
-
-	  double sfcsvt_mistag_down = TagScaleFactor("csvt", flavor, "mistag_down", ptCorr);
-	  double sfcsvl_mistag_down = TagScaleFactor("csvl", flavor, "mistag_down", ptCorr);
-	  double sfcsvm_mistag_down = TagScaleFactor("csvm", flavor, "mistag_down", ptCorr);
-
-	  double sfcsvt_b_tag_down = TagScaleFactor("csvt", flavor, "b_tag_down", ptCorr);
-	  double sfcsvl_b_tag_down = TagScaleFactor("csvl", flavor, "b_tag_down", ptCorr);
-	  double sfcsvm_b_tag_down = TagScaleFactor("csvm", flavor, "b_tag_down", ptCorr);
-	  
-	  double sfcsvt_b_tag_up = TagScaleFactor("csvt", flavor, "b_tag_up", ptCorr);
-	  double sfcsvl_b_tag_up = TagScaleFactor("csvl", flavor, "b_tag_up", ptCorr);
-	  double sfcsvm_b_tag_up = TagScaleFactor("csvm", flavor, "b_tag_up", ptCorr);
-
-
-	  jsfscsvt.push_back(BTagWeight::JetInfo(csvteff, sfcsvt));
-	  jsfscsvl.push_back(BTagWeight::JetInfo(csvleff, sfcsvl));
-	  jsfscsvm.push_back(BTagWeight::JetInfo(csvmeff, sfcsvm));
-
-	  jsfscsvt_mistag_up.push_back(BTagWeight::JetInfo(csvteff, sfcsvt_mistag_up));
-	  jsfscsvl_mistag_up.push_back(BTagWeight::JetInfo(csvleff, sfcsvl_mistag_up));
-	  jsfscsvm_mistag_up.push_back(BTagWeight::JetInfo(csvmeff, sfcsvm_mistag_up));
-
-	  jsfscsvt_b_tag_up.push_back(BTagWeight::JetInfo(csvteff, sfcsvt_b_tag_up));
-	  jsfscsvl_b_tag_up.push_back(BTagWeight::JetInfo(csvleff, sfcsvl_b_tag_up));
-	  jsfscsvm_b_tag_up.push_back(BTagWeight::JetInfo(csvmeff, sfcsvm_b_tag_up));
-
-	  jsfscsvt_mistag_down.push_back(BTagWeight::JetInfo(csvteff, sfcsvt_mistag_down));
-	  jsfscsvl_mistag_down.push_back(BTagWeight::JetInfo(csvleff, sfcsvl_mistag_down));
-	  jsfscsvm_mistag_down.push_back(BTagWeight::JetInfo(csvmeff, sfcsvm_mistag_down));
-
-	  jsfscsvt_b_tag_down.push_back(BTagWeight::JetInfo(csvteff, sfcsvt_b_tag_down));
-	  jsfscsvl_b_tag_down.push_back(BTagWeight::JetInfo(csvleff, sfcsvl_b_tag_down));
-	  jsfscsvm_b_tag_down.push_back(BTagWeight::JetInfo(csvmeff, sfcsvm_b_tag_down));
-
-	  //	  cout<< "jet :# "<< j << "sf is " <<sfcsvt << " eff is "<<csvteff<<endl;
-	}
+      double jetval = 40.0;
+      double jetbaseval = 20.0;
+      
+      bool passesCut = ( ptCorr > jetval && fabs(eta) < 4.);
+      
+      if(passesID && passesCut && passesDR){
 	
-	if(isCSVT && passesCut &&  passesID && passesDR && fabs(eta) < 2.4) {
-	  float_values["Event_nCSVTJets"+j_n.str()]+=1.0;
-	  ncsvt_tags +=1;
+	vfloats_values[jets_label+"_IsTight"][j]=1.0;
+	TLorentzVector jet;
+	jet.SetPtEtaPhiE(ptCorr, eta, phi, energyCorr);
+	jets.push_back(jet);
+      
+	if(!isCSVM)     jetsnob.push_back(jet);
+      
+      if(passesCut &&  passesID && passesDR){	
+	float_values["Event_nJets"]+=1;
+	nTightJets+=1;
+	if(isInVector(obj_cats[jets_label],"Tight")){
+	  //	  cout<< " tight jet precat "<<j <<endl;
+	  fillCategory(jets_label,"Tight",j,float_values["Event_nJets"]-1);
+	  //	  cout<< " tight jet poscat "<<j <<endl;
 	}
-
-	if(isCSVL && passesCut &&  passesID && passesDR && fabs(eta) < 2.4) { 
-	  ncsvl_tags +=1;
-	}
-	if(isCSVM && passesCut &&  passesID && passesDR && fabs(eta) < 2.4) { 
-	  float_values["Event_nCSVMJets"+j_n.str()]+=1.0;
-	  if(ji==0){
-	    ncsvm_tags +=1;
-	    //	    cout << " jet "<< j<< " isBJET "<<endl;
-	    TLorentzVector bjet;
-	    bjet.SetPtEtaPhiE(ptCorr, eta, phi, energyCorr);
-	    bjets.push_back(bjet);
-	    mapBJets[bjetidx]=j;
-	    ++bjetidx;
-	  }
-	  //	  if(ji==0){
-	    //	    cout << " jet "<< j<< " isBJET "<<endl;
-	    //	    TLorentzVector bjet;
-	    //  bjet.SetPtEtaPhiE(ptCorr, eta, phi, energyCorr);
-	    //	    bjets.push_back(bjet);
-	  //	  }
-	}
-	
-	if(isCSVL && passesCut &&  passesID && passesDR && abs(eta) < 2.4) float_values["Event_nCSVLJets"+j_n.str()]+=1;
 	
       }
+      if(passesCut &&  passesID && passesDR){
+    }
+	
+    if(isCSVT && passesCut &&  passesID && passesDR && fabs(eta) < 2.4) {
+      float_values["Event_nCSVTJets"]+=1.0;
+      ncsvt_tags +=1;
+    }
+    
+    if(isCSVL && passesCut &&  passesID && passesDR && fabs(eta) < 2.4) { 
+      ncsvl_tags +=1;
+    }
+    if(isCSVM && passesCut &&  passesID && passesDR && fabs(eta) < 2.4) { 
+      float_values["Event_nCSVMJets"]+=1.0;
+      ncsvm_tags +=1;
+      TLorentzVector bjet;
+      bjet.SetPtEtaPhiE(ptCorr, eta, phi, energyCorr);
+      bjets.push_back(bjet);
+      ++bjetidx;
       
     }
-    if(isInVector(obj_cats[ele_label],"Tight")){
+    
+    if(isCSVL && passesCut &&  passesID && passesDR && abs(eta) < 2.4) float_values["Event_nCSVLJets"]+=1;
+    }
+      bool passesBaseCut = ( ptCorr > jetbaseval && fabs(eta) < 4.);
+
+      if(passesID && passesDR && passesBaseCut) if(obj_scanCuts[jets_label].size()>=1) {
+	  //	cout << "now testing scan jets "<<endl;
+	  fillScanCuts(jets_label,"Tight",j);
+	}
+      
+      //      }//ENDS HERE
+      
+    }
+    
+    if(isInVector(obj_cats[jets_label],"Tight")){
       sizes[jets_label+"Tight"]=(int)nTightJets;
+      setEventBTagSF(jets_label,"Tight");
+      
+      for(size_t jc = 0; jc < obj_scanCuts[jets_label].size();++jc){
+	string scanCut=obj_scanCuts[jets_label].at(jc);
+	
+	//	if(false)
+	setEventBTagSF(jets_label,"Tight_"+scanCut);
+      }
     }
     
     float_values["Event_eventFlavour"]=eventFlavour(getWZFlavour, nb, nc, nudsg);
@@ -2192,7 +1853,6 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       corrMetPy -=signmet*DUnclusteredMETPy*0.1;
     }
     
-    //    cout << " met "<<endl;
     //Met and mt
     string pref = obj_to_pref[met_label];
     float metpt = vfloats_values[makeName(met_label,pref,"Pt")][0];
@@ -2218,116 +1878,38 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     vfloats_values[met_label+"_CorrPhi"][0]=metphiCorr;
 
     //Preselection part
+
     if(doPreselection){
       bool passes = true;
-      //bool metCondition = (metptCorr >100.0); 
-      bool metCondition;
-      //double metPtLepY = metptCorr;
-      float lep1phi = float_values["Event_Lepton1_Phi"];
-      float lep1pt = float_values["Event_Lepton1_Pt"];
-
-      float lep2phi = float_values["Event_Lepton2_Phi"];
-      float lep2pt = float_values["Event_Lepton2_Pt"];
-
-      float lep1px = 0.0;
-      float lep1py = 0.0;
-      float lep2px = 0.0;
-      float lep2py = 0.0;
-      float metPxLep=metPx;
-      float metPyLep=metPy;
+      //bool metCondition = (metptCorr >100.0);
       
-      if(lep1pt>0.0){
-	    lep1px = lep1pt*cos(lep1phi);
-	    lep1py = lep1pt*sin(lep1phi);
-
-	    if(lep2pt>0.0){
-	    lep2px = lep2pt*cos(lep2phi);
-	    lep2py = lep2pt*sin(lep2phi);
-	      }	
-      } 
-      metPxLep+=lep1px;
-      metPyLep+=lep1py;
-      metPxLep+=lep2px;
-      metPyLep+=lep2py;
-      double metLep=sqrt(metPxLep*metPxLep+metPyLep*metPyLep);
-
-      if(metptCorr<100.0 && metLep >100.0){
-	    ;	
-      //	cout << " lep1 pt " << lep1pt << " lep 1 phi "<< lep1phi << " met "<< metptCorr <<endl;
-	    //	cout << " leppx " << lep1px << " metpx "<< metPx << " leppy "<<lep1py << " metpy "<< metPy<<endl;
-	    //	cout << " metLep "<< metLep<<endl;
-      }
-      metPxLep+=lep1px;
-      metCondition = metCondition || (metLep>100.0);
-      
-      //passes = passes && metCondition; //comented out for testing 
-      passes = passes && nTightJets>=1;
+      passes = passes && nTightJets>=0;
       if (!passes ) {
-	    //Reset event weights/#objects
-	    string nameshortv= "Event";
-	    vector<string> extravars = additionalVariables(nameshortv);
-	    
-      for(size_t addv = 0; addv < extravars.size();++addv){
-	    string name = nameshortv+"_"+extravars.at(addv);
+	//Reset event weights/#objects
+	string nameshortv= "Event";
+	vector<string> extravars = additionalVariables(nameshortv);
+	for(size_t addv = 0; addv < extravars.size();++addv){
+	  string name = nameshortv+"_"+extravars.at(addv);
 	  
-	    //std::cout << "syst is "<< syst<< " resetting variable "<< name<< " before "<< float_values[name];
-	    //bool isTriggerVar
-	    //if(isTriggerVar) continue;
-	    //float_values[name]=0;
-	    
-      if(!isMCWeightName(extravars.at(addv))) float_values[name]=0.0;
-	    //if (name==)
-	    //std::cout << " after "<< Float_values[name]<<endl;
-	    }
-	    
-      continue;
+	  if(!isMCWeightName(extravars.at(addv))) float_values[name]=0.0;
+	}
+	continue;
       }
-      }
-    
-    //==================== MET NoHF ==========================
-
-    /*    string prefNoHF = obj_to_pref[metNoHF_label];
-    float metptNoHF = vfloats_values[makeName(metNoHF_label,prefNoHF,"Pt")][0];
-    float metphiNoHF = vfloats_values[makeName(metNoHF_label,prefNoHF,"Phi")][0];
-    
-    
-    float metPyNoHF = metptNoHF*sin(metphiNoHF);
-    float metPxNoHF = metptNoHF*cos(metphiNoHF);
-    metPxNoHF+=corrMetPxNoHF; metPyNoHF+=corrMetPyNoHF; // add JEC/JER contribution
-    
-    //Correcting the pt
-    float metptCorrNoHF = sqrt(metPxNoHF*metPxNoHF + metPyNoHF*metPyNoHF);
-    vfloats_values[metNoHF_label+"_CorrPtNoHF"][0]=metptCorrNoHF;
-
-    //Correcting the phi
-    float metphiCorrNoHF = metphiNoHF;
-    if(metPxNoHF<0){
-      if(metPyNoHF>0)metphiCorrNoHF = atan(metPyNoHF/metPxNoHF)+3.141592;
-      if(metPyNoHF<0)metphiCorrNoHF = atan(metPyNoHF/metPxNoHF)-3.141592;
     }
-    else  metphiCorrNoHF = (atan(metPyNoHF/metPxNoHF));
-
-    vfloats_values[metNoHF_label+"_CorrPhiNoHF"][0]=metphiCorrNoHF;*/
-
+    
     //======================================================
     TLorentzVector lepton;
     
     if( ( (electrons.size()==1 && muons.size()==0 ) || (muons.size()==1 && electrons.size()==0) ) && bjets.size()>0 ){
       if(electrons.size()==1) lepton = electrons[0];
       else if(muons.size()==1) lepton = muons[0];
-    
-      //     cout << " doing mt2w "<<endl;
       
       TVector2 met( metptCorr*cos(metphiCorr), metptCorr*sin(metphiCorr));
-      //      cout << " doing mt2w 1"<<endl;
       float phi_lmet = fabs(deltaPhi(lepton.Phi(), metphiCorr) );
-      //      cout << " doing mt2w 2, dphi is "<< phi_lmet <<endl;
       float mt = sqrt(2* lepton.Pt() * metptCorr * ( 1- cos(phi_lmet)));
-      //      cout << " doing mt2w 3, mt is "<<mt<<endl;
       float_values["Event_mt"] = (float)mt;
       Mt2Com_bisect *Mt2cal = new Mt2Com_bisect();
       double Mt2w = Mt2cal->calculateMT2w(jetsnob,bjets,lepton, met,"MT2w");
-      //      cout << " doing mt2w 4, Mt2w is "<<Mt2w<<endl;
       float_values["Event_Mt2w"] = (float)Mt2w;    
     }
     
@@ -2337,821 +1919,37 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       float eta = vfloats_values[makeName(boosted_tops_subjets_label,pref,"Eta")][s];
       float phi = vfloats_values[makeName(boosted_tops_subjets_label,pref,"Phi")][s];
       float e   = vfloats_values[makeName(boosted_tops_subjets_label,pref,"E")][s];
-      //cout << pt << endl;
       
       TLorentzVector subjet;
       subjet.SetPtEtaPhiE(pt, eta, phi, e);       
       double minDR=999;
       float subjcsv = vfloats_values[makeName(boosted_tops_subjets_label,pref,"CSVv2")][s];
+     
       bool isCSVM = (subjcsv>0.800);
-      //bool isCSVT = csv  > 0.970;
-	    //bool isCSVM = csv  > 0.890;
-	    //bool isCSVL = csv  > 0.605;
+      
+      
+      for(int t = 0;t < min(max_instances[boosted_tops_label],sizes[boosted_tops_label]) ;++t){
 	
-	
-	for(int t = 0;t < min(max_instances[boosted_tops_label],sizes[boosted_tops_label]) ;++t){
-	  
-	  float ptj = vfloats_values[makeName(boosted_tops_label,pref,"Pt")][t];
-	  if (ptj<0.0)continue;
-	  float etaj = vfloats_values[makeName(boosted_tops_label,pref,"Eta")][t];
-	  float phij = vfloats_values[makeName(boosted_tops_label,pref,"Phi")][t];
-	  float ej = vfloats_values[makeName(boosted_tops_label,pref,"E")][t];
-	  TLorentzVector topjet;
-	  topjet.SetPtEtaPhiE(ptj, etaj, phij, ej);       
-	  
-	  float DR = subjet.DeltaR(topjet); 
-	  //	  cout <<"subjet# "<<s<< " jet "<< t << " DR is "<< DR << " minDR is "<<minDR<<endl;
-	    if(DR < minDR){
-	    minDR = DR;
-	    subj_jet_map[s]=t;
-	    }
-	    //	    cout << " sjmap is "<< subj_jet_map[s]<<endl;
-	}
-	size_t tm = subj_jet_map[s];
-	if(isCSVM)vfloats_values[boosted_tops_label+"_nCSVM"][tm]+=1;
-	vfloats_values[boosted_tops_label+"_nJ"][tm]+=1;
-    }
-    
-    for(int t = 0;t < max_instances[boosted_tops_label] ;++t){
-      string pref = obj_to_pref[boosted_tops_label];
-      //float minmass      = vfloats_values[makeName(boosted_tops_label,pref,"minmass")][t];
-      //float trimmedMass  = vfloats_values[makeName(boosted_tops_label,pref,"trimmedMass")][t];
-      float prunedMass   = vfloats_values[makeName(boosted_tops_label,pref,"prunedMass")][t];
-      //float filteredMass = vfloats_values[makeName(boosted_tops_label,pref,"filteredMass")][t];
-      float softDropMass = vfloats_values[makeName(boosted_tops_label,pref,"softDropMass")][t];
-
-      float topPt        = vfloats_values[makeName(boosted_tops_label,pref,"Pt")][t];
-      //float topMass        = vfloats_values[makeName(boosted_tops_label,pref,"Mass")][t];
-      float tau1         = vfloats_values[makeName(boosted_tops_label,pref,"tau1")][t];
-      float tau2         = vfloats_values[makeName(boosted_tops_label,pref,"tau2")][t];
-      float tau3         = vfloats_values[makeName(boosted_tops_label,pref,"tau3")][t];
-
-      float nSubJets = vfloats_values[makeName(boosted_tops_label,pref,"nSubJets")][t];
-      //      float nJ = vfloats_values[makeName(boosted_tops_label,pref,"nJ")][t];
-      //      float nCSVMSubJets= vfloats_values[makeName(boosted_tops_label,pref,"nCVSM")][t];
-      //      float Index0IsCSVM = vfloats_values[makeName(boosted_tops_label,pref,"nSubJets")][t];
-      
-      //      cout << " ak8J # "<< t << " nJ "<< nJ << " nSubJets "<< nSubJets<<endl; 
-      //      cout << nSubJets << endl;
-
-      float tau3OVERtau2 = (tau2!=0. ? tau3/tau2 : 9999.);
-      float tau2OVERtau1 = (tau1!=0. ? tau2/tau1 : 9999.);
-
-      vfloats_values[makeName(boosted_tops_label,pref,"tau3OVERtau2")][t]=(float)tau3OVERtau2;
-      vfloats_values[makeName(boosted_tops_label,pref,"tau2OVERtau1")][t]=(float)tau2OVERtau1;
-      
-      math::PtEtaPhiELorentzVector p4bestTop;
-      math::PtEtaPhiELorentzVector p4bestB;
-
-      math::PtEtaPhiELorentzVector j12;
-      math::PtEtaPhiELorentzVector j13;
-      math::PtEtaPhiELorentzVector j23;
-
-      math::PtEtaPhiELorentzVector j1;
-      math::PtEtaPhiELorentzVector j2;
-      math::PtEtaPhiELorentzVector j3;
-
-      //      vfloats_values[makeName(boosted_tops_subjets_label,pref,"Pt")][s];
-
-      int index0 = vfloats_values[makeName(boosted_tops_label,pref,"topSubjetIndex0")][t];
-      int index1 = vfloats_values[makeName(boosted_tops_label,pref,"topSubjetIndex1")][t];
-      int index2 = vfloats_values[makeName(boosted_tops_label,pref,"topSubjetIndex2")][t];
-      int index3 = vfloats_values[makeName(boosted_tops_label,pref,"topSubjetIndex3")][t];
-
-      int nCSVsubj = 0;
-       
-      if(nSubJets>0){
-	if( vfloats_values[makeName(boosted_tops_subjets_label,pref,"CSV")][index0] > 0.800) ++nCSVsubj;
-	if( vfloats_values[makeName(boosted_tops_subjets_label,pref,"CSV")][index1] > 0.800) ++nCSVsubj;
-	if( vfloats_values[makeName(boosted_tops_subjets_label,pref,"CSV")][index2] > 0.800) ++nCSVsubj;
-	if( vfloats_values[makeName(boosted_tops_subjets_label,pref,"CSV")][index3] > 0.800) ++nCSVsubj;
-      }
-
-
-      int nCSVsubj_tm = 0;
-      
-      if(nSubJets>0){
-	if( vfloats_values[makeName(boosted_tops_subjets_label,pref,"CSV")][index0] > 0.460 && vfloats_values[makeName(boosted_tops_subjets_label,pref,"CSV")][index0]<0.800) ++nCSVsubj_tm;
-        if( vfloats_values[makeName(boosted_tops_subjets_label,pref,"CSV")][index1] > 0.460 && vfloats_values[makeName(boosted_tops_subjets_label,pref,"CSV")][index1] < 0.800) ++nCSVsubj_tm;
-        if( vfloats_values[makeName(boosted_tops_subjets_label,pref,"CSV")][index2] > 0.460 && vfloats_values[makeName(boosted_tops_subjets_label,pref,"CSV")][index2]<0.800) ++nCSVsubj_tm;
-        if( vfloats_values[makeName(boosted_tops_subjets_label,pref,"CSV")][index3] > 0.460 && vfloats_values[makeName(boosted_tops_subjets_label,pref,"CSV")][index3]<0.800) ++nCSVsubj_tm;
-      }
-      
-      vfloats_values[makeName(boosted_tops_label,pref,"nCSVsubj")][t]=(float)nCSVsubj;
-      vfloats_values[makeName(boosted_tops_label,pref,"nCSVsubj_tm")][t]=(float)nCSVsubj_tm;
-
-      j1 = math::PtEtaPhiELorentzVector(vfloats_values[makeName(boosted_tops_subjets_label,pref,"Pt")][index0],
-					 vfloats_values[makeName(boosted_tops_subjets_label,pref,"Eta")][index0],
-					 vfloats_values[makeName(boosted_tops_subjets_label,pref,"Phi")][index0],
-					 vfloats_values[makeName(boosted_tops_subjets_label,pref,"E")][index0]);
-      j2 = math::PtEtaPhiELorentzVector(vfloats_values[makeName(boosted_tops_subjets_label,pref,"Pt")][index1],
-					 vfloats_values[makeName(boosted_tops_subjets_label,pref,"Eta")][index1],
-					 vfloats_values[makeName(boosted_tops_subjets_label,pref,"Phi")][index1],
-					 vfloats_values[makeName(boosted_tops_subjets_label,pref,"E")][index1]);
-      j3 = math::PtEtaPhiELorentzVector(vfloats_values[makeName(boosted_tops_subjets_label,pref,"Pt")][index2],
-					 vfloats_values[makeName(boosted_tops_subjets_label,pref,"Eta")][index2],
-					 vfloats_values[makeName(boosted_tops_subjets_label,pref,"Phi")][index2],
-					 vfloats_values[makeName(boosted_tops_subjets_label,pref,"E")][index2]);
-
-      j12 = j1 + j2;
-      j13 = j1 + j3;
-      j23 = j2 + j3;
-
-      // double m12 = j12.M();
-      // double m13 = j13.M();
-      // double m23 = j23.M();
-
-      // double topmass = 172.3;
-      // double wmass = 80.4;
-
-      // to removed unused masses and ti add mass of ak8 jet and ptjet
-
-      //bool isTop = ( ( (trimmedMass  <= 250 && trimmedMass >= 140) or (filteredMass <= 250 && filteredMass >= 140) or (prunedMass   <= 250 && prunedMass >= 140) )
-      bool isTop = ( ( softDropMass <= 210 && softDropMass >=110 )
-		     //and ( nSubJets >=3 )
-		     //and ( nSubJets >2 )
-		     and (tau3OVERtau2 <= 0.61 )
-		     //and ( minmass >= 50.)
-		     and ( topPt > 400)
-		     //		    nCSVMSubJets ==1 
-		     );
-      
-
-      /*
-      bool subjetCond=0;
-  
-      //Conditions on the subjects: at least one has to be true
-
-      double m_massWindowLower = 0.85;
-      double m_massWindowUpper = 1.15;
-      double m_cutCondition2 = 0.35;
-      double m_cutCondition3 = 0.35;
-      double rmin=m_massWindowLower*wmass/topmass;
-      double rmax=m_massWindowUpper*wmass/topmass;
-  
-      //1st condition
-      if(atan(m13/m12)>0.2 && atan(m13/m12)<1.3 && m23/topMass>rmin && m23/topMass<rmax) subjetCond=1;
-      
-      //2nd condition
-      double cond2left=pow(rmin,2)*(1+pow((m13/m12),2));
-      double cond2cent=1-pow(m23/topMass,2);
-      double cond2right=pow(rmax,2)*(1+pow(m13/m12,2));
-  
-      if(cond2left<cond2cent && cond2cent<cond2right && m23/topMass>m_cutCondition2)subjetCond=1;
-      
-      //3rd condition
-      double cond3left=pow(rmin,2)*(1+pow((m12/m13),2));
-      double cond3cent=1-pow(m23/topMass,2);
-      double cond3right=pow(rmax,2)*(1+pow(m12/m13,2));
-      
-      if(cond3left<cond3cent && cond3cent<cond3right && m23/topMass>m_cutCondition3) subjetCond=1;
-*/
-
-       bool isW = ( ( prunedMass <= 95 && prunedMass >=65 )
-		   //		   and (minmass >= 50.)
-		    and (tau2OVERtau1 <= 0.6) //0.5
-		    //and (nSubJets ==3)
-		    //and subjetCond
-		    and ( topPt > 200)
-		    //  and ( atan(m13/m12)>0.2 and atan(m13/m12)<1.3 or (0.85*wmass/topmass)^2*(1+(m13/m12))^2<1-(m23/topMass)^2 and 1 -(m23/topMass)^2<(1.15*wmass/topmass)^2*(1+(m13/m12)^2) and m23/topMass>0.35 or (0.85*wmass/topmass)^2*(1+(m12/m13)^2)<1-(m23/topMass)^2 and 1-(m23/topMass)^2<(1.15*wmass/topmass)^2*(1+(m12/m13)^2) and m23/topMass>0.35  )
-		   //nCSVMSubJets ==1 
-		    );
-       //  bool isW = ( ( (trimmedMass <= 105 && trimmedMass >= 65) or (filteredMass<= 105 && filteredMass >= 65) or (prunedMass<= 105 && prunedMass >= 65) )		   );
-
-      math::PtEtaPhiELorentzVector p4ak8;
-   
-       if (isW) {
-	//	std::cout << "boosted_tops_label: " << boosted_tops_label << std::endl;
-	//	std::cout << "pref: " << pref << std::endl;
-	p4ak8 = math::PtEtaPhiELorentzVector(vfloats_values[makeName(boosted_tops_label,pref,"Pt")][t],
-					     vfloats_values[makeName(boosted_tops_label,pref,"Eta")][t],
-					     vfloats_values[makeName(boosted_tops_label,pref,"Phi")][t],
-					     vfloats_values[makeName(boosted_tops_label,pref,"E")][t]);
-	
-	//	std::cout << "p4ak8.pt : " << p4ak8.pt() << " eta: " << p4ak8.eta() << " phi: " << p4ak8.phi() << " p4ak8.E: " << p4ak8.E() << std::endl;
-
-	float bestTopMass = 0.;
-	float dRmin = 2.6;
-	//	std::cout << "max_instances[jets_label]: " << max_instances[jets_label] << " <---> max_leading_jets_for_top " << max_leading_jets_for_top << " <---> sizes[jets_label] " <<  sizes[jets_label] << std::endl;
-	for(int i = 0; i < sizes[jets_label]; ++i){
-	  //	  bool isIBJet= (bool)vfloats_values[jets_label+"_IsCSVM"][i];
-
-	  math::PtEtaPhiELorentzVector p4ak4 = math::PtEtaPhiELorentzVector(vfloats_values[jets_label+"_CorrPt"][i], 
-									    vfloats_values[jets_label+"_CorrEta"][i], 
-									    vfloats_values[jets_label+"_CorrPhi"][i], 
-									    vfloats_values[jets_label+"_CorrE"][i] );
-	  double dR = ROOT::Math::VectorUtil::DeltaR(p4ak8,p4ak4);
-	  /* DEGUB
-	  if (dR>5.) {
-	    std::cout << "dR: " << dR << " topMass: " << topMass << " p4ak8.pt: " << p4ak8.pt() << " eta: " << p4ak8.eta() << " phi: " << p4ak8.phi() << " E: " << p4ak8.E() << " index: " << t << std::endl;
-	    std::cout << "               p4ak4.pt: " << p4ak4.pt() << " eta: " << p4ak4.eta() << " phi: " << p4ak4.phi() << " E: " << p4ak4.E() << " index: " << i << " [" << max_instances[jets_label] << std::endl;
- 	  }
-	  */
-
-	  if (dR <= 0.8 or dR > 2.5) continue;
-	  //	  std::cout << "isIBJet ? " << (isIBJet ? "yes" : "nope") << std::endl;
-	  
-	  math::PtEtaPhiELorentzVector p4top = (p4ak8+p4ak4);
-	  float topMass = p4top.mass();
-	  if ( dR < dRmin ) {
-	    dRmin = dR;
-	    bestTopMass = topMass;
-	    p4bestB= p4ak4;
-	  }
-	  //	    std::cout << "dR: " << dR << " topMass: " << topMass << " trimmedMass: " << trimmedMass << " p4ak8.pt: " << p4ak8.pt() << std::endl;
-
-	}
-	//	std::cout << "bestTopMass : " << bestTopMass << " dRmin: " << dRmin << std::endl;
-	if (bestTopMass > 250 or bestTopMass < 140) isW=false; 
-      }
-
-      if(isW){
-	p4bestTop = p4bestB + p4ak8;
-      }
-      if(isTop) p4bestTop = p4ak8;
-      
-
-      vfloats_values[makeName(boosted_tops_label,pref,"isType2")][t]=(float)isW;
-      vfloats_values[makeName(boosted_tops_label,pref,"isType1")][t]=(float)isTop;
-
-      if(isW || isTop){
-	TLorentzVector topjet;
-	float ptj  = vfloats_values[makeName(boosted_tops_label,pref,"Pt")][t];
+	float ptj = vfloats_values[makeName(boosted_tops_label,pref,"Pt")][t];
+	if (ptj<0.0)continue;
 	float etaj = vfloats_values[makeName(boosted_tops_label,pref,"Eta")][t];
 	float phij = vfloats_values[makeName(boosted_tops_label,pref,"Phi")][t];
-	float ej   = vfloats_values[makeName(boosted_tops_label,pref,"E")][t];
-	
-	vfloats_values[makeName(boosted_tops_label,pref,"TopPt")][t]   = p4bestTop.pt();
-	vfloats_values[makeName(boosted_tops_label,pref,"TopEta")][t]  = p4bestTop.eta();
-	vfloats_values[makeName(boosted_tops_label,pref,"TopPhi")][t]  = p4bestTop.phi();
-	vfloats_values[makeName(boosted_tops_label,pref,"TopE")][t]    = p4bestTop.energy();
-	vfloats_values[makeName(boosted_tops_label,pref,"TopMass")][t] = p4bestTop.mass();
-	if (isW)
-	  vfloats_values[makeName(boosted_tops_label,pref,"TopWMass")][t] = vfloats_values[makeName(boosted_tops_label,pref,"prunedMass")][t];
-
-
+	float ej = vfloats_values[makeName(boosted_tops_label,pref,"E")][t];
+	TLorentzVector topjet;
 	topjet.SetPtEtaPhiE(ptj, etaj, phij, ej);       
-	if(isW){
-	  float_values["Event_nType2TopJets"]+=1;
-	  type2topjets.push_back(topjet);
+	
+	float DR = subjet.DeltaR(topjet); 
+	//	  cout <<"subjet# "<<s<< " jet "<< t << " DR is "<< DR << " minDR is "<<minDR<<endl;
+	if(DR < minDR){
+	  minDR = DR;
+	  subj_jet_map[s]=t;
 	}
-	if(isTop){
-	  float_values["Event_nType1TopJets"]+=1;
-	  type1topjets.push_back(topjet);
-	}
+	//	    cout << " sjmap is "<< subj_jet_map[s]<<endl;
       }
+      size_t tm = subj_jet_map[s];
+      if(isCSVM)vfloats_values[boosted_tops_label+"_nCSVM"][tm]+=1;
+      vfloats_values[boosted_tops_label+"_nJ"][tm]+=1;
     }
-    
-    //    int nTightLeptons = electrons.size()+muons.size();
-    size_t cat = 0;
-
-    //cout << "muons size "<< muons.size()<<" el size "<<electrons.size()<< " jets size "<< jets.size() << " bjets size "<< bjets.size()<<endl;
-    size_t ni = 9;
-    cat+= 100000*(min(ni,muons.size()));
-    cat+= 10000*(min(ni,electrons.size()));
-    cat+= 1000*(min(ni,jets.size()));
-    cat+= 100*(min(ni,bjets.size()));
-    cat+= 10*(min(ni,type2topjets.size()));
-    cat+= 1*(min(ni,type1topjets.size()));
-    //    cat+= 1*(min(ni,tops.size()));
-    //cout << " category is "<< cat <<" as float "<< (float)cat<<endl;
-    float_values["Event_category"]=(float)cat;
-    string namelabel= "resolvedTopSemiLep";
-    //Resolved tops Semileptonic:
-    if(doResolvedTopSemiLep){
-      sizes[namelabel]=0;
-      if(((electrons.size()==1 && muons.size()==0 ) || (muons.size()==1 && electrons.size()==0)) &&  bjets.size()>0 &&   jets.size()>0){
-	//	if(jets.size()==2 && bjets.size()==1) cout << " check this one "<<endl;
-	TopUtilities topUtils;
-	size_t t = 0;
-	//	cout << " size b "<< bjets.size()<< " size l  "<< leptons.size() << " size 0 "<< sizes[namelabel]<<endl ;
-	for(size_t b =0; b<bjets.size();++b){
-	  for(size_t l =0; l<leptons.size();++l){
-	    //	  double metPx= 1.0, metPy =1.0;
-	    math::PtEtaPhiELorentzVector topSemiLep = topUtils.top4Momentum(leptons.at(l), bjets.at(b),metPx , metPy);
-	    if(t > (size_t)max_instances[namelabel])continue;
-	    vfloats_values[namelabel+"_Pt"][t]=topSemiLep.pt();
-	    vfloats_values[namelabel+"_Eta"][t]=topSemiLep.eta();
-	    vfloats_values[namelabel+"_Phi"][t]=topSemiLep.phi();
-	    vfloats_values[namelabel+"_E"][t]=topSemiLep.energy();
-	    vfloats_values[namelabel+"_Mass"][t]=topSemiLep.mass();
-	    vfloats_values[namelabel+"_MT"][t]= topUtils.topMtw(leptons.at(l),bjets.at(b),metPx,metPy);
-	    vfloats_values[namelabel+"_LBMPhi"][t]=deltaPhi((leptons.at(l)+bjets.at(b)).Phi(), metphiCorr);
-	    vfloats_values[namelabel+"_LMPhi"][t]= deltaPhi(leptons.at(l).Phi(), metphiCorr);
-	    vfloats_values[namelabel+"_BMPhi"][t]= deltaPhi(bjets.at(b).Phi(), metphiCorr);
-	    vfloats_values[namelabel+"_TMPhi"][t]= deltaPhi(topSemiLep.Phi(), metphiCorr);
-	    vfloats_values[namelabel+"_LBPhi"][t]= deltaPhi(leptons.at(l).Phi(), bjets.at(b).Phi());
-
-	    vfloats_values[namelabel+"_IndexB"][t]= mapBJets[b];
-	    float lidx = -9999;
-	    float flav = -9999;
-	    if(mapMu[l]!=-1){lidx=mapMu[l]; flav = 11;}
-	    if(mapEle[l]!=-1){lidx=mapEle[l]; flav = 13;}
-	    if(mapMu[l]!=-1 && mapEle[l]!=-1) cout<<" what is going on? " <<endl;
-	    
-	    vfloats_values[namelabel+"_IndexL"][t]= lidx;
-	    vfloats_values[namelabel+"_LeptonFlavour"][t]= flav;
-	    
-
-	    // cout << " t is "<< t << " maxsize "<< (size_t)max_instances[namelabel]<< " lepton pt "<< leptons.at(l).Pt()<< " eta "<< leptons.at(l).Eta()<< " phi "<< leptons.at(l).Phi()<<" e " << leptons.at(l).Energy() <<" bjet pt "<< bjets.at(b).Pt() << " eta "<<  bjets.at(b).Eta()<< " phi "<<  bjets.at(b).Phi()<< "  e" <<  bjets.at(b).Energy()<< " metPx "<<metPx <<" metPy "<< metPy<< " topMass "<<  vfloats_values[namelabel+"_Mass"][t] <<endl; 
-	    ++t;
-	    ++sizes[namelabel];
-	  }
-	}
-      }
-      if((bjets.size()==0 || leptons.size()==0)){
-	vector<string> extravars = additionalVariables(namelabel);
-	for(size_t t =0;t<(size_t)max_instances[namelabel];++t){
-	  for(size_t addv = 0; addv < extravars.size();++addv){
-	    //cout << "resetting variable "<< extravars.at(addv)<< " name "<< namelabel+"_"+extravars.at(addv)<<endl;
-	    vfloats_values[namelabel+"_"+extravars.at(addv)][t]=-9999;
-	    //vfloats_values[namelabel+"_"+extravars.at(addv)][t]=0.0;
-	  }
-	}
-      }
-      //      cout << "after all loop size is "<<  sizes[namelabel]<<endl;
-    }
-    //Resolved tops Fullhadronic:
-    //    bool getwobjets = (float_values["Event_nCSVMJetsCut30"]==2 && jets.size()>3);
-    if(doResolvedTopHad || doResolvedTopSemiLep) {
-      //      if(getwobjets) cout << " test 1 "<<endl;
-      string namelabel= "resolvedTopHad";
-      sizes[namelabel]=0;
-      
-      // ==================== Implementing kinematic fitter ==========================
-
-      if(jets.size()>2 && bjets.size()>0   ){
-      
-	int maxJetLoop = min((int)(max_instances[jets_label]),max_leading_jets_for_top);
-	maxJetLoop = min(maxJetLoop,sizes[jets_label]);
-	string pref = obj_to_pref[jets_label];
-	size_t t = 0;
-
-	TLorentzVector jet1, jet2, jet3;
-	
-	
-	for(int i = 0; i < maxJetLoop ;++i){
-	  for(int j = i+1; j < maxJetLoop ;++j){
-	    for(int k = j+1; k < maxJetLoop ;++k){
-		      
-	      if(vfloats_values[jets_label+"_CorrPt"][i]> 0. && vfloats_values[jets_label+"_CorrPt"][j]> 0. && vfloats_values[jets_label+"_CorrPt"][k]> 0.){
-	      
-	     
-	      //
-	      // Kinematic fitter
-	      //
-		//	      KinematicFitter fitter;
-	      
-	      //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	      // Stuff that goes into event loop
-	      //
-	      //*********************************
-	      //
-	      // Example tri-jet combination
-	      // The MVA training is done such that the "b-jet" is the jet in the triplet
-	      // that has the highest CSVv2+IVF value. I've called this one "jet3" in the example.
-	      //
-
-	      float  csv_i= (float)vfloats_values[jets_label+"_CSV"][i];
-	      float  csv_j= (float)vfloats_values[jets_label+"_CSV"][j];
-	      float  csv_k= (float)vfloats_values[jets_label+"_CSV"][k];
-	      
-	      vector<float> csv = {csv_i, csv_j, csv_k};
-	      vector<int> idx = {i, j, k};
-	      //const int csvSize = csv.size()/sizeof(float);
-	      //	      int indexMaxCSV = distance(csv.begin(), max_element(csv.begin(), csv.end()) );
-
-	      /* std::cout<<"CSV values: "<<csv_i<<" "<<csv_j<<" "<<csv_k<<std::endl;
-	      std::cout<<"Element of the array: "<<indexMaxCSV<<std::endl;
-	      std::cout<<"Index of the jet: "<<idx[indexMaxCSV]<<std::endl;
-	      */
-	      // The 3th jet is the b-jet 
-	      
-	      //	      jet3.SetPtEtaPhiE(vfloats_values[jets_label+"_CorrPt"][idx[indexMaxCSV]], vfloats_values[jets_label+"_CorrEta"][idx[indexMaxCSV]], vfloats_values[jets_label+"_CorrPhi"][idx[indexMaxCSV]], vfloats_values[jets_label+"_CorrE"][idx[indexMaxCSV]]);
-	      //	      float jet3csv = csv[indexMaxCSV];
-	      
-	     
-	      //	      vfloats_values[namelabel+"_IndexB_MVA"][t]= idx[indexMaxCSV];
-
-	 
-	      // Removing the bjet index
-	      //std::cout<<"Id values before removing: "<<idx[0]<<" "<<idx[1]<<" "<<idx[2]<<std::endl;
-	      //	      idx.erase(idx.begin() + indexMaxCSV);
-	      //std::cout<<"Id values after removing: "<<idx[0]<<" "<<idx[1]<<" "<<idx[2]<<std::endl;
-
-	      // The 1st and the 2nd jets are the jets from the W 
-	      //	      TLorentzVector jet1;
-	      // jet1.SetPtEtaPhiM(62.698604, 0.9635512, -1.307790, 9.1356649);
-	      //	      jet1.SetPtEtaPhiE(vfloats_values[jets_label+"_CorrPt"][idx[0]], vfloats_values[jets_label+"_CorrEta"][idx[0]], vfloats_values[jets_label+"_CorrPhi"][idx[0]], vfloats_values[jets_label+"_CorrE"][idx[0]]);
-	      //     float jet1csv  = (float)vfloats_values[jets_label+"_CSV"][idx[0]];
-	      //float jet1qgid = (float)vfloats_values[jets_label+"_QGL"][idx[0]];
-	      //	      vfloats_values[namelabel+"_IndexJ1_MVA"][t]= idx[0];
-
-	      //	      TLorentzVector jet2;
-	      //jet2.SetPtEtaPhiM(39.438114, 1.5529232, -2.586280, 5.3947892);
-	      //jet2.SetPtEtaPhiE(vfloats_values[jets_label+"_CorrPt"][idx[1]], vfloats_values[jets_label+"_CorrEta"][idx[1]], vfloats_values[jets_label+"_CorrPhi"][idx[1]], vfloats_values[jets_label+"_CorrE"][idx[1]]);
-	      //	      float jet2csv  = (float)vfloats_values[jets_label+"_CSV"][idx[1]];
-	      //	      float jet2qgid = (float)vfloats_values[jets_label+"_QGL"][idx[1]];
-	      //	      vfloats_values[namelabel+"_IndexJ2_MVA"][t]= idx[1];
-
-	      /*
-	      //
-	      // Perform kinematic fit
-	      //
-	      
-	      // initialize object that stores fit results
-	      FitResults fitres;
-	      fitres.converged = false;
-	      fitres.prob      = 0.;
-	      fitres.chisq     = 999.;
-	      fitres.cost      = 999.;
-	      fitres.fitmass   = 0.;
-	      fitres.fitmassW  = 0.;
-	      
-	      TopCandidate::TopCandidateParticle wjet1(jet1, std::string("unmatched"), 3, 0);
-	      TopCandidate::TopCandidateParticle wjet2(jet2, std::string("unmatched"), 3, 0);
-	      TopCandidate::TopCandidateParticle bjet (jet3, std::string("unmatched"), 3, 0);
-	      
-	      // The constructor, TopCandidate(j1,j2,j3), assumes "j3" corresponds to the b-jet while "j1" and "j2" are the W-jets
-	      TopCandidate combo(wjet1, wjet2, bjet);
-
-	      // =================== Prefit ===============================================================================
-	      // std::cout<<"Top Candidate before fit"<<std::endl;
-	      //std::cout<<"TopMAss: "<<combo.topvec.M()<<", W mass: "<<combo.Wvec.M()<<std::endl;
-	      vfloats_values[namelabel+"_MassPreFit"][t]= combo.topvec.M();
-	      vfloats_values[namelabel+"_PtPreFit"][t]= combo.topvec.Pt();
-	      vfloats_values[namelabel+"_EtaPreFit"][t]= combo.topvec.Eta();
-	      vfloats_values[namelabel+"_PhiPreFit"][t]= combo.topvec.Phi();
-	      vfloats_values[namelabel+"_WMassPreFit"][t]= combo.Wvec.M();
-
-	      vfloats_values[namelabel+"_WMPhiPreFit"][t]= deltaPhi(combo.Wvec.Phi(), metphiCorr);
-	      vfloats_values[namelabel+"_TMPhiPreFit"][t]= deltaPhi(combo.topvec.Phi(), metphiCorr);
-	      vfloats_values[namelabel+"_BMPhiPreFit"][t]= deltaPhi(combo.particles[2].vec.Phi(), metphiCorr);
-	      vfloats_values[namelabel+"_WBPhiPreFit"][t]= deltaPhi(combo.Wvec.Phi(), combo.particles[2].vec.Phi());
-
-
-	      //combo.reset();
-	      //fitter.fit(combo, fitres);
-
-	      //std::cout<<"Top Candidate post fit"<<std::endl;
-	      //std::cout<<"TopMAss: "<<combo.topvec.M()<<", W mass: "<<combo.Wvec.M()<<std::endl;	      
-	      vfloats_values[namelabel+"_MassPostFit"][t]= combo.topvec.M();
-	      vfloats_values[namelabel+"_PtPostFit"][t]= combo.topvec.Pt();
-	      vfloats_values[namelabel+"_EtaPostFit"][t]= combo.topvec.Eta();
-	      vfloats_values[namelabel+"_PhiPostFit"][t]= combo.topvec.Phi();
-	      vfloats_values[namelabel+"_WMassPostFit"][t]= combo.Wvec.M();
-
-	      vfloats_values[namelabel+"_WMPhiPostFit"][t]= deltaPhi(combo.Wvec.Phi(), metphiCorr);
-	      vfloats_values[namelabel+"_TMPhiPostFit"][t]= deltaPhi(combo.topvec.Phi(), metphiCorr);
-	      vfloats_values[namelabel+"_BMPhiPostFit"][t]= deltaPhi(combo.particles[2].vec.Phi(), metphiCorr);
-	      vfloats_values[namelabel+"_WBPhiPostFit"][t]= deltaPhi(combo.Wvec.Phi(), combo.particles[2].vec.Phi());
-
-	      //if(!fitres.converged) { std::cout << "Fit did not converged! Top quark probability = " << fitres.prob << std::endl; }
-
-	      //if(fitres.converged) { std::cout << "Fit converged! Top quark probability = " << fitres.prob << std::endl; }
-	      //else                 { std::cout << "Fit did not converge!" << std::endl; }
-	      
-	      
-	      //
-	      // Set the inputs for the MVA
-	      //
-	      bdt_qgid1   = jet1qgid;
-	      bdt_qgid2   = jet2qgid;
-	      bdt_dphij1b = fabs(jet1.DeltaPhi(jet3));
-	      bdt_dphij2b = fabs(jet2.DeltaPhi(jet3));
-	      bdt_drj1b   = jet1.DeltaR(jet3);
-	      bdt_drj2b   = jet2.DeltaR(jet3);
-	      bdt_bjcsv   = jet3csv;
-	      bdt_jet1csv = jet1csv;
-	      bdt_jet2csv = jet2csv;
-	      bdt_prob    = fitres.prob;
-	      
-
-	      vfloats_values[namelabel+"_FitProb"][t]= fitres.prob ;
-	      vfloats_values[namelabel+"_DPhiJet1b"][t]= bdt_dphij1b  ;
-	      vfloats_values[namelabel+"_DPhiJet2b"][t]= bdt_dphij2b  ;
-	      vfloats_values[namelabel+"_DRJet1b"][t]= bdt_drj1b  ;
-	      vfloats_values[namelabel+"_DRJet2b"][t]= bdt_drj2b  ;
-
-
-	      //
-	      // Compute the MVA value
-	      //
-	
-	      float mva = res_topmvaReader.EvaluateMVA("BDTG");
-	      //std::cout << "MVA value = " << mva << std::endl;
-	      vfloats_values[namelabel+"_MVA"][t]= mva;
-	      */     
-	      ++t;
-	
-	      //if(bjets.size()>0  ){
-
-
-	      //cout << " test 2 "<<endl;
-	      //	      int maxJetLoop = min((int)(max_instances[jets_label]),max_leading_jets_for_top);
-	      //	      maxJetLoop = min(maxJetLoop,sizes[jets_label]);
-	      size_t tt = 0;
-	      //	cout << " test 3 "<<endl;
-	      string pref = obj_to_pref[jets_label];
-	      //for(int i = 0; i < maxJetLoop ;++i){
-	      
-	      //	  float icsv = vfloats_values[makeName(jets_label,pref,"CSV")][i];
-	      
-	      bool isIBJet= (bool)vfloats_values[jets_label+"_IsCSVM"][i] && (fabs(vfloats_values[jets_label+"_CorrEta"][i]) < 2.4);
-	      bool isITight= (bool)vfloats_values[jets_label+"_IsTight"][i];
-	      
-	      //for(int j = i+1; j < maxJetLoop ;++j){
-	      //	  if(j==i)continue;
-	      //	    float jcsv = vfloats_values[makeName(jets_label,pref,"CSV")][j];
-	      bool isJBJet= (bool)vfloats_values[jets_label+"_IsCSVM"][j] && (fabs(vfloats_values[jets_label+"_CorrEta"][j]) < 2.4);
-	      bool isJTight=(bool)vfloats_values[jets_label+"_IsTight"][j];
-		
-		//for(int k = j+1; k < maxJetLoop ;++k){
-		int nBJets =0;
-		
-		//   float kcsv = vfloats_values[makeName(jets_label,pref,"CSV")][k];
-		//   if(k==i || k==j)continue;
-		bool isKBJet= (bool)vfloats_values[jets_label+"_IsCSVM"][k] && (fabs(vfloats_values[jets_label+"_CorrEta"][k]) < 2.4);
-		bool isKTight=(bool)vfloats_values[jets_label+"_IsTight"][k];
-		
-		if(isIBJet)nBJets++;
-		if(isJBJet)nBJets++;
-		if(isKBJet)nBJets++;
-		//	      if(getwobjets)     cout <<"t is "<<t<< "ijk is s "<<i<<j<< k<< " nbjets "<< nBJets << " areallTight "<< (isITight && isJTight && isKTight) << " passes cut? "<< !(nBJets !=1  || !(isITight && isJTight && isKTight) )<< " icsv" << icsv << " jcsv "<< jcsv << "kcsv"<<kcsv<< endl;
-		
-		if(nBJets !=1  || !(isITight && isJTight && isKTight) ) continue;
-		math::PtEtaPhiELorentzVector p4i = math::PtEtaPhiELorentzVector(vfloats_values[jets_label+"_CorrPt"][i], vfloats_values[jets_label+"_CorrEta"][i], vfloats_values[jets_label+"_CorrPhi"][i], vfloats_values[jets_label+"_CorrE"][i] );
-		math::PtEtaPhiELorentzVector p4j = math::PtEtaPhiELorentzVector(vfloats_values[jets_label+"_CorrPt"][j], vfloats_values[jets_label+"_CorrEta"][j], vfloats_values[jets_label+"_CorrPhi"][j], vfloats_values[jets_label+"_CorrE"][j] );
-		math::PtEtaPhiELorentzVector p4k = math::PtEtaPhiELorentzVector(vfloats_values[jets_label+"_CorrPt"][k], vfloats_values[jets_label+"_CorrEta"][k], vfloats_values[jets_label+"_CorrPhi"][k], vfloats_values[jets_label+"_CorrE"][k] );
-		math::PtEtaPhiELorentzVector topHad = (p4i+p4j)+p4k;
-		vfloats_values[namelabel+"_Pt"][tt]=topHad.pt(); 
-		vfloats_values[namelabel+"_Eta"][tt]=topHad.eta();
-		vfloats_values[namelabel+"_Phi"][tt]=topHad.phi();
-		vfloats_values[namelabel+"_E"][tt]=topHad.e();
-		vfloats_values[namelabel+"_Mass"][tt]=topHad.mass();
-		if(isKBJet){
-		  //		cout << " iskbjet"<<endl;
-		  vfloats_values[namelabel+"_IndexB"][tt]= k; vfloats_values[namelabel+"_IndexJ1"][tt]= i;  vfloats_values[namelabel+"_IndexJ2"][tt]= j; 
-		}
-		if(isJBJet){
-		  //		cout << " isjbjet"<<endl;
-		  vfloats_values[namelabel+"_IndexB"][tt]= j; vfloats_values[namelabel+"_IndexJ1"][tt]= i;  vfloats_values[namelabel+"_IndexJ2"][tt]= k; }
-		if(isIBJet){
-		  //		cout << " isibjet"<<endl;
-		  vfloats_values[namelabel+"_IndexB"][tt]= i; vfloats_values[namelabel+"_IndexJ1"][tt]= j;  vfloats_values[namelabel+"_IndexJ2"][tt]= k; }
-		
-		//	      cout <<"t is "<<t<< "ijk is s "<<i<<j<< k<< " idx b is "<< vfloats_values[namelabel+"_IndexB"][tt]<<" j1 "<<  vfloats_values[namelabel+"_IndexJ1"][tt] << " j2 "<<  vfloats_values[namelabel+"_IndexJ2"][tt]<<endl;
-		
-		math::PtEtaPhiELorentzVector p4w, p4b ;
-		float massdrop_=0., deltaRjets=0.;
-		if(isIBJet){ p4w = p4j+p4k; p4b= p4i;
-		  massdrop_ = max( p4j.mass(),  p4k.mass() )/p4w.mass() ;
-		  deltaRjets = deltaR( p4j,  p4k);}
-		if(isJBJet){p4w = p4i+p4k; p4b= p4j;
-		  massdrop_ = max( p4i.mass(),  p4k.mass() )/p4w.mass() ;
-		  deltaRjets = deltaR( p4i,  p4k);}
-		if(isKBJet){p4w = p4j+p4i; p4b= p4k;
-		  massdrop_ = max( p4i.mass(),  p4j.mass() )/p4w.mass() ;
-		  deltaRjets = deltaR( p4i,  p4j);}
-		vfloats_values[namelabel+"_Pt"][tt]=topHad.pt(); 
-		vfloats_values[namelabel+"_Eta"][tt]=topHad.eta();
-		vfloats_values[namelabel+"_Phi"][tt]=topHad.phi();
-		vfloats_values[namelabel+"_E"][tt]=topHad.e();
-		vfloats_values[namelabel+"_Mass"][tt]=topHad.mass();
-		vfloats_values[namelabel+"_WMass"][tt]=p4w.mass();
-		vfloats_values[namelabel+"_massDrop"][tt]=massdrop_*deltaRjets;
-		//cout<<"Mass drop: "<<massdrop_*deltaRjets<<endl;
-		
-		if(topHad.mass()<0. || p4w.mass()<0){
-		  float genpti = vfloats_values[jets_label+"_GenJetPt"][i];
-		  float genptj = vfloats_values[jets_label+"_GenJetPt"][j];
-		  float genptk = vfloats_values[jets_label+"_GenJetPt"][k];
-		  
-		  float pti = vfloats_values[jets_label+"_Pt"][i];
-		  float ptj = vfloats_values[jets_label+"_Pt"][j];
-		  float ptk = vfloats_values[jets_label+"_Pt"][k];
-		  
-		  std::cout<<"Top Mass: "<<topHad.mass()<<std::endl;
-		  std::cout<<"W Mass: "<<p4w.mass()<<std::endl;
-		  std::cout<<"Pt1: "<<p4i.pt()<<" gen "<< genpti<<" pt0 "<<pti <<" eta "<< p4i.eta()<< " phi "<< p4i.phi()<< " e "<< p4i.e()<<std::endl;
-		  std::cout<<"Pt2: "<<p4j.pt()<< " gen "<< genptj<< " pt0 "<<ptj <<" eta "<< p4j.eta()<< " phi "<< p4j.phi()<< " e "<< p4j.e()<<std::endl;
-		  std::cout<<"Pt3> "<<p4k.pt()<< " gen "<< genptk<<" pt0 "<<ptk<< " eta "<< p4k.eta()<< " phi "<< p4k.phi()<< " e "<< p4k.e()<<std::endl;
-		}
-		if(t > (size_t)max_instances[namelabel])continue;
-		vfloats_values[namelabel+"_WMPhi"][tt]=deltaPhi(p4w.Phi(), metphiCorr);
-		vfloats_values[namelabel+"_TMPhi"][tt]= deltaPhi(topHad.Phi(), metphiCorr);
-		vfloats_values[namelabel+"_BMPhi"][tt]= deltaPhi(p4b.Phi(), metphiCorr);
-		vfloats_values[namelabel+"_WBPhi"][tt]= deltaPhi(p4w.Phi(), p4b.Phi());
-		
-		// cout << " t is "<< t << " maxsize "<< (size_t)max_instances[namelabel]<< " lepton pt "<< leptons.at(l).Pt()<< " eta "<< leptons.at(l).Eta()<< " phi "<< leptons.at(l).Phi()<<" e " << leptons.at(l).Energy() <<" bjet pt "<< bjets.at(b).Pt() << " eta "<<  bjets.at(b).Eta()<< " phi "<<  bjets.at(b).Phi()<< "  e" <<  bjets.at(b).Energy()<< " metPx "<<metPx <<" metPy "<< metPy<< " topMass "<<  vfloats_values[namelabel+"_Mass"][tt] <<endl; 
-		++tt;
-		++sizes[namelabel];
-		//	    std::cout << " combination is ijk "<< i<<j<<k<< " momenta: i "<< vfloats_values[jets_label+"CorrPt"][i] << " j: " <<  vfloats_values[jets_label+"CorrPt"][j] << " k "<< vfloats_values[jets_label+"CorrPt"][k] << " top " << p4top.pt() << " tsize "<< t << std::endl;
-		
-		//  } //end of if statement on the number of bjets
-	      }//end if statement on jets
-	    }// end 3rd loop on jets
-	  }// end 2st loop on jets
-	}// end 1st loop on jets
-	
-      }// end if statement (at least 3 jets)
-      // =============================================================================
-      
-      //	    }
-      //	  }	
-      //	}
-      //}//end if on number of jets and bjets
-      
-      //      if(getwobjets)cout << " nresolvedtophad "<< sizes["resolvedTopHad"]<<endl;
-      //      cout << " namelabel? "<< namelabel<< endl;
-      if(sizes[namelabel]==0){
-	vector<string> extravars = additionalVariables(namelabel);
-	for(size_t t =0;t<(size_t)max_instances[namelabel];++t){
-	  //	  if(t> 45)continue;
-	  for(size_t addv = 0; addv < extravars.size();++addv){
-	    //	    cout << "resetting variable "<< extravars.at(addv)<< " name "<< namelabel+"_"+extravars.at(addv)<<" t is "<< t << endl;
-	    vfloats_values[namelabel+"_"+extravars.at(addv)][t]=-9999;
-	  }
-	}
-      }
-    }
-    
-    //BTagging part
-    if(doBTagSF){
-    //CSVT
-      //0 tags
-      b_weight_csvt_0_tags = b_csvt_0_tags.weight(jsfscsvt, ncsvt_tags);  
-      b_weight_csvt_0_tags_mistag_up = b_csvt_0_tags.weight(jsfscsvt_mistag_up, ncsvt_tags);  
-      b_weight_csvt_0_tags_mistag_down = b_csvt_0_tags.weight(jsfscsvt_mistag_down, ncsvt_tags);  
-      b_weight_csvt_0_tags_b_tag_up = b_csvt_0_tags.weight(jsfscsvt_b_tag_up, ncsvt_tags);  
-      b_weight_csvt_0_tags_b_tag_down = b_csvt_0_tags.weight(jsfscsvt_b_tag_down, ncsvt_tags);  
-      
-      //1 tag
-      b_weight_csvt_1_tag = b_csvt_1_tag.weight(jsfscsvt, ncsvt_tags);  
-      b_weight_csvt_1_tag_mistag_up = b_csvt_1_tag.weight(jsfscsvt_mistag_up, ncsvt_tags);  
-      b_weight_csvt_1_tag_mistag_down = b_csvt_1_tag.weight(jsfscsvt_mistag_down, ncsvt_tags);  
-      b_weight_csvt_1_tag_b_tag_up = b_csvt_1_tag.weight(jsfscsvt_b_tag_up, ncsvt_tags);  
-      b_weight_csvt_1_tag_b_tag_down = b_csvt_1_tag.weight(jsfscsvt_b_tag_down, ncsvt_tags);  
-      //      cout <<"w1t check: is"<< b_weight_csvt_1_tag<<endl;
-      
-      //2 tags
-      b_weight_csvt_2_tags = b_csvt_2_tags.weight(jsfscsvt, ncsvt_tags);  
-      b_weight_csvt_2_tags_mistag_up = b_csvt_2_tags.weight(jsfscsvt_mistag_up, ncsvt_tags);  
-      b_weight_csvt_2_tags_mistag_down = b_csvt_2_tags.weight(jsfscsvt_mistag_down, ncsvt_tags);  
-      b_weight_csvt_2_tags_b_tag_up = b_csvt_2_tags.weight(jsfscsvt_b_tag_up, ncsvt_tags);  
-      b_weight_csvt_2_tags_b_tag_down = b_csvt_2_tags.weight(jsfscsvt_b_tag_down, ncsvt_tags);  
-
-      //1-2 tags
-      b_weight_csvt_1_2_tags = b_csvt_1_2_tags.weight(jsfscsvt, ncsvt_tags);  
-      b_weight_csvt_1_2_tags_b_tag_up = b_csvt_1_2_tags.weight(jsfscsvt_b_tag_up, ncsvt_tags);  
-      b_weight_csvt_1_2_tags_b_tag_down = b_csvt_1_2_tags.weight(jsfscsvt_b_tag_down, ncsvt_tags);  
-      b_weight_csvt_1_2_tags_mistag_up = b_csvt_1_2_tags.weight(jsfscsvt_mistag_up, ncsvt_tags);  
-      b_weight_csvt_1_2_tags_mistag_down = b_csvt_1_2_tags.weight(jsfscsvt_mistag_down, ncsvt_tags);  
-
-
-    //CSVM
-      //0 tags
-      b_weight_csvm_0_tags = b_csvm_0_tags.weight(jsfscsvm, ncsvm_tags);  
-      b_weight_csvm_0_tags_mistag_up = b_csvm_0_tags.weight(jsfscsvm_mistag_up, ncsvm_tags);  
-      b_weight_csvm_0_tags_mistag_down = b_csvm_0_tags.weight(jsfscsvm_mistag_down, ncsvm_tags);  
-      b_weight_csvm_0_tags_b_tag_up = b_csvm_0_tags.weight(jsfscsvm_b_tag_up, ncsvm_tags);  
-      b_weight_csvm_0_tags_b_tag_down = b_csvm_0_tags.weight(jsfscsvm_b_tag_down, ncsvm_tags);  
-      
-      //1 tag
-      b_weight_csvm_1_tag = b_csvm_1_tag.weight(jsfscsvm, ncsvm_tags);  
-      b_weight_csvm_1_tag_mistag_up = b_csvm_1_tag.weight(jsfscsvm_mistag_up, ncsvm_tags);  
-      b_weight_csvm_1_tag_mistag_down = b_csvm_1_tag.weight(jsfscsvm_mistag_down, ncsvm_tags);  
-      b_weight_csvm_1_tag_b_tag_up = b_csvm_1_tag.weight(jsfscsvm_b_tag_up, ncsvm_tags);  
-      b_weight_csvm_1_tag_b_tag_down = b_csvm_1_tag.weight(jsfscsvm_b_tag_down, ncsvm_tags);  
-      //      cout <<"w1t check: is"<< b_weight_csvm_1_tag<<endl;
-      
-      //2 tags
-      b_weight_csvm_2_tags = b_csvm_2_tags.weight(jsfscsvm, ncsvm_tags);  
-      b_weight_csvm_2_tags_mistag_up = b_csvm_2_tags.weight(jsfscsvm_mistag_up, ncsvm_tags);  
-      b_weight_csvm_2_tags_mistag_down = b_csvm_2_tags.weight(jsfscsvm_mistag_down, ncsvm_tags);  
-      b_weight_csvm_2_tags_b_tag_up = b_csvm_2_tags.weight(jsfscsvm_b_tag_up, ncsvm_tags);  
-      b_weight_csvm_2_tags_b_tag_down = b_csvm_2_tags.weight(jsfscsvm_b_tag_down, ncsvm_tags);  
-
-      //1-2 tags
-      b_weight_csvm_1_2_tags = b_csvm_1_2_tags.weight(jsfscsvm, ncsvm_tags);  
-      b_weight_csvm_1_2_tags_b_tag_up = b_csvm_1_2_tags.weight(jsfscsvm_b_tag_up, ncsvm_tags);  
-      b_weight_csvm_1_2_tags_b_tag_down = b_csvm_1_2_tags.weight(jsfscsvm_b_tag_down, ncsvm_tags);  
-      b_weight_csvm_1_2_tags_mistag_up = b_csvm_1_2_tags.weight(jsfscsvm_mistag_up, ncsvm_tags);  
-      b_weight_csvm_1_2_tags_mistag_down = b_csvm_1_2_tags.weight(jsfscsvm_mistag_down, ncsvm_tags);  
-
-
-    //CSVL
-      //0 tags
-      b_weight_csvl_0_tags = b_csvl_0_tags.weight(jsfscsvl, ncsvl_tags);  
-      b_weight_csvl_0_tags_mistag_up = b_csvl_0_tags.weight(jsfscsvl_mistag_up, ncsvl_tags);  
-      b_weight_csvl_0_tags_mistag_down = b_csvl_0_tags.weight(jsfscsvl_mistag_down, ncsvl_tags);  
-      b_weight_csvl_0_tags_b_tag_up = b_csvl_0_tags.weight(jsfscsvl_b_tag_up, ncsvl_tags);  
-      b_weight_csvl_0_tags_b_tag_down = b_csvl_0_tags.weight(jsfscsvl_b_tag_down, ncsvl_tags);  
-      
-      //1 tag
-      b_weight_csvl_1_tag = b_csvl_1_tag.weight(jsfscsvl, ncsvl_tags);  
-      b_weight_csvl_1_tag_mistag_up = b_csvl_1_tag.weight(jsfscsvl_mistag_up, ncsvl_tags);  
-      b_weight_csvl_1_tag_mistag_down = b_csvl_1_tag.weight(jsfscsvl_mistag_down, ncsvl_tags);  
-      b_weight_csvl_1_tag_b_tag_up = b_csvl_1_tag.weight(jsfscsvl_b_tag_up, ncsvl_tags);  
-      b_weight_csvl_1_tag_b_tag_down = b_csvl_1_tag.weight(jsfscsvl_b_tag_down, ncsvl_tags);  
-      //      cout <<"w1t check: is"<< b_weight_csvl_1_tag<<endl;
-      
-      //2 tags
-      b_weight_csvl_2_tags = b_csvl_2_tags.weight(jsfscsvl, ncsvl_tags);  
-      b_weight_csvl_2_tags_mistag_up = b_csvl_2_tags.weight(jsfscsvl_mistag_up, ncsvl_tags);  
-      b_weight_csvl_2_tags_mistag_down = b_csvl_2_tags.weight(jsfscsvl_mistag_down, ncsvl_tags);  
-      b_weight_csvl_2_tags_b_tag_up = b_csvl_2_tags.weight(jsfscsvl_b_tag_up, ncsvl_tags);  
-      b_weight_csvl_2_tags_b_tag_down = b_csvl_2_tags.weight(jsfscsvl_b_tag_down, ncsvl_tags);  
-
-      //1-2 tags
-      b_weight_csvl_1_2_tags = b_csvl_1_2_tags.weight(jsfscsvl, ncsvl_tags);  
-      b_weight_csvl_1_2_tags_b_tag_up = b_csvl_1_2_tags.weight(jsfscsvl_b_tag_up, ncsvl_tags);  
-      b_weight_csvl_1_2_tags_b_tag_down = b_csvl_1_2_tags.weight(jsfscsvl_b_tag_down, ncsvl_tags);  
-      b_weight_csvl_1_2_tags_mistag_up = b_csvl_1_2_tags.weight(jsfscsvl_mistag_up, ncsvl_tags);  
-      b_weight_csvl_1_2_tags_mistag_down = b_csvl_1_2_tags.weight(jsfscsvl_mistag_down, ncsvl_tags);  
-      
-      //      cout << " n tight tags "<< ncsvl_tags  << " w0tag "<< b_weight_csvl_0_tags<<" w1tag " << b_weight_csvl_1_tag <<" w2tags "<<b_weight_csvt_2_tags  <<endl;
-      
-      float_values["Event_bWeight0CSVL"]=b_weight_csvl_0_tags;
-      float_values["Event_bWeight1CSVL"]=b_weight_csvl_1_tag;
-      float_values["Event_bWeight2CSVL"]=b_weight_csvl_2_tags;
-      float_values["Event_bWeight1_2CSVL"]=b_weight_csvl_1_2_tags;
-      
-      float_values["Event_bWeight0CSVM"]=b_weight_csvm_0_tags;
-      float_values["Event_bWeight1CSVM"]=b_weight_csvm_1_tag;
-      float_values["Event_bWeight2CSVM"]=b_weight_csvm_2_tags;
-      float_values["Event_bWeight1_2CSVM"]=b_weight_csvm_1_2_tags;
-      
-      float_values["Event_bWeight0CSVT"]=b_weight_csvt_0_tags;
-      float_values["Event_bWeight1CSVT"]=b_weight_csvt_1_tag;
-      float_values["Event_bWeight2CSVT"]=b_weight_csvt_2_tags;
-      float_values["Event_bWeight1_2CSVT"]=b_weight_csvt_1_2_tags;
-      
-   
-      //Mistag
-      float_values["Event_bWeightMisTagUp0CSVL"]=b_weight_csvl_0_tags_mistag_up;
-      float_values["Event_bWeightMisTagUp1CSVL"]=b_weight_csvl_1_tag_mistag_up;
-      float_values["Event_bWeightMisTagUp2CSVL"]=b_weight_csvl_2_tags_mistag_up;
-      float_values["Event_bWeightMisTagUp1_2CSVL"]=b_weight_csvl_1_2_tags_mistag_up;
-      
-      float_values["Event_bWeightMisTagUp0CSVM"]=b_weight_csvm_0_tags_mistag_up;
-      float_values["Event_bWeightMisTagUp1CSVM"]=b_weight_csvm_1_tag_mistag_up;
-      float_values["Event_bWeightMisTagUp2CSVM"]=b_weight_csvm_2_tags_mistag_up;
-      float_values["Event_bWeightMisTagUp1_2CSVM"]=b_weight_csvm_1_2_tags_mistag_up;
-    
-      float_values["Event_bWeightMisTagUp0CSVT"]=b_weight_csvt_0_tags_mistag_up;
-      float_values["Event_bWeightMisTagUp1CSVT"]=b_weight_csvt_1_tag_mistag_up;
-      float_values["Event_bWeightMisTagUp2CSVT"]=b_weight_csvt_2_tags_mistag_up;
-      float_values["Event_bWeightMisTagUp1_2CSVT"]=b_weight_csvt_1_2_tags_mistag_up;
-      
-      
-      float_values["Event_bWeightMisTagDown0CSVL"]=b_weight_csvl_0_tags_mistag_down;
-      float_values["Event_bWeightMisTagDown1CSVL"]=b_weight_csvl_1_tag_mistag_down;
-      float_values["Event_bWeightMisTagDown2CSVL"]=b_weight_csvl_2_tags_mistag_down;
-      float_values["Event_bWeightMisTagDown1_2CSVL"]=b_weight_csvl_1_2_tags_mistag_down;
-      
-      float_values["Event_bWeightMisTagDown0CSVM"]=b_weight_csvm_0_tags_mistag_down;
-      float_values["Event_bWeightMisTagDown1CSVM"]=b_weight_csvm_1_tag_mistag_down;
-      float_values["Event_bWeightMisTagDown2CSVM"]=b_weight_csvm_2_tags_mistag_down;
-      float_values["Event_bWeightMisTagDown1_2CSVM"]=b_weight_csvm_1_2_tags_mistag_down;
-      
-      float_values["Event_bWeightMisTagDown0CSVT"]=b_weight_csvt_0_tags_mistag_down;
-      float_values["Event_bWeightMisTagDown1CSVT"]=b_weight_csvt_1_tag_mistag_down;
-      float_values["Event_bWeightMisTagDown2CSVT"]=b_weight_csvt_2_tags_mistag_down;
-      float_values["Event_bWeightMisTagDown1_2CSVT"]=b_weight_csvt_1_2_tags_mistag_down;
-
-      //Btag
-      float_values["Event_bWeightBTagUp0CSVL"]=b_weight_csvl_0_tags_b_tag_up;
-      float_values["Event_bWeightBTagUp1CSVL"]=b_weight_csvl_1_tag_b_tag_up;
-      float_values["Event_bWeightBTagUp2CSVL"]=b_weight_csvl_2_tags_b_tag_up;
-      float_values["Event_bWeightBTagUp1_2CSVL"]=b_weight_csvl_1_2_tags_b_tag_up;
-      
-      float_values["Event_bWeightBTagUp0CSVM"]=b_weight_csvm_0_tags_b_tag_up;
-      float_values["Event_bWeightBTagUp1CSVM"]=b_weight_csvm_1_tag_b_tag_up;
-      float_values["Event_bWeightBTagUp2CSVM"]=b_weight_csvm_2_tags_b_tag_up;
-      float_values["Event_bWeightBTagUp1_2CSVM"]=b_weight_csvm_1_2_tags_b_tag_up;
-      
-      float_values["Event_bWeightBTagUp0CSVT"]=b_weight_csvt_0_tags_b_tag_up;
-      float_values["Event_bWeightBTagUp1CSVT"]=b_weight_csvt_1_tag_b_tag_up;
-      float_values["Event_bWeightBTagUp2CSVT"]=b_weight_csvt_2_tags_b_tag_up;
-      float_values["Event_bWeightBTagUp1_2CSVT"]=b_weight_csvt_1_2_tags_b_tag_up;
-      
-      float_values["Event_bWeightBTagDown0CSVL"]=b_weight_csvl_0_tags_b_tag_down;
-      float_values["Event_bWeightBTagDown1CSVL"]=b_weight_csvl_1_tag_b_tag_down;
-      float_values["Event_bWeightBTagDown2CSVL"]=b_weight_csvl_2_tags_b_tag_down;
-      float_values["Event_bWeightBTagDown1_2CSVL"]=b_weight_csvl_1_2_tags_b_tag_down;
-      
-      float_values["Event_bWeightBTagDown0CSVM"]=b_weight_csvm_0_tags_b_tag_down;
-      float_values["Event_bWeightBTagDown1CSVM"]=b_weight_csvm_1_tag_b_tag_down;
-      float_values["Event_bWeightBTagDown2CSVM"]=b_weight_csvm_2_tags_b_tag_down;
-      float_values["Event_bWeightBTagDown1_2CSVM"]=b_weight_csvm_1_2_tags_b_tag_down;
-      
-      float_values["Event_bWeightBTagDown0CSVT"]=b_weight_csvt_0_tags_b_tag_down;
-      float_values["Event_bWeightBTagDown1CSVT"]=b_weight_csvt_1_tag_b_tag_down;
-      float_values["Event_bWeightBTagDown2CSVT"]=b_weight_csvt_2_tags_b_tag_down;
-      float_values["Event_bWeightBTagDown1_2CSVT"]=b_weight_csvt_1_2_tags_b_tag_down;
-    }
-    
     
     float LHEWeightSign=1.0;
     if(useLHE){
@@ -3174,10 +1972,6 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     }
     
     if(doPU){
-      //iEvent.getByLabel("eventUserData","puNtrueInt",ntrpu);
-      //int nTruePV=*ntrpu;
-      //float_values["Event_nTruePV"]=(float)(nTruePV);
-      //t_ntrpu_ = consumes< int >( edm::InputTag( "eventUserData","puNtrueInt" ) );
       iEvent.getByToken(t_ntrpu_,ntrpu);
       int nTruePV=*ntrpu;
       float_values["Event_nTruePV"]=(float)(nTruePV);
@@ -3197,36 +1991,19 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
      float_values["Event_nPV"]=(float)(nPV);
     }
     
-    //    float_values["Event_passesHBHE"]=(float)(*HBHE);
-    //float_values["Event_passesHBHEIso"]=(float)(*HBHEIso); FIXME check whether it was removed
-
-    float_values["Event_passesHBHE"]=(float)(1.0);
-    float_values["Event_passesHBHEIso"]=(float)(1.0);
-
-    //technical event informationx
+    //technical event information
     double_values["Event_EventNumber"]=*eventNumber;
     float_values["Event_LumiBlock"]=*lumiBlock;
     float_values["Event_RunNumber"]=*runNumber;
     
-
-    //    std::cout << " event ntight muons " << float_values["Event_nTightMuons"]<< std::endl;
-    //    std::cout << " event ntight electrons " << float_values["Event_nTightElectrons"]<< std::endl;
-    //    cout << "before filling jets label "<< jets_label << " maxinstances "<< max_instances[jets_label]<< "size "<< sizes[jets_label]<<endl;  
     trees[syst]->Fill();
-    //Reset event weights/#objects
+
     string nameshortv= "Event";
     vector<string> extravars = additionalVariables(nameshortv);
     for(size_t addv = 0; addv < extravars.size();++addv){
       string name = nameshortv+"_"+extravars.at(addv);
       
-      //      std::cout << "syst is "<< syst<< " resetting variable "<< name<< " before "<< float_values[name];
-      //      bool isTriggerVar
-      //      if(isTriggerVar) continue;
-      //      float_values[name]=0;
       if(!isMCWeightName(extravars.at(addv))) float_values[name]=0.0;
-      //      float_values[name]=0.0;
-      //if (name==)
-      //      std::cout << " after "<< Float_values[name]<<endl;
     }
   }
   for(int t = 0;t < max_instances[boosted_tops_label] ;++t){
@@ -3257,7 +2034,7 @@ int DMAnalysisTreeMaker::eventFlavour(bool getFlavour, int nb, int nc, int nl)
       if ( flavourFilter("WJets_wcc", nb, nc, nl) ) return 2;
       if ( flavourFilter("WJets_wbb", nb, nc, nl) ) return 3;
     }
-    return 0;
+  return 0;
 }
 
 
@@ -3291,7 +2068,9 @@ string DMAnalysisTreeMaker::makeName(string label,string pref,string var){
 void DMAnalysisTreeMaker::initCategoriesSize(string label){
   for(size_t sc = 0; sc< obj_cats[label].size() ;++sc){
     string category = obj_cats[label].at(sc);
+    //    cout << " label "<<label<< " cat "<<category << " size bef "<<sizes[label+category]<<endl;
     sizes[label+category]=0;
+    //    cout << " size after "<<sizes[label+category]<<endl;
   }
 }
 
@@ -3299,16 +2078,75 @@ void DMAnalysisTreeMaker::setCategorySize(string label, string category, size_t 
     sizes[label+category]=size;
 }
 void DMAnalysisTreeMaker::fillCategory(string label, string category, int pos_nocat, int pos_cat){
-  //  for(size_t sc = 0; sc< obj_cats[label].size() ;++sc){
-  //    string category = obj_cats.at(sc);
+  //  cout << " filling cat  " << category << " for label "<< label<<endl;
+  sizes[label+category]=pos_cat+1;//Update the size with the latest position filled
+
   for (size_t obj =0; obj< obj_to_floats[label].size(); ++obj){
+    
     string var = obj_to_floats[label].at(obj);
     string varCat = makeBranchNameCat(label,category,label+"_",var);
     //    cout << " var "<< var << " varcat "<< varCat<<endl;
+    //    cout << " poscat "<< pos_cat << " posnocat "<< pos_nocat<<endl;
     vfloats_values[varCat][pos_cat]= vfloats_values[var][pos_nocat];
   }
+  //  cout << "sizes is there "<< sizes[label+category]<<endl;
+}
+void DMAnalysisTreeMaker::fillScanCuts(string label, string category, int pos_nocat){
+  for(size_t sccut = 0; sccut< obj_scanCuts[label].size() ;++sccut){
+    string scanCut = obj_scanCuts[label].at(sccut);
+    //cout << " filling scan cut "<< scanCut <<" for label "<< label <<endl;
+    if(passesScanCut(label,category,scanCut,pos_nocat)){
+      int pos_cat=sizes[label+category+"_"+scanCut];// the size is the position of the last element
+      fillCategory(label,category+"_"+scanCut,pos_nocat,pos_cat); // this will also increment the size of the category
+    }
+  }    
 }
 
+string DMAnalysisTreeMaker::parseScanCut(string category, int obj){
+  std::stringstream cat;
+  cat << category;
+  std::string segment;
+  std::vector<std::string> pieces;
+  //  cout << " caat "<<category<<endl;
+  while(std::getline(cat, segment, '_'))    {
+    //    cout << " cat split "<<segment <<" "; 
+      pieces.push_back(segment);
+    }
+  //  cout <<endl;
+  if(pieces.size()<2)return "";
+  if(obj==0){
+    return (pieces.at(0));
+  }
+  if(obj==1){
+    
+    return (pieces.at(1));
+  }
+  if(obj==2){
+    if (pieces.size()<3) return "GE";
+    else{
+      return (pieces.at(2));
+    }
+  }
+  return "";
+}
+bool DMAnalysisTreeMaker::passesScanCut(string label, string category, string scanCut, int pos_nocat){
+  string lookAtLabel = label+category;  
+  string variable = parseScanCut(scanCut,0);
+  stringstream cutvalue ;
+  cutvalue << parseScanCut(scanCut,1);
+  float cutfloat=0.;
+  cutvalue >> cutfloat;
+  string sign = parseScanCut(scanCut,2);
+  //  cout << " obs " << variable<< " sign "<< sign << " threshold " <<  cutfloat << endl;
+  string pref = obj_to_pref[label];
+  float var = vfloats_values[makeName(label,pref,variable)][pos_nocat];
+  //  cout << " variable full name is is "<< makeName(label,pref,variable)<<" value "<<var<< " passes cut? "<< (bool)(var>cutfloat) <<endl;
+  
+  if(sign=="GE") return (bool)(var>cutfloat);
+
+  return true;
+  //  return false;
+}
 
 vector<string> DMAnalysisTreeMaker::additionalVariables(string object){
   vector<string> addvar;
@@ -3331,8 +2169,8 @@ vector<string> DMAnalysisTreeMaker::additionalVariables(string object){
   if(ismuon || iselectron){
     addvar.push_back("SFTrigger");
     addvar.push_back("SFReco");
-    addvar.push_back("isQCD");
-    //    addvar.push_back("isTightOffline");
+    addvar.push_back("isQCd-");
+    //    Addvar.push_back("isTightOffline");
     //    addvar.push_back("isLooseOffline");
     }*/
   
@@ -3422,6 +2260,7 @@ vector<string> DMAnalysisTreeMaker::additionalVariables(string object){
     addvar.push_back("nLooseElectrons");
     addvar.push_back("nVetoElectrons");
     addvar.push_back("nElectronsSF");
+    addvar.push_back("nJets");
     addvar.push_back("mt");
     addvar.push_back("Mt2w");
     addvar.push_back("category");
@@ -3438,6 +2277,114 @@ vector<string> DMAnalysisTreeMaker::additionalVariables(string object){
     addvar.push_back("nPV");
     addvar.push_back("nTruePV");
 
+    for (size_t jc=0;jc<obj_cats[jets_label].size();jc++){
+      string category = obj_cats[jets_label].at(jc);
+      addvar.push_back("nJets"+category);
+      addvar.push_back("nJetsCSVT"+category);
+      addvar.push_back("nJetsCSVM"+category);
+      addvar.push_back("nJetsCSVL"+category);
+
+      addvar.push_back("bWeight0CSVT"+category);
+      addvar.push_back("bWeight1CSVT"+category);
+      addvar.push_back("bWeight2CSVT"+category);
+      addvar.push_back("bWeight1_2CSVT"+category);
+      addvar.push_back("bWeightGE3CSVT"+category);
+
+      addvar.push_back("bWeight0CSVM"+category);
+      addvar.push_back("bWeight1CSVM"+category);
+      addvar.push_back("bWeight2CSVM"+category);
+      addvar.push_back("bWeight1_2CSVM"+category);
+      addvar.push_back("bWeightGE3CSVM"+category);
+
+      addvar.push_back("bWeight0CSVL"+category);
+      addvar.push_back("bWeight1CSVL"+category);
+      addvar.push_back("bWeight2CSVL"+category);
+      addvar.push_back("bWeight1_2CSVL"+category);
+      addvar.push_back("bWeightGE3CSVL"+category);
+
+
+
+      addvar.push_back("bWeightBTagUp0CSVT"+category);
+      addvar.push_back("bWeightBTagUp1CSVT"+category);
+      addvar.push_back("bWeightBTagUp2CSVT"+category);
+      addvar.push_back("bWeightBTagUp1_2CSVT"+category);
+      addvar.push_back("bWeightBTagUpGE3CSVT"+category);
+
+      addvar.push_back("bWeightBTagUp0CSVM"+category);
+      addvar.push_back("bWeightBTagUp1CSVM"+category);
+      addvar.push_back("bWeightBTagUp2CSVM"+category);
+      addvar.push_back("bWeightBTagUp1_2CSVM"+category);
+      addvar.push_back("bWeightBTagUpGE3CSVM"+category);
+
+      addvar.push_back("bWeightBTagUp0CSVL"+category);
+      addvar.push_back("bWeightBTagUp1CSVL"+category);
+      addvar.push_back("bWeightBTagUp2CSVL"+category);
+      addvar.push_back("bWeightBTagUp1_2CSVL"+category);
+      addvar.push_back("bWeightBTagUpGE3CSVL"+category);
+
+
+      addvar.push_back("bWeightBTagDown0CSVT"+category);
+      addvar.push_back("bWeightBTagDown1CSVT"+category);
+      addvar.push_back("bWeightBTagDown2CSVT"+category);
+      addvar.push_back("bWeightBTagDown1_2CSVT"+category);
+      addvar.push_back("bWeightBTagDownGE3CSVT"+category);
+
+      addvar.push_back("bWeightBTagDown0CSVM"+category);
+      addvar.push_back("bWeightBTagDown1CSVM"+category);
+      addvar.push_back("bWeightBTagDown2CSVM"+category);
+      addvar.push_back("bWeightBTagDown1_2CSVM"+category);
+      addvar.push_back("bWeightBTagDownGE3CSVM"+category);
+
+      addvar.push_back("bWeightBTagDown0CSVL"+category);
+      addvar.push_back("bWeightBTagDown1CSVL"+category);
+      addvar.push_back("bWeightBTagDown2CSVL"+category);
+      addvar.push_back("bWeightBTagDown1_2CSVL"+category);
+      addvar.push_back("bWeightBTagDownGE3CSVL"+category);
+
+
+
+
+
+      addvar.push_back("bWeightMisTagUp0CSVT"+category);
+      addvar.push_back("bWeightMisTagUp1CSVT"+category);
+      addvar.push_back("bWeightMisTagUp2CSVT"+category);
+      addvar.push_back("bWeightMisTagUp1_2CSVT"+category);
+      addvar.push_back("bWeightMisTagUpGE3CSVT"+category);
+
+      addvar.push_back("bWeightMisTagUp0CSVM"+category);
+      addvar.push_back("bWeightMisTagUp1CSVM"+category);
+      addvar.push_back("bWeightMisTagUp2CSVM"+category);
+      addvar.push_back("bWeightMisTagUp1_2CSVM"+category);
+      addvar.push_back("bWeightMisTagUpGE3CSVM"+category);
+
+      addvar.push_back("bWeightMisTagUp0CSVL"+category);
+      addvar.push_back("bWeightMisTagUp1CSVL"+category);
+      addvar.push_back("bWeightMisTagUp2CSVL"+category);
+      addvar.push_back("bWeightMisTagUp1_2CSVL"+category);
+      addvar.push_back("bWeightMisTagUpGE3CSVL"+category);
+
+
+
+      addvar.push_back("bWeightMisTagDown0CSVT"+category);
+      addvar.push_back("bWeightMisTagDown1CSVT"+category);
+      addvar.push_back("bWeightMisTagDown2CSVT"+category);
+      addvar.push_back("bWeightMisTagDown1_2CSVT"+category);
+      addvar.push_back("bWeightMisTagDownGE3CSVT"+category);
+
+      addvar.push_back("bWeightMisTagDown0CSVM"+category);
+      addvar.push_back("bWeightMisTagDown1CSVM"+category);
+      addvar.push_back("bWeightMisTagDown2CSVM"+category);
+      addvar.push_back("bWeightMisTagDown1_2CSVM"+category);
+      addvar.push_back("bWeightMisTagDownGE3CSVM"+category);
+
+      addvar.push_back("bWeightMisTagDown0CSVL"+category);
+      addvar.push_back("bWeightMisTagDown1CSVL"+category);
+      addvar.push_back("bWeightMisTagDown2CSVL"+category);
+      addvar.push_back("bWeightMisTagDown1_2CSVL"+category);
+      addvar.push_back("bWeightMisTagDownGE3CSVL"+category);
+            
+    }
+
     addvar.push_back("bWeight0CSVT");
     addvar.push_back("bWeight1CSVT");
     addvar.push_back("bWeight2CSVT");
@@ -3452,7 +2399,6 @@ vector<string> DMAnalysisTreeMaker::additionalVariables(string object){
     addvar.push_back("bWeight1CSVL");
     addvar.push_back("bWeight2CSVL");
     addvar.push_back("bWeight1_2CSVL");
-
 
     addvar.push_back("bWeightMisTagDown0CSVT");
     addvar.push_back("bWeightMisTagDown1CSVT");
@@ -3568,25 +2514,6 @@ vector<string> DMAnalysisTreeMaker::additionalVariables(string object){
     addvar.push_back("LumiBlock");
     addvar.push_back("RunNumber");
     
-    for (size_t j = 0; j < (size_t)jetScanCuts.size(); ++j){
-      stringstream j_n;
-      double jetval = jetScanCuts.at(j);
-      j_n << "Cut" <<jetval;
-      
-      addvar.push_back("nJets"+j_n.str());
-      addvar.push_back("nCSVTJets"+j_n.str());
-      addvar.push_back("nCSVMJets"+j_n.str());
-      addvar.push_back("nCSVLJets"+j_n.str());
-      addvar.push_back("bWeight1CSVTWeight"+j_n.str());
-      addvar.push_back("bWeight2CSVTWeight"+j_n.str());
-      addvar.push_back("bWeight1CSVMWeight"+j_n.str());
-      addvar.push_back("bWeight2CSVMWeight"+j_n.str());
-      addvar.push_back("bWeight1CSVLWeight"+j_n.str());
-      addvar.push_back("bWeight2CSVLWeight"+j_n.str());
-      addvar.push_back("bWeight0CSVLWeight"+j_n.str());
-      addvar.push_back("bWeight0CSVLWeight"+j_n.str());
-    }
-
     if(useLHEWeights){
       for (size_t w = 0; w <= (size_t)maxWeights; ++w)  {
 	//	cout << " weight # " << lhe_weights[w - 1] << " test "<< endl; 
@@ -3610,8 +2537,6 @@ vector<string> DMAnalysisTreeMaker::additionalVariables(string object){
 	addvar.push_back("passes"+trig);
       }
       addvar.push_back("passesMETFilters");
-      addvar.push_back("passesHBHE");
-      addvar.push_back("passesHBHEIso");
     }
     if(useTriggers){
       for (size_t lt = 0; lt < SingleElTriggers.size(); ++lt)  {
@@ -3651,6 +2576,270 @@ vector<string> DMAnalysisTreeMaker::additionalVariables(string object){
   return addvar;
 }
 
+void DMAnalysisTreeMaker::setEventBTagSF(string label, string category){
+  
+  int ncsv_tmp_t_tags =0;
+  int ncsv_tmp_m_tags =0;
+  int ncsv_tmp_l_tags =0;
+  string lc=label+category;
+
+  jsfscsvt.clear();
+  jsfscsvt_b_tag_up.clear(); 
+  jsfscsvt_b_tag_down.clear(); 
+  jsfscsvt_mistag_up.clear(); 
+  jsfscsvt_mistag_down.clear();
+  
+  jsfscsvm.clear(); 
+  jsfscsvm_b_tag_up.clear(); 
+  jsfscsvm_b_tag_down.clear(); 
+  jsfscsvm_mistag_up.clear(); 
+  jsfscsvm_mistag_down.clear();
+  
+  jsfscsvl.clear(); 
+  jsfscsvl_b_tag_up.clear(); 
+  jsfscsvl_b_tag_down.clear(); 
+  jsfscsvl_mistag_up.clear();
+  jsfscsvl_mistag_down.clear();
+  
+  for(int j =0; j<sizes[label+category];++j){
+    
+    if(vfloats_values[lc+"_IsCSVT"][j])++ncsv_tmp_t_tags;
+    if(vfloats_values[lc+"_IsCSVM"][j])++ncsv_tmp_m_tags;
+    if(vfloats_values[lc+"_IsCSVL"][j])++ncsv_tmp_l_tags;
+
+    //    cout <<"jet "<< j<< " istagged l "<<vfloats_values[lc+"_IsCSVL"][j]<<endl;
+
+    float ptCorr = vfloats_values[lc+"_CorrPt"][j];
+    int flavor = vfloats_values[lc+"_PartonFlavor"][j];
+    
+    double csvteff = MCTagEfficiency("csvt",flavor, ptCorr);
+    double sfcsvt = TagScaleFactor("csvt", flavor, "noSyst", ptCorr);
+    
+    double csvleff = MCTagEfficiency("csvl",flavor,ptCorr);
+    double sfcsvl = TagScaleFactor("csvl", flavor, "noSyst", ptCorr);
+    
+    double csvmeff = MCTagEfficiency("csvm",flavor,ptCorr);
+    double sfcsvm = TagScaleFactor("csvm", flavor, "noSyst", ptCorr);
+	
+    
+    double sfcsvt_mistag_up = TagScaleFactor("csvt", flavor, "mistag_up", ptCorr);
+    double sfcsvl_mistag_up = TagScaleFactor("csvl", flavor, "mistag_up", ptCorr);
+    double sfcsvm_mistag_up = TagScaleFactor("csvm", flavor, "mistag_up", ptCorr);
+    
+    double sfcsvt_mistag_down = TagScaleFactor("csvt", flavor, "mistag_down", ptCorr);
+    double sfcsvl_mistag_down = TagScaleFactor("csvl", flavor, "mistag_down", ptCorr);
+    double sfcsvm_mistag_down = TagScaleFactor("csvm", flavor, "mistag_down", ptCorr);
+    
+    double sfcsvt_b_tag_down = TagScaleFactor("csvt", flavor, "b_tag_down", ptCorr);
+    double sfcsvl_b_tag_down = TagScaleFactor("csvl", flavor, "b_tag_down", ptCorr);
+    double sfcsvm_b_tag_down = TagScaleFactor("csvm", flavor, "b_tag_down", ptCorr);
+    
+    double sfcsvt_b_tag_up = TagScaleFactor("csvt", flavor, "b_tag_up", ptCorr);
+    double sfcsvl_b_tag_up = TagScaleFactor("csvl", flavor, "b_tag_up", ptCorr);
+    double sfcsvm_b_tag_up = TagScaleFactor("csvm", flavor, "b_tag_up", ptCorr);
+    
+    
+    jsfscsvt.push_back(BTagWeight::JetInfo(csvteff, sfcsvt));
+    jsfscsvl.push_back(BTagWeight::JetInfo(csvleff, sfcsvl));
+    jsfscsvm.push_back(BTagWeight::JetInfo(csvmeff, sfcsvm));
+    
+    jsfscsvt_mistag_up.push_back(BTagWeight::JetInfo(csvteff, sfcsvt_mistag_up));
+    jsfscsvl_mistag_up.push_back(BTagWeight::JetInfo(csvleff, sfcsvl_mistag_up));
+    jsfscsvm_mistag_up.push_back(BTagWeight::JetInfo(csvmeff, sfcsvm_mistag_up));
+    
+    jsfscsvt_b_tag_up.push_back(BTagWeight::JetInfo(csvteff, sfcsvt_b_tag_up));
+    jsfscsvl_b_tag_up.push_back(BTagWeight::JetInfo(csvleff, sfcsvl_b_tag_up));
+    jsfscsvm_b_tag_up.push_back(BTagWeight::JetInfo(csvmeff, sfcsvm_b_tag_up));
+    
+    jsfscsvt_mistag_down.push_back(BTagWeight::JetInfo(csvteff, sfcsvt_mistag_down));
+    jsfscsvl_mistag_down.push_back(BTagWeight::JetInfo(csvleff, sfcsvl_mistag_down));
+    jsfscsvm_mistag_down.push_back(BTagWeight::JetInfo(csvmeff, sfcsvm_mistag_down));
+    
+    jsfscsvt_b_tag_down.push_back(BTagWeight::JetInfo(csvteff, sfcsvt_b_tag_down));
+    jsfscsvl_b_tag_down.push_back(BTagWeight::JetInfo(csvleff, sfcsvl_b_tag_down));
+    jsfscsvm_b_tag_down.push_back(BTagWeight::JetInfo(csvmeff, sfcsvm_b_tag_down));
+  }
+  
+  //BTagging part
+  //if(doBTagSF){
+  if(doBTagSF){
+    
+    //CSVT
+    //0 tags
+    b_weight_csvt_0_tags = b_csvt_0_tags.weight(jsfscsvt, ncsv_tmp_t_tags);  
+    b_weight_csvt_0_tags_mistag_up = b_csvt_0_tags.weight(jsfscsvt_mistag_up, ncsv_tmp_t_tags);  
+    b_weight_csvt_0_tags_mistag_down = b_csvt_0_tags.weight(jsfscsvt_mistag_down, ncsv_tmp_t_tags);  
+    b_weight_csvt_0_tags_b_tag_up = b_csvt_0_tags.weight(jsfscsvt_b_tag_up, ncsv_tmp_t_tags);  
+    b_weight_csvt_0_tags_b_tag_down = b_csvt_0_tags.weight(jsfscsvt_b_tag_down, ncsv_tmp_t_tags);  
+    
+    //1 tag
+    b_weight_csvt_1_tag = b_csvt_1_tag.weight(jsfscsvt, ncsv_tmp_t_tags);  
+    b_weight_csvt_1_tag_mistag_up = b_csvt_1_tag.weight(jsfscsvt_mistag_up, ncsv_tmp_t_tags);  
+    b_weight_csvt_1_tag_mistag_down = b_csvt_1_tag.weight(jsfscsvt_mistag_down, ncsv_tmp_t_tags);  
+    b_weight_csvt_1_tag_b_tag_up = b_csvt_1_tag.weight(jsfscsvt_b_tag_up, ncsv_tmp_t_tags);  
+    b_weight_csvt_1_tag_b_tag_down = b_csvt_1_tag.weight(jsfscsvt_b_tag_down, ncsv_tmp_t_tags);  
+    //      cout <<"w1t check: is"<< b_weight_csvt_1_tag<<endl;
+    
+    //2 tags
+    b_weight_csvt_2_tags = b_csvt_2_tags.weight(jsfscsvt, ncsv_tmp_t_tags);  
+    b_weight_csvt_2_tags_mistag_up = b_csvt_2_tags.weight(jsfscsvt_mistag_up, ncsv_tmp_t_tags);  
+    b_weight_csvt_2_tags_mistag_down = b_csvt_2_tags.weight(jsfscsvt_mistag_down, ncsv_tmp_t_tags);  
+    b_weight_csvt_2_tags_b_tag_up = b_csvt_2_tags.weight(jsfscsvt_b_tag_up, ncsv_tmp_t_tags);  
+    b_weight_csvt_2_tags_b_tag_down = b_csvt_2_tags.weight(jsfscsvt_b_tag_down, ncsv_tmp_t_tags);  
+    
+    //1-2 tags
+    b_weight_csvt_1_2_tags = b_csvt_1_2_tags.weight(jsfscsvt, ncsv_tmp_t_tags);  
+    b_weight_csvt_1_2_tags_b_tag_up = b_csvt_1_2_tags.weight(jsfscsvt_b_tag_up, ncsv_tmp_t_tags);  
+    b_weight_csvt_1_2_tags_b_tag_down = b_csvt_1_2_tags.weight(jsfscsvt_b_tag_down, ncsv_tmp_t_tags);  
+    b_weight_csvt_1_2_tags_mistag_up = b_csvt_1_2_tags.weight(jsfscsvt_mistag_up, ncsv_tmp_t_tags);  
+    b_weight_csvt_1_2_tags_mistag_down = b_csvt_1_2_tags.weight(jsfscsvt_mistag_down, ncsv_tmp_t_tags);  
+    
+    
+    //CSVM
+    //0 tags
+    b_weight_csvm_0_tags = b_csvm_0_tags.weight(jsfscsvm, ncsv_tmp_m_tags);  
+    b_weight_csvm_0_tags_mistag_up = b_csvm_0_tags.weight(jsfscsvm_mistag_up, ncsv_tmp_m_tags);  
+    b_weight_csvm_0_tags_mistag_down = b_csvm_0_tags.weight(jsfscsvm_mistag_down, ncsv_tmp_m_tags);  
+    b_weight_csvm_0_tags_b_tag_up = b_csvm_0_tags.weight(jsfscsvm_b_tag_up, ncsv_tmp_m_tags);  
+    b_weight_csvm_0_tags_b_tag_down = b_csvm_0_tags.weight(jsfscsvm_b_tag_down, ncsv_tmp_m_tags);  
+    
+    //1 tag
+    b_weight_csvm_1_tag = b_csvm_1_tag.weight(jsfscsvm, ncsv_tmp_m_tags);  
+    b_weight_csvm_1_tag_mistag_up = b_csvm_1_tag.weight(jsfscsvm_mistag_up, ncsv_tmp_m_tags);  
+    b_weight_csvm_1_tag_mistag_down = b_csvm_1_tag.weight(jsfscsvm_mistag_down, ncsv_tmp_m_tags);  
+    b_weight_csvm_1_tag_b_tag_up = b_csvm_1_tag.weight(jsfscsvm_b_tag_up, ncsv_tmp_m_tags);  
+    b_weight_csvm_1_tag_b_tag_down = b_csvm_1_tag.weight(jsfscsvm_b_tag_down, ncsv_tmp_m_tags);  
+    //      cout <<"w1t check: is"<< b_weight_csvm_1_tag<<endl;
+    
+    //2 tags
+    b_weight_csvm_2_tags = b_csvm_2_tags.weight(jsfscsvm, ncsv_tmp_m_tags);  
+    b_weight_csvm_2_tags_mistag_up = b_csvm_2_tags.weight(jsfscsvm_mistag_up, ncsv_tmp_m_tags);  
+    b_weight_csvm_2_tags_mistag_down = b_csvm_2_tags.weight(jsfscsvm_mistag_down, ncsv_tmp_m_tags);  
+    b_weight_csvm_2_tags_b_tag_up = b_csvm_2_tags.weight(jsfscsvm_b_tag_up, ncsv_tmp_m_tags);  
+    b_weight_csvm_2_tags_b_tag_down = b_csvm_2_tags.weight(jsfscsvm_b_tag_down, ncsv_tmp_m_tags);  
+    
+    //1-2 tags
+    b_weight_csvm_1_2_tags = b_csvm_1_2_tags.weight(jsfscsvm, ncsv_tmp_m_tags);  
+    b_weight_csvm_1_2_tags_b_tag_up = b_csvm_1_2_tags.weight(jsfscsvm_b_tag_up, ncsv_tmp_m_tags);  
+    b_weight_csvm_1_2_tags_b_tag_down = b_csvm_1_2_tags.weight(jsfscsvm_b_tag_down, ncsv_tmp_m_tags);  
+    b_weight_csvm_1_2_tags_mistag_up = b_csvm_1_2_tags.weight(jsfscsvm_mistag_up, ncsv_tmp_m_tags);  
+    b_weight_csvm_1_2_tags_mistag_down = b_csvm_1_2_tags.weight(jsfscsvm_mistag_down, ncsv_tmp_m_tags);  
+    
+    
+    //CSVL
+    //0 tags
+    b_weight_csvl_0_tags = b_csvl_0_tags.weight(jsfscsvl, ncsv_tmp_l_tags);  
+    b_weight_csvl_0_tags_mistag_up = b_csvl_0_tags.weight(jsfscsvl_mistag_up, ncsv_tmp_l_tags);  
+    b_weight_csvl_0_tags_mistag_down = b_csvl_0_tags.weight(jsfscsvl_mistag_down, ncsv_tmp_l_tags);  
+    b_weight_csvl_0_tags_b_tag_up = b_csvl_0_tags.weight(jsfscsvl_b_tag_up, ncsv_tmp_l_tags);  
+    b_weight_csvl_0_tags_b_tag_down = b_csvl_0_tags.weight(jsfscsvl_b_tag_down, ncsv_tmp_l_tags);  
+    
+    //1 tag
+    b_weight_csvl_1_tag = b_csvl_1_tag.weight(jsfscsvl, ncsv_tmp_l_tags);  
+    b_weight_csvl_1_tag_mistag_up = b_csvl_1_tag.weight(jsfscsvl_mistag_up, ncsv_tmp_l_tags);  
+    b_weight_csvl_1_tag_mistag_down = b_csvl_1_tag.weight(jsfscsvl_mistag_down, ncsv_tmp_l_tags);  
+    b_weight_csvl_1_tag_b_tag_up = b_csvl_1_tag.weight(jsfscsvl_b_tag_up, ncsv_tmp_l_tags);  
+    b_weight_csvl_1_tag_b_tag_down = b_csvl_1_tag.weight(jsfscsvl_b_tag_down, ncsv_tmp_l_tags);  
+    //      cout <<"w1t check: is"<< b_weight_csvl_1_tag<<endl;
+    
+    //2 tags
+    b_weight_csvl_2_tags = b_csvl_2_tags.weight(jsfscsvl, ncsv_tmp_l_tags);  
+    b_weight_csvl_2_tags_mistag_up = b_csvl_2_tags.weight(jsfscsvl_mistag_up, ncsv_tmp_l_tags);  
+    b_weight_csvl_2_tags_mistag_down = b_csvl_2_tags.weight(jsfscsvl_mistag_down, ncsv_tmp_l_tags);  
+    b_weight_csvl_2_tags_b_tag_up = b_csvl_2_tags.weight(jsfscsvl_b_tag_up, ncsv_tmp_l_tags);  
+    b_weight_csvl_2_tags_b_tag_down = b_csvl_2_tags.weight(jsfscsvl_b_tag_down, ncsv_tmp_l_tags);  
+    
+    //1-2 tags
+    b_weight_csvl_1_2_tags = b_csvl_1_2_tags.weight(jsfscsvl, ncsv_tmp_l_tags);  
+    b_weight_csvl_1_2_tags_b_tag_up = b_csvl_1_2_tags.weight(jsfscsvl_b_tag_up, ncsv_tmp_l_tags);  
+    b_weight_csvl_1_2_tags_b_tag_down = b_csvl_1_2_tags.weight(jsfscsvl_b_tag_down, ncsv_tmp_l_tags);  
+    b_weight_csvl_1_2_tags_mistag_up = b_csvl_1_2_tags.weight(jsfscsvl_mistag_up, ncsv_tmp_l_tags);  
+    b_weight_csvl_1_2_tags_mistag_down = b_csvl_1_2_tags.weight(jsfscsvl_mistag_down, ncsv_tmp_l_tags);  
+    
+    //    cout << " n tight tags "<< ncsv_tmp_l_tags  << " w0tag "<< b_weight_csvl_0_tags<<" w1tag " << b_weight_csvl_1_tag <<" w2tags "<<b_weight_csvt_2_tags  <<endl;
+    
+    float_values["Event_bWeight0CSVL"+category]=b_weight_csvl_0_tags;
+    float_values["Event_bWeight1CSVL"+category]=b_weight_csvl_1_tag;
+    float_values["Event_bWeight2CSVL"+category]=b_weight_csvl_2_tags;
+    float_values["Event_bWeight1_2CSVL"+category]=b_weight_csvl_1_2_tags;
+    
+    float_values["Event_bWeight0CSVM"+category]=b_weight_csvm_0_tags;
+    float_values["Event_bWeight1CSVM"+category]=b_weight_csvm_1_tag;
+    float_values["Event_bWeight2CSVM"+category]=b_weight_csvm_2_tags;
+    float_values["Event_bWeight1_2CSVM"+category]=b_weight_csvm_1_2_tags;
+    
+    float_values["Event_bWeight0CSVT"+category]=b_weight_csvt_0_tags;
+    float_values["Event_bWeight1CSVT"+category]=b_weight_csvt_1_tag;
+    float_values["Event_bWeight2CSVT"+category]=b_weight_csvt_2_tags;
+    float_values["Event_bWeight1_2CSVT"+category]=b_weight_csvt_1_2_tags;
+    
+    //Mistag
+    float_values["Event_bWeightMisTagUp0CSVL"+category]=b_weight_csvl_0_tags_mistag_up;
+    float_values["Event_bWeightMisTagUp1CSVL"+category]=b_weight_csvl_1_tag_mistag_up;
+    float_values["Event_bWeightMisTagUp2CSVL"+category]=b_weight_csvl_2_tags_mistag_up;
+    float_values["Event_bWeightMisTagUp1_2CSVL"+category]=b_weight_csvl_1_2_tags_mistag_up;
+    
+    float_values["Event_bWeightMisTagUp0CSVM"+category]=b_weight_csvm_0_tags_mistag_up;
+    float_values["Event_bWeightMisTagUp1CSVM"+category]=b_weight_csvm_1_tag_mistag_up;
+    float_values["Event_bWeightMisTagUp2CSVM"+category]=b_weight_csvm_2_tags_mistag_up;
+    float_values["Event_bWeightMisTagUp1_2CSVM"+category]=b_weight_csvm_1_2_tags_mistag_up;
+    
+    float_values["Event_bWeightMisTagUp0CSVT"+category]=b_weight_csvt_0_tags_mistag_up;
+    float_values["Event_bWeightMisTagUp1CSVT"+category]=b_weight_csvt_1_tag_mistag_up;
+    float_values["Event_bWeightMisTagUp2CSVT"+category]=b_weight_csvt_2_tags_mistag_up;
+    float_values["Event_bWeightMisTagUp1_2CSVT"+category]=b_weight_csvt_1_2_tags_mistag_up;
+    
+    float_values["Event_bWeightMisTagDown0CSVL"+category]=b_weight_csvl_0_tags_mistag_down;
+    float_values["Event_bWeightMisTagDown1CSVL"+category]=b_weight_csvl_1_tag_mistag_down;
+    float_values["Event_bWeightMisTagDown2CSVL"+category]=b_weight_csvl_2_tags_mistag_down;
+    float_values["Event_bWeightMisTagDown1_2CSVL"+category]=b_weight_csvl_1_2_tags_mistag_down;
+    
+    float_values["Event_bWeightMisTagDown0CSVM"+category]=b_weight_csvm_0_tags_mistag_down;
+    float_values["Event_bWeightMisTagDown1CSVM"+category]=b_weight_csvm_1_tag_mistag_down;
+    float_values["Event_bWeightMisTagDown2CSVM"+category]=b_weight_csvm_2_tags_mistag_down;
+    float_values["Event_bWeightMisTagDown1_2CSVM"+category]=b_weight_csvm_1_2_tags_mistag_down;
+    
+    float_values["Event_bWeightMisTagDown0CSVT"+category]=b_weight_csvt_0_tags_mistag_down;
+    float_values["Event_bWeightMisTagDown1CSVT"+category]=b_weight_csvt_1_tag_mistag_down;
+    float_values["Event_bWeightMisTagDown2CSVT"+category]=b_weight_csvt_2_tags_mistag_down;
+    float_values["Event_bWeightMisTagDown1_2CSVT"+category]=b_weight_csvt_1_2_tags_mistag_down;
+    
+    //Btag
+    float_values["Event_bWeightBTagUp0CSVL"+category]=b_weight_csvl_0_tags_b_tag_up;
+    float_values["Event_bWeightBTagUp1CSVL"+category]=b_weight_csvl_1_tag_b_tag_up;
+    float_values["Event_bWeightBTagUp2CSVL"+category]=b_weight_csvl_2_tags_b_tag_up;
+    float_values["Event_bWeightBTagUp1_2CSVL"+category]=b_weight_csvl_1_2_tags_b_tag_up;
+    
+    float_values["Event_bWeightBTagUp0CSVM"+category]=b_weight_csvm_0_tags_b_tag_up;
+    float_values["Event_bWeightBTagUp1CSVM"+category]=b_weight_csvm_1_tag_b_tag_up;
+    float_values["Event_bWeightBTagUp2CSVM"+category]=b_weight_csvm_2_tags_b_tag_up;
+    float_values["Event_bWeightBTagUp1_2CSVM"+category]=b_weight_csvm_1_2_tags_b_tag_up;
+    
+    float_values["Event_bWeightBTagUp0CSVT"+category]=b_weight_csvt_0_tags_b_tag_up;
+    float_values["Event_bWeightBTagUp1CSVT"+category]=b_weight_csvt_1_tag_b_tag_up;
+    float_values["Event_bWeightBTagUp2CSVT"+category]=b_weight_csvt_2_tags_b_tag_up;
+    float_values["Event_bWeightBTagUp1_2CSVT"+category]=b_weight_csvt_1_2_tags_b_tag_up;
+    
+    float_values["Event_bWeightBTagDown0CSVL"+category]=b_weight_csvl_0_tags_b_tag_down;
+    float_values["Event_bWeightBTagDown1CSVL"+category]=b_weight_csvl_1_tag_b_tag_down;
+    float_values["Event_bWeightBTagDown2CSVL"+category]=b_weight_csvl_2_tags_b_tag_down;
+    float_values["Event_bWeightBTagDown1_2CSVL"+category]=b_weight_csvl_1_2_tags_b_tag_down;
+    
+    float_values["Event_bWeightBTagDown0CSVM"+category]=b_weight_csvm_0_tags_b_tag_down;
+    float_values["Event_bWeightBTagDown1CSVM"+category]=b_weight_csvm_1_tag_b_tag_down;
+    float_values["Event_bWeightBTagDown2CSVM"+category]=b_weight_csvm_2_tags_b_tag_down;
+    float_values["Event_bWeightBTagDown1_2CSVM"+category]=b_weight_csvm_1_2_tags_b_tag_down;
+    
+    float_values["Event_bWeightBTagDown0CSVT"+category]=b_weight_csvt_0_tags_b_tag_down;
+    float_values["Event_bWeightBTagDown1CSVT"+category]=b_weight_csvt_1_tag_b_tag_down;
+    float_values["Event_bWeightBTagDown2CSVT"+category]=b_weight_csvt_2_tags_b_tag_down;
+    float_values["Event_bWeightBTagDown1_2CSVT"+category]=b_weight_csvt_1_2_tags_b_tag_down;
+  }
+}
+
+void DMAnalysisTreeMaker::setEventLeptonSF(string label, string category){
+  ;
+}
 void DMAnalysisTreeMaker::initializePdf(string central, string varied){
 
     if(central == "CT") {  LHAPDF::initPDFSet(1, "cteq66.LHgrid"); }
@@ -3669,15 +2858,15 @@ void DMAnalysisTreeMaker::initializePdf(string central, string varied){
 
 double DMAnalysisTreeMaker::getWEWKPtWeight(double ptW){
   //EWK
-//  [100, 150]:  0.980859
-//  [150, 200]:  0.962119
-//  [200, 250]:  0.944429
-//  [250, 300]:  0.927686
-//  [300, 350]:  0.911802
-//  [350, 400]:  0.8967  
-//  [400, 500]:  0.875368
-//  [500, 600]:  0.849097
-//  [600, 1000]: 0.792159
+  //  [100, 150]:  0.980859
+  //  [150, 200]:  0.962119
+  //  [200, 250]:  0.944429
+  //  [250, 300]:  0.927686
+  //  [300, 350]:  0.911802
+  //  [350, 400]:  0.8967  
+  //  [400, 500]:  0.875368
+  //  [500, 600]:  0.849097
+  //  [600, 1000]: 0.792159
 
   if(ptW<150.)return 0.980859;
   if(ptW>=150. && ptW <200.)return 0.962119;
@@ -3874,7 +3063,7 @@ void DMAnalysisTreeMaker::getEventPdf(){
   double w0 = xpdf1 * xpdf2;
   int maxPDFCount = maxPdf;
 
-  std::cout << "entering pdf loop" <<std::endl;
+  //  std::cout << "entering pdf loop" <<std::endl;
   for (int p = 1; p <= maxPdf; ++p)
     {
       
@@ -3920,7 +3109,7 @@ void DMAnalysisTreeMaker::getEventLHEWeights(){
 }
 
 void DMAnalysisTreeMaker::initTreeWeightHistory(bool useLHEW){
-  cout << " preBranch "<<endl;
+  //  cout << " preBranch "<<endl;
 
   trees["WeightHistory"]->Branch("Event_Z_EW_Weight",&float_values["Event_Z_EW_Weight"]);
   trees["WeightHistory"]->Branch("Event_W_EW_Weight",&float_values["Event_W_EW_Weight"]);
@@ -3937,7 +3126,7 @@ void DMAnalysisTreeMaker::initTreeWeightHistory(bool useLHEW){
   trees["WeightHistory"]->Branch("Event_W_Pt",&float_values["Event_W_Pt"]);
   trees["WeightHistory"]->Branch("Event_Z_Pt",&float_values["Event_Z_Pt"]);
   
-  cout << " preBranch Weight "<<endl;
+  //  cout << " preBranch Weight "<<endl;
 
   //  size_t wgtsize=  lhes->weights().size();
   //  std::cout << "weight size "<< wgtsize<<endl;
