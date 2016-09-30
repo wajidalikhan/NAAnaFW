@@ -845,7 +845,8 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
       L2L3ResName = "Fall15_25nsV2_MC_L2L3Residual_AK4PFchs.txt"; 
   }
 
-  string jecDir="JEC/";
+  //  string jecDir="JEC/";
+  string jecDir="./";
   jecParsL1  = new JetCorrectorParameters(jecDir+L1Name);
   //  jecParsL1RC  = new JetCorrectorParameters(L1RCName);
   jecParsL2  = new JetCorrectorParameters(jecDir+L2Name);
