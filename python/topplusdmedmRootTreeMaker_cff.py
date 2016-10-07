@@ -57,6 +57,8 @@ scanJet = ["CorrPt_30","CorrPt_40"]
 
 #"HLT_PFMET120_NoiseCleaned_BTagCSV07_v1", "", "HLT_PFMET120_PFMHT120_IDTight_v1", "HLT_PFMET90_PFMHT90_IDTight_v1", "HLT_PFMETNoMu120_NoiseCleaned_PFMHTNoMu120_IDTight_v2", "HLT_PFMETNoMu90_NoiseCleaned_PFMHTNoMu90_IDTight_v2", "HLT_AK8DiPFJet280_200_TrimMass30_BTagCSV0p45_v2", "HLT_AK8PFHT700_TrimR0p1PT0p03Mass50_v2", "HLT_AK8PFJet360_TrimMass30_v2", "HLT_PFHT400_SixJet30_BTagCSV0p55_2PFBTagCSV0p72_v2", "HLT_PFHT450_SixJet40_PFBTagCSV0p72_v2", "HLT_PFHT800_v1"]
 
+addCentrality=False
+
 cutOnTriggers = False
 doPreselectionCuts = False
 
@@ -400,25 +402,26 @@ DMTreesDumper.physicsObjects.append(
 #        )
 #    )
 
-DMTreesDumper.physicsObjects.append( 
-    cms.PSet(
-        label = centralitylabel,
-        prefix = cms.string(""),
-        maxInstances =  cms.untracked.int32(1),
-        saveBaseVariables = cms.untracked.bool(True),
-        categories = cms.vstring(),
-        scanCuts = cms.vstring(),
-        variablesF = cms.VInputTag(),
-        variablesD = cms.VInputTag(),
-        variablesI = cms.VInputTag(),
-        singleI = cms.VInputTag(),
-        singleF = cms.VInputTag(),
-        singleD = cms.VInputTag(
-            cms.InputTag("centrality","centrality"),
-            ),
-        toSave = cms.vstring(),
+if addCentrality:
+    DMTreesDumper.physicsObjects.append( 
+        cms.PSet(
+            label = centralitylabel,
+            prefix = cms.string(""),
+            maxInstances =  cms.untracked.int32(1),
+            saveBaseVariables = cms.untracked.bool(True),
+            categories = cms.vstring(),
+            scanCuts = cms.vstring(),
+            variablesF = cms.VInputTag(),
+            variablesD = cms.VInputTag(),
+            variablesI = cms.VInputTag(),
+            singleI = cms.VInputTag(),
+            singleF = cms.VInputTag(),
+            singleD = cms.VInputTag(
+                cms.InputTag("centrality","centrality"),
+                ),
+            toSave = cms.vstring(),
+            )
         )
-    )
 
 
 DMTreesDumper.physicsObjects.append( 
