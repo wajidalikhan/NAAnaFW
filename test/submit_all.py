@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#usage: python submit_all.py -c topplusdmTrees_cfg.py -f mySamplesFile.txt -d crab_workdir
+#usage: python submit_all.py -c topplusdmTrees_cfg.py -f samples.txt -d crab_workdir
 """
 This is a small script that submits a config over many datasets
 """
