@@ -1183,7 +1183,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     if(isFirstEvent){
       for(size_t bt = 0; bt < triggerNamesR->size();++bt){
 	std::string tname = triggerNamesR->at(bt);
-	//	cout << "trigger test tname "<< tname << " passes "<< triggerBits->at(bt)<< endl;
+	// cout << "trigger test tname "<< tname << " passes "<< triggerBits->at(bt)<< endl;
       }
     }
     
