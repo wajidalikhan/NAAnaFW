@@ -139,7 +139,7 @@ for sample in samplesAndPaths:
 #    outputList = []
     outputListJES = []
     print path
-    outputListJES= findRootFileInPath(cmdls,srm,path,sample,extraString ="",date="", veto = "")
+    outputListJES= findRootFileInPath(cmdls,srm,path,sample,extraString ="",date="", veto = "failed")
 
 
 
