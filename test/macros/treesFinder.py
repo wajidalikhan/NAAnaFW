@@ -112,7 +112,8 @@ srm = "  -b -D srmv2 srm://storage01.lcg.cscs.ch:8443/srm/managerv2\?SFN="
 
 #samplesAndPaths = {"TTJets":"/pnfs/lcg.cscs.ch/cms/trivcat/store/user/decosa/ttDM/Phys14_Tree_v2/"}
 samplesAndPaths = {
-    "ST_t-channel":"/pnfs/lcg.cscs.ch/cms/trivcat/store/user/oiorio/ttDM/trees/2016/Oct/",
+    "ST_t-channel_top":"/pnfs/lcg.cscs.ch/cms/trivcat/store/user/oiorio/ttDM/trees/2016/Oct/",
+    "ST_t-channel_antitop":"/pnfs/lcg.cscs.ch/cms/trivcat/store/user/oiorio/ttDM/trees/2016/Oct/",
     }
 
 def writeSamplesAndPaths(sap, outputDir="./", option = 'w'):
@@ -130,7 +131,7 @@ outDir = "/tmp/oiorio/"
 
 writeSamplesAndPaths(samplesAndPaths)
 os.system("mkdir trees")
-os.system("rm treees/listAllSamples.py")
+os.system("rm trees/listAllSamples.py")
 
 for sample in samplesAndPaths:
     path = samplesAndPaths[sample]
