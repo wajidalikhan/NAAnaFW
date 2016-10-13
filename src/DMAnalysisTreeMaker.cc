@@ -909,11 +909,10 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
   getPartonTop=false;
   doWReweighting=false;
   doTopReweighting=false;
-  useLHE=false;
-  useLHEWeights=false;
-
-  useLHE=false;
-  useLHEWeights=false;
+  //  useLHE=false;
+  //  useLHEWeights=false;
+  //  useLHE=false;
+  //  useLHEWeights=false;
   if(getPartonW || getPartonTop || doWReweighting || doTopReweighting){
     if(!useLHE)return;
     genlep.clear();
@@ -1184,7 +1183,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     if(isFirstEvent){
       for(size_t bt = 0; bt < triggerNamesR->size();++bt){
 	std::string tname = triggerNamesR->at(bt);
-	//cout << "trigger test tname "<< tname << " passes "<< triggerBits->at(bt)<< endl;
+	//	cout << "trigger test tname "<< tname << " passes "<< triggerBits->at(bt)<< endl;
       }
     }
     
@@ -1443,7 +1442,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       float muCharge = vfloats_values[makeName(mu_label,pref,"Charge")][mu];
       
       
-      if(isTight>0 && pt> 30 && abs(eta) < 2.1 && iso <0.15){
+      if(isTight>0 && pt> 26 && abs(eta) < 2.1 && iso <0.15){
 	++float_values["Event_nTightMuons"];
 	TLorentzVector muon;
 	muon.SetPtEtaPhiE(pt, eta, phi, energy);
@@ -1517,14 +1516,14 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       bool passesDRmu = true;
       bool passesTightCuts = false;
       if(fabs(scEta)<=1.479){
-	passesTightCuts = isTight >0.0 && iso < 0.0354 ;
+	passesTightCuts = isTight >0.0 && iso < 0.0588 ;
 
       } //is barrel electron
       if (fabs(scEta)>1.479 && fabs(scEta)<2.5){
-	passesTightCuts = isTight >0.0 && iso < 0.0646 ;
+	passesTightCuts = isTight >0.0 && iso < 0.0571 ;
       }
 
-      if(pt> 30 && fabs(eta) < 2.1 && passesTightCuts){
+      if(pt> 30 && fabs(eta) < 2.5 && passesTightCuts){
 	TLorentzVector ele;
 	ele.SetPtEtaPhiE(pt, eta, phi, energy);	
 	double minDR=999;
@@ -1562,9 +1561,9 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	++float_values["Event_nMediumElectrons"]; 
       }
       
-      if(isVeto>0 && pt> 10 && fabs(eta) < 2.5 ){
-	if((fabs(scEta)<=1.479 && (iso<0.126)) 
-	   || ((fabs(scEta)>1.479 && fabs(scEta)<2.5) && (iso<0.144))){
+      if(isVeto>0 && pt> 20 && fabs(eta) < 2.5 ){
+	if((fabs(scEta)<=1.479 && (iso<0.175)) 
+	   || ((fabs(scEta)>1.479 && fabs(scEta)<2.5) && (iso<0.159))){
 	  ++float_values["Event_nVetoElectrons"]; 
 	  if(isInVector(obj_cats[ele_label],"Veto")){
 	    fillCategory(ele_label,"Veto",el,float_values["Event_nVetoElectrons"]-1);
@@ -1579,6 +1578,8 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     } 
     int firstidx=-1, secondidx=-1;
     double maxpt=0.0;
+
+    int nTightLeptons = float_values["Event_nTightMuons"]+float_values["Event_nTightElectrons"];
 
     for(size_t l =0; l< leptons.size();++l){
       double lpt= leptons.at(l).Pt();
@@ -1728,17 +1729,20 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
         float chEmEnFrac = vfloats_values[makeName(jets_label,pref,"chargedEmEnergyFrac")][j];
         float neuEmEnFrac = vfloats_values[makeName(jets_label,pref,"neutralEmEnergyFrac")][j];
         float neuHadEnFrac = vfloats_values[makeName(jets_label,pref,"neutralHadronEnergyFrac")][j];
-        float numConst = 10.;//vfloats_values[makeName(jets_label,pref,"NumConstituents")][j];
+        float numConst = chMulti+neuMulti;//vfloats_values[makeName(jets_label,pref,"NumConstituents")][j];
         //passesID =  (nDau >1.0 && fabs(eta) < 4.7 && (fabs(eta)>=2.4 ||(chHadEnFrac>0.0 && chMulti>0 && chEmEnFrac<0.99)) && neuEmEnFrac<0.99 && neuHadEnFrac <0.99 && muEnFrac<0.8) ;
 
-        if(fabs(eta)<=3){
-          passesID =  (neuHadEnFrac<0.99 && neuEmEnFrac<0.99 && numConst>1) && ( (abs(eta)<=2.4 && chHadEnFrac>0 && chMulti>0 && chEmEnFrac<0.99) || abs(eta)>2.4);
+        if(fabs(eta)<=2.7){
+          passesID =  (neuHadEnFrac<0.99 && neuEmEnFrac<0.99 && numConst>1) && 
+	    ( (fabs(eta)<=2.4 && chHadEnFrac>0 && chMulti>0 && chEmEnFrac<0.99) || abs(eta)>2.4);
         }
+	else if( (fabs(eta) >2.7) && (fabs(eta)<=3.0)) {
+          passesID = neuEmEnFrac<0.90 && neuMulti>2. ;
+	}
         else if(fabs(eta)>3){
-          passesID = neuEmEnFrac<0.90 && neuMulti>10 ;
+          passesID = neuEmEnFrac<0.90 && neuMulti>10. ;
         }
       }
-
       
       vfloats_values[jets_label+"_PassesID"][j]=(float)passesID;
       //Remove overlap with tight electrons/muons
@@ -1883,10 +1887,11 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     if(doPreselection){
       bool passes = true;
       //bool metCondition = (metptCorr >100.0);
-      
-      passes = passes && nTightJets>=0;
+      passes = passes && nTightJets>=1.0;
+      passes = passes && nTightLeptons>=1.0;
+
       if (!passes ) {
-	//Reset event weights/#objects
+	//Reset eventmax weights/#objects
 	string nameshortv= "Event";
 	vector<string> extravars = additionalVariables(nameshortv);
 	for(size_t addv = 0; addv < extravars.size();++addv){
@@ -2990,12 +2995,20 @@ bool DMAnalysisTreeMaker::getEventTriggers(){
       }
     }
   }
+
+  for(size_t bt = 0; bt < triggerNamesR->size();++bt){
+    std::string tname = triggerNamesR->at(bt);
+    //    std::cout << " tname is " << tname << " passes "<< triggerBits->at(bt)<< std::endl;
+  }
+  
   for(size_t lt =0; lt< SingleMuTriggers.size();++lt){
     string lname = SingleMuTriggers.at(lt);
-    //std::cout << lname << std::endl;
+    //    std::cout << lname << std::endl;
     for(size_t bt = 0; bt < triggerNamesR->size();++bt){
       std::string tname = triggerNamesR->at(bt);
+      //      std::cout << " tname is " << tname << " passes "<< triggerBits->at(bt)<< std::endl;
       if(tname.find(lname)!=std::string::npos){
+	//	cout << " matches "<<endl;
 	muOR = muOR || (triggerBits->at(bt)>0);
 	float_values["Event_passes"+lname]=triggerBits->at(bt);
 	float_values["Event_prescale"+lname]=triggerPrescales->at(bt);
@@ -3090,11 +3103,11 @@ void DMAnalysisTreeMaker::getEventLHEWeights(){
       stringstream w_n;
       w_n << i;
 
-      float ww = (float)lhes->weights().at(i).wgt;
+            float ww = (float)lhes->weights().at(i).wgt;
       
-      //      cout << "ww # " << i<< "is "<<ww <<endl;
-      //      cout << "id  is "<< std::string(lhes->weights().at(i).id.data()) <<endl;
-      //      cout <<" floatval before "<< float_values["Event_LHEWeight"+w_n.str()]<<endl;
+	    //cout << "ww # " << i<< "is "<<ww <<endl;
+	    //      cout << "id  is "<< std::string(lhes->weights().at(i).id.data()) <<endl;
+	    //      cout <<" floatval before "<< float_values["Event_LHEWeight"+w_n.str()]<<endl;
 
       float_values["Event_LHEWeight"+w_n.str()]= ww;
       //if(i>=11)float_values["Event_LHEWeightAVG"]+= ww;

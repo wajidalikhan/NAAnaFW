@@ -43,7 +43,7 @@ files = []
 #files = ["file:"+filedir+"MET_Prompt/"+l for l in listFiles]
 files = ["file:"+filedir+"/"+chan+"/"+l for l in listFiles]
 options.register('sample',
-                 '/store/group/lpctlbsm/B2GAnaFW_80X_V2p0/ST_t-channel_antitop_4f_leptonDecays_13TeV-powheg-pythia8_TuneCUETP8M1/RunIISpring16MiniAODv2_B2GAnaFW_80x_V2p0/160723_155301/0000/B2GEDMNtuple_1.root',
+                 #                 '/store/group/lpctlbsm/B2GAnaFW_80X_V2p0/ST_t-channel_antitop_4f_leptonDecays_13TeV-powheg-pythia8_TuneCUETP8M1/RunIISpring16MiniAODv2_B2GAnaFW_80x_V2p0/160723_155301/0000/B2GEDMNtuple_1.root',
                  #                 files,
                  #'root://xrootd.ba.infn.it//store/user/grauco/Ntuples_Fwk76v1_wPileUpJet/QCD_Pt-15to3000_TuneCUETP8M1_Flat_13TeV_pythia8/b2ganafw76x_QCD_Pt-15to3000_TuneCUETP8M1_Flat_13TeV_pythia8_JetMet_18Mar_v1/160318_104000/0000/B2GEDMNtuple_1.root',
                  #/store/user/grauco/Ntuples_Fwk76v1_wPileUpJet/QCD_Pt-15to3000_TuneCUETP8M1_Flat_13TeV_pythia8/b2ganafw76x_QCD_Pt-15to3000_TuneCUETP8M1_Flat_13TeV_pythia8_JetMet_18Mar_v1/160318_104000/0000/B2GEDMNtuple_1.root
@@ -70,6 +70,7 @@ options.register('sample',
 #                 'root://xrootd.ba.infn.it//store/user/dpinna/TTDM_Fwv7.4.x_v6.1_25ns/TTbarDMJets_pseudoscalar_Mchi-1_Mphi-500_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/psDMtt_Mchi1Mphi500_1Oct/150930_221122/0000/B2GEDMNtuple_1.root',
                  
 #                 'root://xrootd.ba.infn.it//store/user/grauco/Ntuples_Fwk76v1_wPileUpJet/QCD_Pt-15to7000_TuneCUETHS1_Flat_13TeV_herwigpp/b2ganafw76x_QCD_Pt-15to7000_TuneCUETHS1_Flat_13TeV_herwigpp_02Mar_v3/160302_134653/0000/B2GEDMNtuple_1.root',
+                 'file:../../B2GAnaFW/test/B2GEDMNtuple.root',
 #                 'file:B2GEDMNtuple.root',
                  #'file:B2GEDMNtuple_QCD.root',
                  #'file:B2GEDMNtuple_DoubleMuon.root',  
@@ -149,43 +150,41 @@ if(not options.isData): options.applyRes = False
 l = ["singleTrigger"+str(s) for s in xrange(15)]
 l = l + ["trigger2"+str(s) for s in xrange(15)]
 
-SingleElTriggers = ["HLT_Ele27_eta2p1_WP75_Gsf"]
-SingleElTriggers = SingleElTriggers + ["HLT_Ele27_eta2p1_WP75_Gsf_v"+str(s) for s in xrange(15)]
+#SingleElTriggers = ["HLT_Ele27_WPTight_Gsf_v2"]
+#SingleElTriggers = SingleElTriggers + ["HLT_Ele32_eta2p1_WPTight_Gsf_v3"]
+SingleElTriggers = ["HLT_Ele32_eta2p1_WPTight_Gsf_v"+str(s) for s in range(2,4)]
+SingleElTriggers = SingleElTriggers + ["HLT_Ele27_eta2p1_WPTight_Gsf_v"+str(s) for s in xrange(2,4)]
+#SingleElTriggers = SingleElTriggers + ["HLT_Ele27_eta2p1_WPLoose_Gsf_v"+str(s) for s in xrange(2,4)]
 
-PhotonTriggers = ["HLT_Photon155"]
-PhotonTriggers = PhotonTriggers + ["HLT_Photon155_v"+str(s) for s in xrange(15)]
+PhotonTriggers = [""]
 
-SingleMuTriggers = ["HLT_IsoMu20","HLT_IsoTkMu20"]
-SingleMuTriggers = SingleMuTriggers + ["HLT_IsoMu20_v"+str(s) for s in xrange(15)]
-SingleMuTriggers = SingleMuTriggers + ["HLT_IsoTkMu20_v"+str(s) for s in xrange(15)]
+#SingleMuTriggers = ["HLT_IsoMu22_v3","HLT_IsoTkMu22_v3"]
+SingleMuTriggers = ["HLT_IsoMu22_v"+str(s) for s in range(2,4)]
+SingleMuTriggers = SingleMuTriggers + ["HLT_IsoMu24_v"+str(s) for s in range(2,4)]
+#SingleMuTriggers = SingleMuTriggers + ["HLT_IsoTkMu22_v"+str(s) for s in range(2,3)]
 
-hadronTriggers = ["HLT_PFMETNoMu120_NoiseCleaned_PFMHTNoMu120_IDTight","HLT_PFMETNoMu120_JetIdCleaned_PFMHTNoMu120_IDTight","HLT_PFMETNoMu90_NoiseCleaned_PFMHTNoMu90_IDTight","HLT_PFMETNoMu90_JetIdCleaned_PFMHTNoMu90_IDTight", "HLT_PFHT475_v2", "HLT_PFHT400_v2", "HLT_PFHT350_v3", "HLT_PFHT200_v2", "HLT_PFHT300_v2", "HLT_PFHT250_v2", "HLT_PFHT800_v2", "HLT_PFHT650_v3", "HLT_PFHT600_v3","HLT_AK8PFHT700_TrimR0p1PT0p03Mass50_v3", "HLT_Mu17_Mu8_v1", "HLT_ZeroBias_v2","HLT_Photon22_v2 ","HLT_Photon30_v3 ","HLT_Photon36_v3 ","HLT_Photon50_v3 ","HLT_Photon75_v3 ","HLT_Photon90_v3 ","HLT_Photon120_v3","HLT_Photon165_HE10_v3"]
-#hadronTriggers = ["HLT_PFMETNoMu120_NoiseCleaned_PFMHTNoMu120_IDTight","HLT_PFMETNoMu120_JetIdCleaned_PFMHTNoMu120_IDTight"]
+#SingleMuTriggers = SingleMuTriggers + ["HLT_IsoMu24_v2","HLT_IsoTkMu24_v2"]
+#SingleMuTriggers = SingleMuTriggers + ["HLT_IsoTkMu24_v"+str(s) for s in range(2,3)]
 
-hadronTriggers = hadronTriggers + ["HLT_PFMETNoMu120_NoiseCleaned_PFMHTNoMu120_IDTight_v"+str(s) for s in xrange(15)]
-hadronTriggers = hadronTriggers + ["HLT_PFMETNoMu120_JetIdCleaned_PFMHTNoMu120_IDTight_v"+str(s) for s in xrange(15)]
-hadronTriggers = hadronTriggers + ["HLT_PFMETNoMu90_NoiseCleaned_PFMHTNoMu90_IDTight_v"+str(s) for s in xrange(15)]
-hadronTriggers = hadronTriggers + ["HLT_PFMETNoMu90_JetIdCleaned_PFMHTNoMu90_IDTight_v"+str(s) for s in xrange(15)]
+hadronTriggers = [""]
 
 if(options.isData):
 
-    SingleElTriggers = ["HLT_Ele27_eta2p1_WPLoose_Gsf", "HLT_Ele23_WPLoose_Gsf"]
-    SingleElTriggers = SingleElTriggers + ["HLT_Ele27_eta2p1_WPLoose_Gsf_v"+str(s) for s in xrange(15)]
-    SingleElTriggers = SingleElTriggers + ["HLT_Ele23_WPLoose_Gsf_v"+str(s) for s in xrange(15)]
+    SingleElTriggers = ["HLT_Ele27_WPTight_Gsf","HLT_Ele32_eta2p1_WPTight_Gsf"]
+    SingleElTriggers = SingleElTriggers + ["HLT_Ele27_WPTight_Gsf_v"+str(s) for s in xrange(10)]
+    SingleElTriggers = SingleElTriggers + ["HLT_Ele32_eta2p1_WPTight_Gsf_v"+str(s) for s in xrange(10)]
 
-    SingleMuTriggers = ["HLT_IsoMu20","HLT_IsoTkMu20"]
-    SingleMuTriggers = SingleMuTriggers + ["HLT_IsoMu20_v"+str(s) for s in xrange(15)]
-    SingleMuTriggers = SingleMuTriggers + ["HLT_IsoTkMu20_v"+str(s) for s in xrange(15)]
+    #Muons
+    SingleMuTriggers = ["HLT_IsoMu22","HLT_IsoTkMu22"]
+    SingleMuTriggers = SingleMuTriggers + ["HLT_IsoMu22_v"+str(s) for s in xrange(10)]
+    SingleMuTriggers = SingleMuTriggers + ["HLT_IsoTkMu22_v"+str(s) for s in xrange(10)]
 
-    hadronTriggers = ["HLT_PFMETNoMu120_NoiseCleaned_PFMHTNoMu120_IDTight","HLT_PFMETNoMu120_JetIdCleaned_PFMHTNoMu120_IDTight","HLT_PFMETNoMu90_JetIdCleaned_PFMHTNoMu90_IDTight","HLT_PFMETNoMu90_NoiseCleaned_PFMHTNoMu90_IDTight","HLT_PFMETNoMu90_NoiseCleaned_PFMHTNoMu90_NoID", "HLT_PFMETNoMu90_PFMHTNoMu90_IDTight", "HLT_PFHT475_v2", "HLT_PFHT400_v2", "HLT_PFHT350_v3", "HLT_PFHT200_v2", "HLT_PFHT300_v2", "HLT_PFHT250_v2", "HLT_PFHT650_v3", "HLT_PFHT600_v3", "HLT_PFHT800_v2", "HLT_AK8PFHT700_TrimR0p1PT0p03Mass50_v3", "HLT_Mu17_Mu8_v1", "HLT_ZeroBias_v2", "HLT_Photon22_v2 ","HLT_Photon30_v3 ","HLT_Photon36_v3 ","HLT_Photon50_v3 ","HLT_Photon75_v3 ","HLT_Photon90_v3 ","HLT_Photon120_v3", "HLT_Photon165_HE10_v3"]
+    SingleMuTriggers = SingleMuTriggers + ["HLT_IsoMu24","HLT_IsoTkMu24"]
+    SingleMuTriggers = SingleMuTriggers + ["HLT_IsoMu24_v"+str(s) for s in xrange(10)]
+    SingleMuTriggers = SingleMuTriggers + ["HLT_IsoTkMu24_v"+str(s) for s in xrange(10)]
 
-    hadronTriggers = hadronTriggers+ ["HLT_PFMETNoMu120_NoiseCleaned_PFMHTNoMu120_IDTight_v"+str(s) for s in xrange(15)]
-    hadronTriggers = hadronTriggers+ ["HLT_PFMETNoMu120_JetIdCleaned_PFMHTNoMu120_IDTight_v"+str(s) for s in xrange(15)]
-    hadronTriggers = hadronTriggers+ ["HLT_PFMETNoMu90_JetIdCleaned_PFMHTNoMu90_IDTight_v"+str(s) for s in xrange(15)]
-    hadronTriggers = hadronTriggers+ ["HLT_PFMETNoMu90_NoiseCleaned_PFMHTNoMu90_IDTight_v"+str(s) for s in xrange(15)]
-    hadronTriggers = hadronTriggers+ ["HLT_PFMETNoMu90_NoiseCleaned_PFMHTNoMu90_NoID_v"+str(s) for s in xrange(15)]
-    hadronTriggers = hadronTriggers+ ["HLT_PFMETNoMu90_PFMHTNoMu90_IDTight_v"+str(s) for s in xrange(15)]
-
+    hadronTriggers = hadronTriggers+ [""]
+    
 
 
 process = cms.Process("ttDManalysisTrees")
@@ -249,9 +248,9 @@ process.DMTreesDumper.isData = cms.untracked.bool(options.isData)#This adds the 
 process.DMTreesDumper.applyRes = cms.untracked.bool(options.applyRes)#This adds the L2L3Residuals
 
 #G
-process.DMTreesDumper.channelInfo.useLHE = cms.untracked.bool(False)
+process.DMTreesDumper.channelInfo.useLHE = cms.untracked.bool(True)
 #G
-process.DMTreesDumper.channelInfo.useLHEWeights = cms.untracked.bool(False)
+process.DMTreesDumper.channelInfo.useLHEWeights = cms.untracked.bool(True)
 
 
 if options.channel == "ttbar":
@@ -267,8 +266,8 @@ if options.isData:
     process.DMTreesDumper.channelInfo.useLHEWeights = cms.untracked.bool(False)
 
 if not options.isData:
-    process.DMTreesDumper.channelInfo.useLHE = cms.untracked.bool(False)
-    process.DMTreesDumper.channelInfo.useLHEWeights = cms.untracked.bool(False)
+    process.DMTreesDumper.channelInfo.useLHE = cms.untracked.bool(True)
+    process.DMTreesDumper.channelInfo.useLHEWeights = cms.untracked.bool(True)
 
 if(options.isData): del process.DMTreesDumper.physicsObjects[-1]
 process.analysisPath = cms.Path(

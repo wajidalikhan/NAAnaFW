@@ -58,7 +58,8 @@ def main():
     config.section_("Data")
     config.Data.inputDataset = None
     config.Data.ignoreLocality = True
-    config.Data.outLFNDirBase = '/store/user/oiorio/ttDM/trees/2016/Apr/25Apr/'
+    #    config.Data.outLFNDirBase = '/store/user/oiorio/ttDM/samples/2016/Oct/'
+    config.Data.outLFNDirBase = '/store/user/oiorio/ttDM/trees/2016/Oct/12Oct/'
     config.Data.inputDBS = 'phys03'
     config.Data.splitting = 'FileBased'
     #    config.Data.totalUnits = -1
@@ -95,7 +96,8 @@ def main():
         
         #if s.find('ST_t-') > 0 :
         #   print ' single top\n   => add lhesource=source'
-        #    config.JobType.pyCfgParams = ["isData=False", "changeJECs=False","lhesource=source"]
+        config.JobType.pyCfgParams = ["isData=False", "changeJECs=False"]
+        #        config.JobType.pyCfgParams = ["isData=False", "changeJECs=False","lhesource=source"]
         
     for ijob, job in enumerate(jobs) :
 

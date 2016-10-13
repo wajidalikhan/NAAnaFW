@@ -41,9 +41,9 @@ catMu = ["Tight","Loose"]
 catEl = ["Tight","Veto"]
 catJet = ["Tight"]
 
-scanMu = ["Pt_30","Pt_40"]
+scanMu = []
 scanEl = []
-scanJet = ["CorrPt_30","CorrPt_40"]
+scanJet = ["CorrPt_20","CorrPt_40"]
 #scanJet = ["CorrPt_30"]
 #scanJet = ["Pt_30","Pt_40"]
 
@@ -60,7 +60,7 @@ scanJet = ["CorrPt_30","CorrPt_40"]
 addCentrality=False
 
 cutOnTriggers = False
-doPreselectionCuts = False
+doPreselectionCuts = True
 
 #What to use for jets/other variables
 saveBase = cms.untracked.bool(False)
@@ -469,11 +469,15 @@ DMTreesDumper.physicsObjects.append(
  #           cms.InputTag(j,jpref+"SmearedPEta"),
  #           cms.InputTag(j,jpref+"SmearedPhi"),
 #            cms.InputTag(j,jpref+"Y"),
+#            cms.InputTag(j,jpref+"muonEnergyFrac"),
+
+            cms.InputTag(j,jpref+"neutralHadronEnergyFrac"),
+            cms.InputTag(j,jpref+"neutralEmEnergyFrac"),
+
+
             cms.InputTag(j,jpref+"chargedEmEnergyFrac"),
             cms.InputTag(j,jpref+"chargedHadronEnergyFrac"),
-#            cms.InputTag(j,jpref+"muonEnergyFrac"),
-            cms.InputTag(j,jpref+"neutralEmEnergyFrac"),
-            cms.InputTag(j,jpref+"neutralHadronEnergyFrac"),
+
 #            cms.InputTag(j,jpref+"NumConstituents"),
 #            cms.InputTag(j,jpref+"electronMultiplicity"),
 #            cms.InputTag(j,jpref+"muonMultiplicity"),
