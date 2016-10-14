@@ -1801,8 +1801,8 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	
       }
       if(passesCut &&  passesID && passesDR){
-    }
-	
+      }
+      
     if(isCSVT && passesCut &&  passesID && passesDR && fabs(eta) < 2.4) {
       float_values["Event_nCSVTJets"]+=1.0;
       ncsvt_tags +=1;
@@ -1820,11 +1820,11 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       ++bjetidx;
       
     }
-    
+      
     if(isCSVL && passesCut &&  passesID && passesDR && abs(eta) < 2.4) float_values["Event_nCSVLJets"]+=1;
-    }
+      }
       bool passesBaseCut = ( ptCorr > jetbaseval && fabs(eta) < 4.);
-
+      
       if(passesID && passesDR && passesBaseCut) if(obj_scanCuts[jets_label].size()>=1) {
 	  //	cout << "now testing scan jets "<<endl;
 	  fillScanCuts(jets_label,"Tight",j);
@@ -2391,80 +2391,80 @@ vector<string> DMAnalysisTreeMaker::additionalVariables(string object){
             
     }
 
-    addvar.push_back("bWeight0CSVT");
-    addvar.push_back("bWeight1CSVT");
-    addvar.push_back("bWeight2CSVT");
-    addvar.push_back("bWeight1_2CSVT");
-
-    addvar.push_back("bWeight0CSVM");
-    addvar.push_back("bWeight1CSVM");
-    addvar.push_back("bWeight2CSVM");
-    addvar.push_back("bWeight1_2CSVM");
-
-    addvar.push_back("bWeight0CSVL");
-    addvar.push_back("bWeight1CSVL");
-    addvar.push_back("bWeight2CSVL");
-    addvar.push_back("bWeight1_2CSVL");
-
-    addvar.push_back("bWeightMisTagDown0CSVT");
-    addvar.push_back("bWeightMisTagDown1CSVT");
-    addvar.push_back("bWeightMisTagDown2CSVT");
-    addvar.push_back("bWeightMisTagDown1_2CSVT");
-
-    addvar.push_back("bWeightMisTagDown0CSVM");
-    addvar.push_back("bWeightMisTagDown1CSVM");
-    addvar.push_back("bWeightMisTagDown2CSVM");
-    addvar.push_back("bWeightMisTagDown1_2CSVM");
-
-    addvar.push_back("bWeightMisTagDown0CSVL");
-    addvar.push_back("bWeightMisTagDown1CSVL");
-    addvar.push_back("bWeightMisTagDown2CSVL");
-    addvar.push_back("bWeightMisTagDown1_2CSVL");
-
-    addvar.push_back("bWeightMisTagUp0CSVT");
-    addvar.push_back("bWeightMisTagUp1CSVT");
-    addvar.push_back("bWeightMisTagUp2CSVT");
-    addvar.push_back("bWeightMisTagUp1_2CSVT");
-
-    addvar.push_back("bWeightMisTagUp0CSVM");
-    addvar.push_back("bWeightMisTagUp1CSVM");
-    addvar.push_back("bWeightMisTagUp2CSVM");
-    addvar.push_back("bWeightMisTagUp1_2CSVM");
-
-    addvar.push_back("bWeightMisTagUp0CSVL");
-    addvar.push_back("bWeightMisTagUp1CSVL");
-    addvar.push_back("bWeightMisTagUp2CSVL");
-    addvar.push_back("bWeightMisTagUp1_2CSVL");
-
-    addvar.push_back("bWeightBTagUp0CSVT");
-    addvar.push_back("bWeightBTagUp1CSVT");
-    addvar.push_back("bWeightBTagUp2CSVT");
-    addvar.push_back("bWeightBTagUp1_2CSVT");
-
-    addvar.push_back("bWeightBTagUp0CSVM");
-    addvar.push_back("bWeightBTagUp1CSVM");
-    addvar.push_back("bWeightBTagUp2CSVM");
-    addvar.push_back("bWeightBTagUp1_2CSVM");
-
-    addvar.push_back("bWeightBTagUp0CSVL");
-    addvar.push_back("bWeightBTagUp1CSVL");
-    addvar.push_back("bWeightBTagUp2CSVL");
-    addvar.push_back("bWeightBTagUp1_2CSVL");
-
-    addvar.push_back("bWeightBTagDown0CSVT");
-    addvar.push_back("bWeightBTagDown1CSVT");
-    addvar.push_back("bWeightBTagDown2CSVT");
-    addvar.push_back("bWeightBTagDown1_2CSVT");
-
-    addvar.push_back("bWeightBTagDown0CSVM");
-    addvar.push_back("bWeightBTagDown1CSVM");
-    addvar.push_back("bWeightBTagDown2CSVM");
-    addvar.push_back("bWeightBTagDown1_2CSVM");
-
-    addvar.push_back("bWeightBTagDown0CSVL");
-    addvar.push_back("bWeightBTagDown1CSVL");
-    addvar.push_back("bWeightBTagDown2CSVL");
-    addvar.push_back("bWeightBTagDown1_2CSVL");
+//    addvar.push_back("bWeight0CSVT");
+//    addvar.push_back("bWeight1CSVT");
+//    addvar.push_back("bWeight2CSVT");
+//    addvar.push_back("bWeight1_2CSVT");
+//
+//    addvar.push_back("bWeight0CSVM");
+//    addvar.push_back("bWeight1CSVM");
+//    addvar.push_back("bWeight2CSVM");
+//    addvar.push_back("bWeight1_2CSVM");
+//
+//    addvar.push_back("bWeight0CSVL");
+//    addvar.push_back("bWeight1CSVL");
+//    addvar.push_back("bWeight2CSVL");
+//    addvar.push_back("bWeight1_2CSVL");
+//
+//    addvar.push_back("bWeightMisTagDown0CSVT");
+//    addvar.push_back("bWeightMisTagDown1CSVT");
+//    addvar.push_back("bWeightMisTagDown2CSVT");
+//    addvar.push_back("bWeightMisTagDown1_2CSVT");
+//
+//    addvar.push_back("bWeightMisTagDown0CSVM");
+//    addvar.push_back("bWeightMisTagDown1CSVM");
+//    addvar.push_back("bWeightMisTagDown2CSVM");
+//    addvar.push_back("bWeightMisTagDown1_2CSVM");
+//
+//    addvar.push_back("bWeightMisTagDown0CSVL");
+//    addvar.push_back("bWeightMisTagDown1CSVL");
+//    addvar.push_back("bWeightMisTagDown2CSVL");
+//    addvar.push_back("bWeightMisTagDown1_2CSVL");
+//
+//    addvar.push_back("bWeightMisTagUp0CSVT");
+//    addvar.push_back("bWeightMisTagUp1CSVT");
+//    addvar.push_back("bWeightMisTagUp2CSVT");
+//    addvar.push_back("bWeightMisTagUp1_2CSVT");
+//
+//    addvar.push_back("bWeightMisTagUp0CSVM");
+//    addvar.push_back("bWeightMisTagUp1CSVM");
+//    addvar.push_back("bWeightMisTagUp2CSVM");
+//    addvar.push_back("bWeightMisTagUp1_2CSVM");
+//
+//    addvar.push_back("bWeightMisTagUp0CSVL");
+//    addvar.push_back("bWeightMisTagUp1CSVL");
+//    addvar.push_back("bWeightMisTagUp2CSVL");
+//    addvar.push_back("bWeightMisTagUp1_2CSVL");
+//
+//    addvar.push_back("bWeightBTagUp0CSVT");
+//    addvar.push_back("bWeightBTagUp1CSVT");
+//    addvar.push_back("bWeightBTagUp2CSVT");
+//    addvar.push_back("bWeightBTagUp1_2CSVT");
+//
+//    addvar.push_back("bWeightBTagUp0CSVM");
+//    addvar.push_back("bWeightBTagUp1CSVM");
+//    addvar.push_back("bWeightBTagUp2CSVM");
+//    addvar.push_back("bWeightBTagUp1_2CSVM");
+//
+//    addvar.push_back("bWeightBTagUp0CSVL");
+//    addvar.push_back("bWeightBTagUp1CSVL");
+//    addvar.push_back("bWeightBTagUp2CSVL");
+//    addvar.push_back("bWeightBTagUp1_2CSVL");
+//
+//    addvar.push_back("bWeightBTagDown0CSVT");
+//    addvar.push_back("bWeightBTagDown1CSVT");
+//    addvar.push_back("bWeightBTagDown2CSVT");
+//    addvar.push_back("bWeightBTagDown1_2CSVT");
+//
+//    addvar.push_back("bWeightBTagDown0CSVM");
+//    addvar.push_back("bWeightBTagDown1CSVM");
+//    addvar.push_back("bWeightBTagDown2CSVM");
+//    addvar.push_back("bWeightBTagDown1_2CSVM");
+//
+//    addvar.push_back("bWeightBTagDown0CSVL");
+//    addvar.push_back("bWeightBTagDown1CSVL");
+//    addvar.push_back("bWeightBTagDown2CSVL");
+//    addvar.push_back("bWeightBTagDown1_2CSVL");
 
     addvar.push_back("T_Pt");
     addvar.push_back("T_Eta");
@@ -2548,22 +2548,22 @@ vector<string> DMAnalysisTreeMaker::additionalVariables(string object){
       for (size_t lt = 0; lt < SingleElTriggers.size(); ++lt)  {
 	string trig = SingleElTriggers.at(lt);
 	addvar.push_back("passes"+trig);
-	addvar.push_back("prescale"+trig);
+	//addvar.push_back("prescale"+trig);
       }
       for (size_t lt = 0; lt < SingleMuTriggers.size(); ++lt)  {
 	string trig = SingleMuTriggers.at(lt);
 	addvar.push_back("passes"+trig);
-	addvar.push_back("prescale"+trig);
+	//	addvar.push_back("prescale"+trig);
       }
       for (size_t lt = 0; lt < PhotonTriggers.size(); ++lt)  {
 	string trig = PhotonTriggers.at(lt);
 	addvar.push_back("passes"+trig);
-	addvar.push_back("prescale"+trig);
+	//	addvar.push_back("prescale"+trig);
       }
       for (size_t ht = 0; ht < hadronicTriggers.size(); ++ht)  {
 	string trig = hadronicTriggers.at(ht);
 	addvar.push_back("passes"+trig);
-	addvar.push_back("prescale"+trig);
+	//	addvar.push_back("prescale"+trig);
       }
       addvar.push_back("passesSingleElTriggers");
       addvar.push_back("passesSingleMuTriggers");
