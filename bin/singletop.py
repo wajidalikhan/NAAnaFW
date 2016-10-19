@@ -6,7 +6,8 @@ import subprocess
 import sys
 import glob
 
-#python HistoProd.py -c fullhadronic -s noSys -m local
+#python singletop.py -c fullhadronic -s noSys -m t3se 
+#python singletop.py -c fullhadronic -s noSys -m local 
 
 from os.path import join,exists
 print 'Python version', sys.version_info
@@ -18,16 +19,15 @@ workdir = 'work'
 fileListDir = join(workdir,'files')
 
 #define samples paths
-path = "/afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_16/src/Analysis/NAAnaFW/test/"
-t3Path = '//pnfs/psi.ch/cms/trivcat/store/user/grauco/BprimeAnalysis_76X_v4/' #_4_15_v0/B2G_Fw76X/'
-t3Ls = 'xrdfs t3dcachedb03.psi.ch ls -u'
-#path = "/scratch/grauco/B2G_25ns/"
-#path = "/scratch/decosa/07Oct2015/"
-#t3Ls = 'xrdfs t3se01.psi.ch ls -u'
+pathlocal = "/afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_16/src/Analysis/NAAnaFW/test/crab_projects/crab_st_top/results/ST/" 
+path = "root://cms-xrd-global.cern.ch//store/group/phys_top/SingleTop/2016/ST_t-channel_antitop_4f_leptonDecays_13TeV-powheg-pythia8_TuneCUETP8M1/crab_st_atop/160914_101244/0000/" 
+t2Path='/store/group/phys_top/SingleTop/2016/ST_t-channel_top_4f_leptonDecays_13TeV-powheg-pythia8_TuneCUETP8M1/crab_st_top/160914_130329/0000/' 
+storeLs = 'xrd eoscms dirlist'
 
 #define samples, one folder for each mass value
 samples = []
-samples.append("TT")
+samples.append("ST")
+#samples.append("STbar")
 
 usage = 'usage: %prog -l lumi'
 parser = optparse.OptionParser(usage)
@@ -60,9 +60,12 @@ for s in samples:
     #cmd = "ttDManalysis "+ s + " " + path + s  + " " + opt.channel + " " +opt.cat + " " + opt.sys + " " + opt.sync + " " + isData
     #print cmd
     #os.system(cmd)
+    if (s.startswith("STbar")):
+      t2Path='/store/group/phys_top/SingleTop/2016/ST_t-channel_antitop_4f_leptonDecays_13TeV-powheg-pythia8_TuneCUETP8M1/crab_st_atop/160914_101244/0000/'
+    
     if opt.mode == 'local':
         print 'Info: Running in local mode ...'
-        sPath = join(path,s,'*.root')
+        sPath = join(pathlocal,'*.root')
         print 'Info: Looking for the *.root files at: ',sPath
         
         # Get the complete list of files
@@ -72,42 +75,48 @@ for s in samples:
 
     elif opt.mode == 't3se':
         # Build the full path of sample files
-        sT3Path = join(t3Path,s)
-        print ' '.join([t3Ls,sT3Path])
+        sT2Path = join(t2Path)
+        interpath = join([storeLs,sT2Path])
+        print ' '.join([storeLs,sT2Path])
 
         # Get the complete list of files
-        listing = subprocess.check_output(t3Ls.split()+[sT3Path])
+        listing = subprocess.check_output(storeLs.split()+[sT2Path])
         files = listing.split()
         print 'Sample',s,'Files found',len(files)
 
     # Save it to a semi-temp file
     sampleFileList = join(fileListDir,s+'.txt')
+    
     print 'Info:',sampleFileList
     with open(sampleFileList,'w') as sl:
         sl.write('\n'.join(files))
     
     outDirs = ['res','trees']
-
+    
+    if opt.mode == 't3se':
+        subprocess.call("./dirty.sh",shell=True)
+    
     for d in outDirs:
         if exists(d): continue
         os.makedirs(d)
-
+    
     cmd = 'SingleTopAnalysis '+ s + ' ' + sampleFileList  + ' ' + opt.channel + ' ' + opt.cat + ' ' + opt.sys + ' ' + opt.sync + ' ' + isData
     #cmd = "ttDManalysis "+ s + " " + path + s  + " " + opt.channel + " " +opt.cat + " " + opt.sys + " " + opt.sync + " " + isData
+    print cmd
 
     if opt.gdb:
         cmd = 'gdb --args '+cmd
+    
     elif opt.t3batch:
         jid = '%s_%s_%s_%s' % (s,opt.channel,opt.cat,opt.sys)
         cmd = 'qexe.py -w' + workdir + ' ' + jid+' -- '+cmd
+    
     print 'Info:',cmd
-    print '--------------------'
  
     if opt.dryrun:
         print 'Dry Run (command will not be executed)'
         continue
-
-
-
+    
+    print '--------------------'
     subprocess.call(cmd,shell=True)
 

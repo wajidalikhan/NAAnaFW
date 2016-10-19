@@ -6,7 +6,6 @@
 <use  name="rootminuit2"/>
 <use  name="root"/>
 <use  name="roottmva"/>
-<use  name="Tprime/TprimeAnalysis/"/>
 <export>
   <lib name="1"/>
 </export>
