@@ -33,5 +33,6 @@ __init__.py*
 *.root
 *.log
 
+backup
 test/CRAB
 .__afs*

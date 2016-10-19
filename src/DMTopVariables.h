@@ -24,6 +24,7 @@
 #include "DataFormats/Math/interface/LorentzVector.h"
 #include "DataFormats/Math/interface/deltaPhi.h"
 #include "DataFormats/Math/interface/deltaR.h"
+#include "TLorentzVector.h"
 #include <Math/VectorUtil.h>
 #include "./EquationSolver.h"
 
@@ -35,6 +36,9 @@ public:
   TopUtilities(){;}
   ~TopUtilities(){;}
   
+  vector<math::PtEtaPhiELorentzVector> top4MomentaPTEtaPhiE(vector<TLorentzVector> , vector<TLorentzVector>, double, double );
+  vector<TLorentzVector> top4Momenta(vector<TLorentzVector> , vector<TLorentzVector>, double, double );
+
   math::PtEtaPhiELorentzVector top4Momentum(TLorentzVector , TLorentzVector, double, double );
   math::PtEtaPhiELorentzVector top4Momentum(math::PtEtaPhiELorentzVector , math::PtEtaPhiELorentzVector, double, double );
   math::PtEtaPhiELorentzVector top4Momentum(float leptonPx, float leptonPy, float leptonPz, float leptonE, float jetPx, float jetPy, float jetPz, float jetE, float metPx, float metPy);
@@ -47,12 +51,41 @@ public:
 
 };
 
+vector <math::PtEtaPhiELorentzVector> TopUtilities::top4MomentaPTEtaPhiE(vector<TLorentzVector> leptons, vector<TLorentzVector> bjets, double metPx, double metPy){
+  vector <math::PtEtaPhiELorentzVector> topCandidates;
+  for (size_t i=0; i < (size_t)leptons.size();++i ){
+    math::PtEtaPhiELorentzVector lep(leptons.at(i).Pt(),leptons.at(i).Eta(),leptons.at(i).Phi(),leptons.at(i).Energy());
+    
+    for (size_t b=0; b < (size_t)bjets.size();++b ){
+      math::PtEtaPhiELorentzVector bjet(bjets.at(b).Pt(),bjets.at(b).Eta(),bjets.at(b).Phi(),bjets.at(b).Energy());
+      topCandidates.push_back(top4Momentum(lep,bjet,metPx,metPy));
+    }  
+  }
+  return topCandidates;
+}
+
+vector <TLorentzVector> TopUtilities::top4Momenta(vector<TLorentzVector> leptons, vector<TLorentzVector> bjets, double metPx, double metPy){
+  vector <TLorentzVector> topCandidates;
+  for (size_t i=0; i < (size_t)leptons.size();++i ){
+    math::PtEtaPhiELorentzVector lep(leptons.at(i).Pt(),leptons.at(i).Eta(),leptons.at(i).Phi(),leptons.at(i).Energy());
+    
+    for (size_t b=0; b < (size_t)bjets.size();++b ){
+      math::PtEtaPhiELorentzVector bjet(bjets.at(b).Pt(),bjets.at(b).Eta(),bjets.at(b).Phi(),bjets.at(b).Energy());
+      TLorentzVector top;
+      math::PtEtaPhiELorentzVector top_tmp = top4Momentum(lep,bjet,metPx,metPy);
+      top.SetPtEtaPhiE(top_tmp.Pt(), top_tmp.Eta(), top_tmp.Phi(), top_tmp.E());
+      topCandidates.push_back(top);
+
+    }  
+  }
+  return topCandidates;
+}
+
 math::PtEtaPhiELorentzVector TopUtilities::top4Momentum(TLorentzVector lepton, TLorentzVector jet, double metPx, double metPy){
   math::PtEtaPhiELorentzVector lep(lepton.Pt(),lepton.Eta(),lepton.Phi(),lepton.Energy());
   math::PtEtaPhiELorentzVector bjet(jet.Pt(),jet.Eta(),jet.Phi(),jet.Energy());
   return top4Momentum(lep,bjet,metPx,metPy);
 }
-
 
 //top quark 4-momentum given lepton, met and b-jet
 math::PtEtaPhiELorentzVector TopUtilities::top4Momentum(math::PtEtaPhiELorentzVector lepton, math::PtEtaPhiELorentzVector jet, double metPx, double metPy)
