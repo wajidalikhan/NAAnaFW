@@ -2,27 +2,28 @@ import os, commands
 import optparse 
 
 
-usage = 'usage: %prog -se storage -v failed -d 161012'
+usage = 'usage: %prog -se storage:port/srm/managerv2 -v failed -d 161012 -f samples.txt -p path/On/SE -o localOutputDirectory -V verboseLevel'
 parser = optparse.OptionParser(usage)
-#Specify the base parameters, assuming you manually put samples and paths in the list below:
+#Specify the base parameters(default samples are hardcoded in the list below):
+
+#Input/Output options:
 parser.add_option('-s', '--storageElement',      dest='se',     type='string',     default = 'storage01.lcg.cscs.ch:8443/srm/managerv2',    help='Remote storaga element to fetch including port and manager version, examples: srm://storage01.lcg.cscs.ch:8443/srm/managerv2, stormfe1.pi.infn.it:8444/srm/managerv2')
+parser.add_option('-o', '--outputDir',   dest='outdir',  type='string',     default = './mc/trees/',      help='Directory to create the trees folder')
+
+#String fetching options:
 parser.add_option('-d', '--date',      dest='date',     type='string',     default = '',   help='date of the job, in the crab format yymmdd_hhmmss, also accepts partial (e.g: 1610 for october 2016)')
 parser.add_option('-v',   '--veto',     dest='veto',    type='string',     default = 'failed',  help='String to veto while fetching')
 
-
-parser.add_option('-o', '--outputDir',   dest='outdir',  type='string',     default = './',      help='Directory to create the trees folder')
-
-parser.add_option('-V',   '--verbose',     dest='verbose', type='int', default=0,help="verbose level:0=none, 1=only final list,2= detail from all functions")
-####If you want to import the samples and paths from a python file, work in progress:
-####parser.add_option('-i', '--importSamples',   dest='import',  type='string', default = None)
-
 #If you want to get the samples from a .txt file:
 parser.add_option('-f', '--file',      dest='file',     type='string',     default = '',      help='File for samples fetching')
-parser.add_option('-p','--path',      dest='path',     type='string',     default = '/pnfs/lcg.cscs.ch/cms/trivcat/store/user/oiorio/ttDM/trees/2016/Oct/',    help='local path for the samples, if file name is  specified')
 
+#If you want to get a single sample specifying it directly in the command:
+parser.add_option('-S','--singleSample',      dest='singleSample',     type='string',     default = '',    help='force to look for a single sample if specified. Overrides the -f option if both are present.')
+parser.add_option('-p','--path',      dest='path',     type='string',     default = '/pnfs/lcg.cscs.ch/cms/trivcat/store/user/oiorio/ttDM/trees/2016/Oct/',    help='local path for the samples, if -f or -S options are specified.')
 
-
-parser.add_option('-n', '--dryrun',   dest='dryrun',  action='store_true', default=False)
+#Quality of life options:
+parser.add_option('-V',   '--verbose',     dest='verbose', type='int', default=0,help="verbose level:0=steps performed, 1=final output list,2= detail from all functions")
+parser.add_option('-n', '--dryrun',   dest='dryrun',  action='store_true', default=False, help="dry run: will look for the files, but will not write any list.")
 
 (opt, args) = parser.parse_args()
 
@@ -161,10 +162,17 @@ samplesAndPaths = {
     }
 
 
-if not opt.file == '':
-    samplesAndPaths = listFromSamples(opt.file, opt.path)
-
 outDir = opt.outdir
+print "output directory is: ", outDir, " , fetching se: ", opt.se
+
+if not opt.file == '':
+    if not opt.singleSample=='':
+        print "using file: ", opt.file, " through path: ", opt.path
+        samplesAndPaths = listFromSamples(opt.file, opt.path)
+    else: print "!!!WARNING!!! both -f and -S options are present! The latter will override the former, be sure this is what you intended!"
+
+if not opt.singleSample=='':
+    samplesAndPaths ={opt.singleSample,opt.path}
 
 def writeSamplesAndPaths(sap, outputDir=outDir, option = 'w'):
     filename = outputDir+"samplesAndPaths.py"
@@ -179,9 +187,9 @@ def writeSamplesAndPaths(sap, outputDir=outDir, option = 'w'):
   
 
 
+os.system("mkdir "+outDir)
+os.system("rm "+outDir+"/listAllSamples.py")
 writeSamplesAndPaths(samplesAndPaths)
-os.system("mkdir "+outDir+"/trees")
-os.system("rm "+outDir+"/trees/listAllSamples.py")
 
 for sample in samplesAndPaths:
     path = samplesAndPaths[sample]
@@ -195,6 +203,6 @@ for sample in samplesAndPaths:
         print outputListJES
 
     if not opt.dryrun:
-        printFilesInList(outputListJES, "/pnfs/lcg.cscs.ch/cms/trivcat/", sample,outDir+"/trees/","w",verbose=opt.verbose>1)
-        printFilesInList(outputListJES, "/pnfs/lcg.cscs.ch/cms/trivcat/", sample,outDir+"./trees/","a",verbose=opt.verbose>1)
+        printFilesInList(outputListJES, "/pnfs/lcg.cscs.ch/cms/trivcat/", sample,outDir,"w",verbose=opt.verbose>1)
+        printFilesInList(outputListJES, "/pnfs/lcg.cscs.ch/cms/trivcat/", sample,outDir,"a",verbose=opt.verbose>1)
     

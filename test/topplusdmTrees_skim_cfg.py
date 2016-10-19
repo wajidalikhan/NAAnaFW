@@ -43,40 +43,13 @@ files = []
 #files = ["file:"+filedir+"MET_Prompt/"+l for l in listFiles]
 files = ["file:"+filedir+"/"+chan+"/"+l for l in listFiles]
 options.register('sample',
-                 #                 '/store/group/lpctlbsm/B2GAnaFW_80X_V2p0/ST_t-channel_antitop_4f_leptonDecays_13TeV-powheg-pythia8_TuneCUETP8M1/RunIISpring16MiniAODv2_B2GAnaFW_80x_V2p0/160723_155301/0000/B2GEDMNtuple_1.root',
-                 #                 files,
-                 #'root://xrootd.ba.infn.it//store/user/grauco/Ntuples_Fwk76v1_wPileUpJet/QCD_Pt-15to3000_TuneCUETP8M1_Flat_13TeV_pythia8/b2ganafw76x_QCD_Pt-15to3000_TuneCUETP8M1_Flat_13TeV_pythia8_JetMet_18Mar_v1/160318_104000/0000/B2GEDMNtuple_1.root',
-                 #/store/user/grauco/Ntuples_Fwk76v1_wPileUpJet/QCD_Pt-15to3000_TuneCUETP8M1_Flat_13TeV_pythia8/b2ganafw76x_QCD_Pt-15to3000_TuneCUETP8M1_Flat_13TeV_pythia8_JetMet_18Mar_v1/160318_104000/0000/B2GEDMNtuple_1.root
-                 #'root://xrootd.ba.infn.it//store/user/grauco/Ntuples_Fwk76v1_wPileUpJet/DoubleMuon/b2ganafw76x_DoubleMuon_02Mar_v3/160302_145236/0000/B2GEDMNtuple_101.root',
-                 
-                 #'root://xrootd.ba.infn.it//store/user/grauco/Ntuples_Fwk76v1/BprimeBToHB_M-1000_TuneCUETP8M1_13TeV-madgraph-pythia8/b2ganafw76x_BprimeBToHB_M-1000_TuneCUETP8M1_13TeV-madgraph-pythia8_23Feb_v1/160223_072932/0000/B2GEDMNtuple_1.root',
-                 #'root://xrootd.ba.infn.it//store/user/algomez/QCD_HT1500to2000_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIIFall15MiniAODv2-PU25nsData2015v1_B2GAnaFW_v76x_v1p0/160222_145142/0000/B2GEDMNtuple_100.root',
-                 #'root://xrootd.unl.edu//store/user/decosa/ttDM/CMSSW_7_4_15/MET/MET_Run2015D_miniAODv2_13Nov/151113_154306/0000/B2GEDMNtuple_1.root',
-                 #'root://xrootd.unl.edu//store/user/dpinna/Samples_v2_Fw7_4_15/TTbarDMJets_scalar_Mchi-1_Mphi-10_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/DMtt_Mchi1Mphi10_v211Nov/151111_102628/0000/B2GEDMNtuple_1.root',
-                 #'root://xrootd.unl.edu//store/user/oiorio/ttDM/samples/Nov2015/ST_t-channel_top_4f_leptonDecays_13TeV-powheg-pythia8_TuneCUETP8M1/EDMNTUPLE_12Nov/151113_183052/0000/B2GEDMNtuple_1.root',
-#                 ['root://xrootd.unl.edu//store/user/dpinna/Samples_v2_Fw7_4_15/TTbarDMJets_scalar_Mchi-1_Mphi-10_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/DMtt_Mchi1Mphi10_v211Nov/1511#11_102628/0000/B2GEDMNtuple_1.root',
-#                 'root://xrootd.unl.edu//store/user/dpinna/Samples_v2_Fw7_4_15/TTbarDMJets_scalar_Mchi-1_Mphi-10_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/DMtt_Mchi1Mphi10_v211Nov/15111#1_102628/0000/B2GEDMNtuple_2.root',
-#                 'root://xrootd.unl.edu//store/user/dpinna/Samples_v2_Fw7_4_15/TTbarDMJets_scalar_Mchi-1_Mphi-10_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/DMtt_Mchi1Mphi10_v211Nov/15111#1_102628/0000/B2GEDMNtuple_3.root',],
-                 #'root://xrootd.unl.edu//store/user/jkarancs/SusyAnalysis/B2GEdmNtuple/DYJetsToLL_M-50_HT-400to600_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/B2GAnaFW_v74x_V8p4_RunIISpring15MiniAODv2-74X_mcRun2_asymptotic_v2-v2/151111_094305/0000/B2GEDMNtuple_1.root',
-#                 'root://xrootd.ba.infn.it//store/user/jkarancs/SusyAnalysis/B2GEdmNtuple/DYJetsToLL_M-50_HT-400to600_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/B2GAnaFW_v74x_V8p4_RunIISpring15MiniAODv2-74X_mcRun2_asymptotic_v2-v2/151111_094305/0000/B2GEDMNtuple_26.root',
-#/store/user/decosa/ttDM/CMSSW_7_4_15/QCD_HT300to500_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/QCD_HT300to500/151111_112957/0000/B2GEDMNtuple_1.root',
-                 #'root://xrootd.ba.infn.it//store/user/decosa/ttDM/CMSSW_7_4_12/MET/MET_Run2015D_v3/150927_052306/0000/B2GEDMNtuple_1.root',
-
-#                 'root://xrootd.ba.infn.it//store/user/decosa/ttDM/CMSSW_7_4_12/MET/MET_Run2015D_v5/151012_123712/0000/B2GEDMNtuple_104.root',
-#                 'root://xrootd.ba.infn.it//store/user/dpinna/TTDM_Fwv7.4.x_v6.1_25ns/SingleElectron/SingleElectron_20Oct_v2/151020_082044/0000/B2GEDMNtuple_1.root',
-#                 "file:/tmp/oiorio/B2G.root",
-#                 "file:/tmp/oiorio/B2GWJetsNLO.root",
-#                /user/oiorio/ttDM/samples/Nov2015/ST_t-channel_top_4f_leptonDecays_13TeV-powheg-pythia8_TuneCUETP8M1/EDMNTUPLE_12Nov/151 'root://xrootd.ba.infn.it//store/user/decosa/ttDM/CMSSW_7_4_12/SingleMuon/SingleMuon_Run2015D_v4/151012_123201/0000/B2GEDMNtuple_1.root',
-#                 'root://xrootd.ba.infn.it//store/user/dpinna/TTDM_Fwv7.4.x_v6.1_25ns/TTbarDMJets_pseudoscalar_Mchi-1_Mphi-500_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/psDMtt_Mchi1Mphi500_1Oct/150930_221122/0000/B2GEDMNtuple_1.root',
-                 
-#                 'root://xrootd.ba.infn.it//store/user/grauco/Ntuples_Fwk76v1_wPileUpJet/QCD_Pt-15to7000_TuneCUETHS1_Flat_13TeV_herwigpp/b2ganafw76x_QCD_Pt-15to7000_TuneCUETHS1_Flat_13TeV_herwigpp_02Mar_v3/160302_134653/0000/B2GEDMNtuple_1.root',
-                 'file:../../B2GAnaFW/test/B2GEDMNtuple.root',
-#                 'file:B2GEDMNtuple.root',
-                 #'file:B2GEDMNtuple_QCD.root',
-                 #'file:B2GEDMNtuple_DoubleMuon.root',  
-#                 'file:B2GEDMNtuple_test.root',
-#                'file:/tmp/oiorio/BGEDMNtuple_TT.root',
-#                'file:/tmp/oiorio/B2GEDMNtuple_QCD.root',
+                 #root://xrootd.ba.infn.it
+                 #or 
+                 #root://xrootd.unl.edu
+                 #or
+                 #root://xrootd.cern.ch
+                 'root://xrootd.ba.infn.it//store/user/oiorio/ttDM/samples/2016/Oct/ST_t-channel_top_4f_inclusiveDecays_13TeV-powhegV2-madspin-pythia8_TuneCUETP8M1/crab_STt-channeltop4finclusiveDecays13TeV-powhegV2-madspin-pythia8TuneCUETP8M1/161011_132502/0000/B2GEDMNtuple_212.root',
+#                 'file:../../B2GAnaFW/test/B2GEDMNtuple.root',
                  opts.VarParsing.multiplicity.singleton,
                  opts.VarParsing.varType.string,
                  'Sample to analyze')
@@ -269,7 +242,7 @@ if not options.isData:
     process.DMTreesDumper.channelInfo.useLHE = cms.untracked.bool(True)
     process.DMTreesDumper.channelInfo.useLHEWeights = cms.untracked.bool(True)
 
-if(options.isData): del process.DMTreesDumper.physicsObjects[-1]
+#if(options.isData): del process.DMTreesDumper.physicsObjects[-1]
 process.analysisPath = cms.Path(
     process.DMTreesDumper
     )
