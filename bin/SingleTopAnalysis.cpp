@@ -155,7 +155,7 @@ int main(int argc, char **argv) {
   systWeights systZero,syst0B; 
   int maxSysts=0; 
   int sizeMax=50;
-  int muSize, elSize, jetSize,jetTightSize;
+  int muSize, elSize, jetSize;
   //float passTrigHT(0.), Ht(0.);
   float Ht(0.), mt(0.);
   float runNumber(0.), lumiSec(0.);
@@ -232,7 +232,6 @@ int main(int argc, char **argv) {
   chain.SetBranchAddress("jetsAK4CHSTight_IsLoose",&jetIsLoose);
   chain.SetBranchAddress("jetsAK4CHSTight_IsTight",&jetIsTight);
   chain.SetBranchAddress("jetsAK4CHSTight_CSVv2",  &jetak4chs_csvv2);
-  chain.SetBranchAddress("jetsAK4CHSTight_size",  &jetTightSize);
   
   chain.SetBranchAddress("Event_RunNumber", &runNumber);
   chain.SetBranchAddress("Event_LumiBlock", &lumiSec);
@@ -322,11 +321,11 @@ int main(int argc, char **argv) {
   TopUtilities topUtils;
 
 
-for(Int_t i=0; i<nEvents; i++ ){
-    if(i%100000==1 ){
-    cout<<"Info: Running on event: "<<i<<endl; 
+for(Int_t evt=0; evt<nEvents; evt++ ){
+    if(evt%100000==1 ){
+    cout<<"Info: Running on event: "<<evt<<endl; 
     }
-  chain.GetEntry(i);
+  chain.GetEntry(evt);
   int maxJetLoop = min(15, jetSize);
   int maxMuLoop = min(6, muSize);
   int maxElLoop = min(6, elSize);
@@ -468,9 +467,9 @@ for(Int_t i=0; i<nEvents; i++ ){
   for(size_t i = 0; i < (size_t)tightMu.size();++i ){
    if(tightMu[i].Pt()>20){
    systZero.fillHistogramsSysts(h_2j1t_MuPt,tightMu[i].Pt(),1.0);
-   systZero.fillHistogramsSysts(h_2j1t_MuEta,tightMu[i].Pt(),1.0);
-   systZero.fillHistogramsSysts(h_2j1t_MuPhi,tightMu[i].Pt(),1.0);
-   systZero.fillHistogramsSysts(h_2j1t_MuE,tightMu[i].Pt(),1.0);
+   systZero.fillHistogramsSysts(h_2j1t_MuEta,tightMu[i].Eta(),1.0);
+   systZero.fillHistogramsSysts(h_2j1t_MuPhi,tightMu[i].Phi(),1.0);
+   systZero.fillHistogramsSysts(h_2j1t_MuE,tightMu[i].E(),1.0);
    
    if((tightMu.size())<2 ){
         TVector2 met_( met*cos(metPhi[0]), met*sin(metPhi[0]));
@@ -499,9 +498,9 @@ for(Int_t i=0; i<nEvents; i++ ){
   
   for(size_t i = 0; i < (size_t)tightMu.size();++i ){
         systZero.fillHistogramsSysts(h_3j1t_MuPt,tightMu[i].Pt(),1.0);
-        systZero.fillHistogramsSysts(h_3j1t_MuEta,tightMu[i].Pt(),1.0);
-        systZero.fillHistogramsSysts(h_3j1t_MuPhi,tightMu[i].Pt(),1.0);
-        systZero.fillHistogramsSysts(h_3j1t_MuE,tightMu[i].Pt(),1.0);
+        systZero.fillHistogramsSysts(h_3j1t_MuEta,tightMu[i].Eta(),1.0);
+        systZero.fillHistogramsSysts(h_3j1t_MuPhi,tightMu[i].Phi(),1.0);
+        systZero.fillHistogramsSysts(h_3j1t_MuE,tightMu[i].E(),1.0);
         if((tightMu.size())<2 ){
           TVector2 met_( met*cos(metPhi[0]), met*sin(metPhi[0]));
           float phi_lmet = fabs(deltaPhi(tightMu[i].Phi(), metPhi[0]) );
@@ -520,9 +519,9 @@ for(Int_t i=0; i<nEvents; i++ ){
       for(size_t i = 0; i < (size_t)tightMu.size();++i ){
         if(tightMu[i].Pt()>20){
         systZero.fillHistogramsSysts(h_3j2t_MuPt,tightMu[i].Pt(),1.0);
-        systZero.fillHistogramsSysts(h_3j2t_MuEta,tightMu[i].Pt(),1.0);
-        systZero.fillHistogramsSysts(h_3j2t_MuPhi,tightMu[i].Pt(),1.0);
-        systZero.fillHistogramsSysts(h_3j2t_MuE,tightMu[i].Pt(),1.0);
+        systZero.fillHistogramsSysts(h_3j2t_MuEta,tightMu[i].Eta(),1.0);
+        systZero.fillHistogramsSysts(h_3j2t_MuPhi,tightMu[i].Phi(),1.0);
+        systZero.fillHistogramsSysts(h_3j2t_MuE,tightMu[i].E(),1.0);
         if((tightMu.size())<2 ){
           TVector2 met_( met*cos(metPhi[0]), met*sin(metPhi[0]));
           float phi_lmet = fabs(deltaPhi(tightMu[i].Phi(), metPhi[0]) );

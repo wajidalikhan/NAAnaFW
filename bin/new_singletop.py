@@ -69,6 +69,8 @@ for s in samples:
         print 'Info: Sample',s,'Files found',len(files)
 
     elif opt.mode == 't3se':
+        print 'Info: Running on t3se in interactive mode ...'
+        sPath = join(pathlocal,'*.root')
         sT2Path = join(filepath,s+'.txt')
         print sT2Path 
         f = open(sT2Path,'r')
@@ -98,6 +100,8 @@ for s in samples:
     
     elif opt.t3batch:
         #usage: qexe.py [-h] [-w WORKDIR] [-q QUEUE] [-n] [-e {qsub,bsub}]
+        print 'Info: Running on t3se in batch mode ...'
+        sPath = join(pathlocal,'*.root')
         que = '-q 8nh'
         dry = '-n'
         batch = '-e bsub'

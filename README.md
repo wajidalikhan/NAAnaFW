@@ -43,7 +43,25 @@ python treesFinder.py -f samples_HLTv1_muons.txt -s storage01.lcg.cscs.ch:8443/s
 
 ######################################################################
 ######## part 3: Running the detailed selection and analysis  ########
+The SingleTopAnalysis.cpp contains the event selection and then it can be used 
+with the following python script as: 
+1- python new_singletop.py -c fullhadronic -s noSys --t3batch 
+2- python new_singletop.py -c fullhadronic -s noSys -m t3se 
+3- python new_singletop.py -c fullhadronic -s noSys -m local 
 
+PS: The "--t3batch" option will run via batch jobs 
 
+    The "t3se" option will run it interactively on t3 Storage Element
+    
+    The "local" will run the job locally
+    
+    The script "new_singletop.py" takes in the list of root files stoared at any SE. 
+    The user has to give the path of text files of sample e.g. ST.txt:
+    /afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_20/src/Analysis/NAAnaFW/bin/files/trees/ST.txt  
+    /afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_20/src/Analysis/NAAnaFW/bin/files/trees/TT.txt  
+    Please make sure that you append the name of the sample you want to process in the script 
+    "new_singletop.py"
+    
+    There is another script which automatically generates these sample text files
 ################################################
 ######## part 4: Statistical inference  ########
