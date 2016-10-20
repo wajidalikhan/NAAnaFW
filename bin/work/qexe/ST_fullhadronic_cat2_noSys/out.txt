@@ -1,0 +1,95 @@
+Sender: LSF System <lsfadmin@b624d0f249.cern.ch>
+Subject: Job 793360474: <ST_fullhadronic_cat2_noSys> in cluster <batch> Done
+
+Job <ST_fullhadronic_cat2_noSys> was submitted from host <lxplus018.cern.ch> by user <wajid> in cluster <batch>.
+Job was executed on host(s) <b624d0f249.cern.ch>, in queue <8nh>, as user <wajid> in cluster <batch>.
+</afs/cern.ch/user/w/wajid> was used as the home directory.
+</afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_20/src/Analysis/NAAnaFW/bin> was used as the working directory.
+Started at Thu Oct 20 12:19:49 2016
+Results reported on Thu Oct 20 12:23:02 2016
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+/afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_20/src/Analysis/NAAnaFW/bin/work/qexe/ST_fullhadronic_cat2_noSys/run.sh
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   2.47 sec.
+    Max Memory :                                 131.87 MB
+    Average Memory :                             75.69 MB
+    Total Requested Memory :                     -
+    Delta Memory :                               -
+    Max Swap :                                   1311 MB
+    Max Processes :                              8
+    Max Threads :                                14
+    Run time :                                   191 sec.
+    Turnaround time :                            209 sec.
+
+The output (if any) follows:
+
+@(#)CERN job starter $Date: 2010/06/23 14:22:16 $
+Working directory is </pool/lsf/wajid/793360474> on <b624d0f249.cern.ch>
+
+SingleTopAnalysis ST work/files/ST.txt fullhadronic cat2 noSys noSync MC
+Info: Starting to run ...
+--------------------
+Usage:	 SingleTopAnalysis ST work/files/ST.txt fullhadronic cat2 noSys noSync MC
+	 Sample: ST
+	 File list to open: work/files/ST.txt
+	 Channel: fullhadronic
+	 Category: cat2
+	 Systematics: noSys
+	 Synchro: noSync
+	 isData: MC
+	 File to open: work/files/ST.txt
+--------------------
+Info: Loading file collection from work/files/ST.txt
+Info: Files found : 64
+ creating file for syst 
+onlynominal is 0
+ filename is ./res/ST_fullhadronic.root
+ creating file for syst btagUp
+onlynominal is 0
+ filename is ./res/ST_fullhadronicbtagUp.root
+ creating file for syst btagDown
+onlynominal is 0
+ filename is ./res/ST_fullhadronicbtagDown.root
+ creating file for syst mistagUp
+onlynominal is 0
+ filename is ./res/ST_fullhadronicmistagUp.root
+ creating file for syst mistagDown
+onlynominal is 0
+ filename is ./res/ST_fullhadronicmistagDown.root
+ creating file for syst puUp
+onlynominal is 0
+ filename is ./res/ST_fullhadronicpuUp.root
+ creating file for syst puDown
+onlynominal is 0
+ filename is ./res/ST_fullhadronicpuDown.root
+ creating file for syst lepUp
+onlynominal is 0
+ filename is ./res/ST_fullhadroniclepUp.root
+ creating file for syst lepDown
+onlynominal is 0
+ filename is ./res/ST_fullhadroniclepDown.root
+Info: Total No. of events for sample[ST] : 0
+=========================================================
+Exit code: 0
+=========================================================
+
+Job finished at gio 20 ott 2016, 12.22.33, CEST on node 
+ under linux version Scientific Linux CERN SLC release 6.8 (Carbon)
+
+CERN statistics: This process used approximately : 0:00:04 KSI2K hours (4 KSI2K seconds)
+                 This process corresponds to     : 0:00:17 HS06  hours (17 HS06  seconds)
+
+
+PS:
+
+Read file </afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_20/src/Analysis/NAAnaFW/bin/work/qexe/ST_fullhadronic_cat2_noSys/stderr.txt> for stderr output of this job.
+
