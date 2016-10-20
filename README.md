@@ -50,20 +50,20 @@ The SingleTopAnalysis.cpp contains the event selection and then it can be used w
 
 PS: The "--t3batch" option will run via batch jobs 
 
-    The "t3se" option will run it interactively on t3 Storage Element
-    
-    The "local" will run the job locally
-    
-    The script "new_singletop.py" takes in the list of root files stoared at any SE. 
+-- The "t3se" option will run it interactively on t3 Storage Element
 
-    The user has to give the path of text files of sample e.g. ST.txt:
+-- The "local" will run the job locally
 
-    /afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_20/src/Analysis/NAAnaFW/bin/files/trees/ST.txt  
+-- The script "new_singletop.py" takes in the list of root files stoared at any SE. 
 
-    /afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_20/src/Analysis/NAAnaFW/bin/files/trees/TT.txt  
+-- The user has to give the path of text files of sample e.g. ST.txt:
 
-    Please make sure that you append the name of the sample you want to process in the script "new_singletop.py"
-    
-    There is another script which automatically generates these sample text files
+-- /afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_20/src/Analysis/NAAnaFW/bin/files/trees/ST.txt  
+
+-- /afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_20/src/Analysis/NAAnaFW/bin/files/trees/TT.txt  
+
+-- Please make sure that you append the name of the sample you want to process in the script "new_singletop.py"
+
+-- There is another script which automatically generates these sample text files
 
 ## part 4: Statistical inference  ##
