@@ -6,8 +6,9 @@ import subprocess
 import sys
 import glob
 
-#python singletop.py -c fullhadronic -s noSys -m t3se 
-#python singletop.py -c fullhadronic -s noSys -m local 
+#Usage: python new_singletop.py -c fullhadronic -s noSys --t3batch 
+#Usage: python new_singletop.py -c fullhadronic -s noSys -m t3se 
+#Usage: python new_singletop.py -c fullhadronic -s noSys -m local 
 
 from os.path import join,exists
 print 'Python version', sys.version_info
@@ -20,10 +21,6 @@ fileListDir = join(workdir,'files')
 
 #define samples paths
 pathlocal = "/afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_16/src/Analysis/NAAnaFW/test/crab_projects/crab_st_top/results/ST/" 
-path = "root://cms-xrd-global.cern.ch//store/group/phys_top/SingleTop/2016/ST_t-channel_antitop_4f_leptonDecays_13TeV-powheg-pythia8_TuneCUETP8M1/crab_st_atop/160914_101244/0000/" 
-t2Path='/store/group/phys_top/SingleTop/2016/ST_t-channel_top_4f_leptonDecays_13TeV-powheg-pythia8_TuneCUETP8M1/crab_st_top/160914_130329/0000/' 
-storeLs = 'xrd eoscms dirlist'
-
 filepath='/afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_20/src/Analysis/NAAnaFW/bin/files/trees/'
 
 #define samples, one folder for each mass value
@@ -59,8 +56,6 @@ if not exists('test'):
 
 for s in samples:
     if (s.startswith("JetHT") or s.startswith("SingleMu") or s.startswith("SingleEl") or  s.startswith("MET")): isData="DATA"
-    if (s.startswith("STbar")):
-      t2Path='/store/group/phys_top/SingleTop/2016/ST_t-channel_antitop_4f_leptonDecays_13TeV-powheg-pythia8_TuneCUETP8M1/crab_st_atop/160914_101244/0000/'
     
     if opt.mode == 'local':
         print 'Info: Running in local mode ...'
@@ -95,16 +90,21 @@ for s in samples:
         os.makedirs(d)
     
     cmd = 'SingleTopAnalysis '+ s + ' ' + sampleFileList  + ' ' + opt.channel + ' ' + opt.cat + ' ' + opt.sys + ' ' + opt.sync + ' ' + isData
-    #cmd = "ttDManalysis "+ s + " " + path + s  + " " + opt.channel + " " +opt.cat + " " + opt.sys + " " + opt.sync + " " + isData
     print cmd
 
     if opt.gdb:
         cmd = 'gdb --args '+cmd
     
     elif opt.t3batch:
+        #usage: qexe.py [-h] [-w WORKDIR] [-q QUEUE] [-n] [-e {qsub,bsub}]
+        que = '-q 8nh'
+        dry = '-n'
+        batch = '-e bsub'
         jid = '%s_%s_%s_%s' % (s,opt.channel,opt.cat,opt.sys)
-        cmd = 'qexe.py -w' + workdir + ' ' + jid+' -- '+cmd
-    
+        #cmd = 'qexe.py -w ' + workdir + ' ' + jid+' -- '+cmd
+        #cmd = './qexe.py -w ' + workdir + ' ' + que + ' ' + dry + ' ' + batch + ' ' + jid + ' '+cmd
+        cmd = './run.py -w ' + workdir + ' ' + que + ' ' + batch + ' ' + jid + ' '+cmd
+     
     print 'Info:',cmd
  
     if opt.dryrun:

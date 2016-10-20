@@ -147,8 +147,8 @@ int main(int argc, char **argv) {
   chain.AddFileInfoList(fc.GetList());
 
   Int_t nEvents = (Int_t)chain.GetEntries();
-  std::cout<<"Info: Number of Events: "<<nEvents<< endl;
-  //nEvents = std::min(nEvents, 1000);
+  //std::cout<<"Info: Number of Events: "<<nEvents<< endl;
+  nEvents = std::min(nEvents, 1000);
   
   TString weightedSystsNames (weightedSysts sy);
   
@@ -221,17 +221,17 @@ int main(int argc, char **argv) {
   chain.SetBranchAddress("muonsTight_IsLooseMuon", muIsLoose);
   chain.SetBranchAddress("muonsTight_size", &muSize);
 
-  chain.SetBranchAddress("jetsAK4CHS_E",      &jet_e);
-  chain.SetBranchAddress("jetsAK4CHS_Pt",     &jet_pt);
-  chain.SetBranchAddress("jetsAK4CHS_Phi",    &jet_phi);
-  chain.SetBranchAddress("jetsAK4CHS_Eta",    &jetEta);
-  chain.SetBranchAddress("jetsAK4CHS_size",   &jetSize);
-  chain.SetBranchAddress("jetsAK4CHS_IsCSVL", &jet_iscsvl);
-  chain.SetBranchAddress("jetsAK4CHS_IsCSVM", &jetIsCSVM);
-  chain.SetBranchAddress("jetsAK4CHS_IsCSVT", &jet_iscsvt);
-  chain.SetBranchAddress("jetsAK4CHS_IsLoose",&jetIsLoose);
-  chain.SetBranchAddress("jetsAK4CHS_IsTight",&jetIsTight);
-  chain.SetBranchAddress("jetsAK4CHS_CSVv2",  &jetak4chs_csvv2);
+  chain.SetBranchAddress("jetsAK4CHSTight_E",      &jet_e);
+  chain.SetBranchAddress("jetsAK4CHSTight_Pt",     &jet_pt);
+  chain.SetBranchAddress("jetsAK4CHSTight_Phi",    &jet_phi);
+  chain.SetBranchAddress("jetsAK4CHSTight_Eta",    &jetEta);
+  chain.SetBranchAddress("jetsAK4CHSTight_size",   &jetSize);
+  chain.SetBranchAddress("jetsAK4CHSTight_IsCSVL", &jet_iscsvl);
+  chain.SetBranchAddress("jetsAK4CHSTight_IsCSVM", &jetIsCSVM);
+  chain.SetBranchAddress("jetsAK4CHSTight_IsCSVT", &jet_iscsvt);
+  chain.SetBranchAddress("jetsAK4CHSTight_IsLoose",&jetIsLoose);
+  chain.SetBranchAddress("jetsAK4CHSTight_IsTight",&jetIsTight);
+  chain.SetBranchAddress("jetsAK4CHSTight_CSVv2",  &jetak4chs_csvv2);
   chain.SetBranchAddress("jetsAK4CHSTight_size",  &jetTightSize);
   
   chain.SetBranchAddress("Event_RunNumber", &runNumber);
