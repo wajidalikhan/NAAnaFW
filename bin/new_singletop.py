@@ -20,7 +20,8 @@ workdir = 'work'
 fileListDir = join(workdir,'files')
 
 #define samples paths
-pathlocal = "/afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_16/src/Analysis/NAAnaFW/test/crab_projects/crab_st_top/results/ST/" 
+#pathlocal = "/afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_16/src/Analysis/NAAnaFW/test/crab_projects/crab_st_top/results/ST/" 
+pathlocal = "/afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_20/src/Analysis/NAAnaFW/bin/ST/"
 filepath='/afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_20/src/Analysis/NAAnaFW/bin/files/trees/'
 
 #define samples, one folder for each mass value
@@ -72,8 +73,8 @@ for s in samples:
         print sT2Path 
         f = open(sT2Path,'r')
         listing = f.read()
-        lines = listing.split()
-        print 'Info: Sample',s,'Files found',len(lines) 
+        files = listing.split()
+        print 'Info: Sample',s,'Files found',len(files) 
         f.close() 
 
     # Save it to a semi-temp file
@@ -81,7 +82,7 @@ for s in samples:
     
     print 'Info :',sampleFileList
     with open(sampleFileList,'w') as sl:
-        sl.write('\n'.join(lines))
+        sl.write('\n'.join(files))
     
     outDirs = ['res','trees']
     
@@ -101,8 +102,7 @@ for s in samples:
         dry = '-n'
         batch = '-e bsub'
         jid = '%s_%s_%s_%s' % (s,opt.channel,opt.cat,opt.sys)
-        #cmd = 'qexe.py -w ' + workdir + ' ' + jid+' -- '+cmd
-        #cmd = './qexe.py -w ' + workdir + ' ' + que + ' ' + dry + ' ' + batch + ' ' + jid + ' '+cmd
+        #cmd = './run.py -w ' + workdir + ' ' + que + ' ' + dry + ' ' + batch + ' ' + jid + ' '+cmd
         cmd = './run.py -w ' + workdir + ' ' + que + ' ' + batch + ' ' + jid + ' '+cmd
      
     print 'Info:',cmd

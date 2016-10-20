@@ -147,8 +147,8 @@ int main(int argc, char **argv) {
   chain.AddFileInfoList(fc.GetList());
 
   Int_t nEvents = (Int_t)chain.GetEntries();
-  //std::cout<<"Info: Number of Events: "<<nEvents<< endl;
-  nEvents = std::min(nEvents, 1000);
+  std::cout<<"Info: Number of Events: "<<nEvents<< endl;
+  //nEvents = std::min(nEvents, 1000);
   
   TString weightedSystsNames (weightedSysts sy);
   
