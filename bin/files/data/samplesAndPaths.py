@@ -1,1 +1,0 @@
-samplesAndPaths = {'SingleMuon':'/pnfs/lcg.cscs.ch/cms/trivcat/store/user/oiorio/ttDM/trees/2016/Oct',}

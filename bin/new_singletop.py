@@ -5,7 +5,10 @@ import optparse
 import subprocess
 import sys
 import glob
-
+#import colorama
+#from colorama import Fore, Back, Style
+#text = "The quick brown fox jumps over the lazy dog"
+#print(Fore.RED + text)
 #Usage: python new_singletop.py -c fullhadronic -s noSys --t3batch 
 #Usage: python new_singletop.py -c fullhadronic -s noSys -m t3se 
 #Usage: python new_singletop.py -c fullhadronic -s noSys -m local 
@@ -22,12 +25,11 @@ fileListDir = join(workdir,'files')
 #define samples paths
 #pathlocal = "/afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_16/src/Analysis/NAAnaFW/test/crab_projects/crab_st_top/results/ST/" 
 pathlocal = "/afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_20/src/Analysis/NAAnaFW/bin/ST/"
-filepath='/afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_20/src/Analysis/NAAnaFW/bin/files/trees/'
+filepath='/afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_20/src/Analysis/NAAnaFW/bin/files/trees/mc/'
 
 #define samples, one folder for each mass value
 samples = []
 samples.append("ST")
-#samples.append("STbar")
 
 usage = 'usage: %prog -l lumi'
 parser = optparse.OptionParser(usage)

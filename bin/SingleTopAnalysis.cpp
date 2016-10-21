@@ -160,7 +160,7 @@ int main(int argc, char **argv) {
   float Ht(0.), mt(0.);
   float runNumber(0.), lumiSec(0.);
   double evtNumber(0.);
-  float jet_e[sizeMax], jet_pt[sizeMax], jet_phi[sizeMax], jetEta[sizeMax];
+  float jetE[sizeMax], jetPt[sizeMax], jetPhi[sizeMax], jetEta[sizeMax];
   float jet_iscsvl[sizeMax], jetIsCSVM[sizeMax], jet_iscsvt[sizeMax],jetIsLoose[sizeMax],jetIsTight[sizeMax],jetak4chs_csvv2[sizeMax];
   float nTightMuons, nTightElectrons, nVetoElectrons, nLooseMuons, nJets,nCSVJets;//, nCSVLJets;
   float  nGoodPV, nPV, numTrueInt;
@@ -221,9 +221,9 @@ int main(int argc, char **argv) {
   chain.SetBranchAddress("muonsTight_IsLooseMuon", muIsLoose);
   chain.SetBranchAddress("muonsTight_size", &muSize);
 
-  chain.SetBranchAddress("jetsAK4CHSTight_E",      &jet_e);
-  chain.SetBranchAddress("jetsAK4CHSTight_Pt",     &jet_pt);
-  chain.SetBranchAddress("jetsAK4CHSTight_Phi",    &jet_phi);
+  chain.SetBranchAddress("jetsAK4CHSTight_E",      &jetE);
+  chain.SetBranchAddress("jetsAK4CHSTight_Pt",     &jetPt);
+  chain.SetBranchAddress("jetsAK4CHSTight_Phi",    &jetPhi);
   chain.SetBranchAddress("jetsAK4CHSTight_Eta",    &jetEta);
   chain.SetBranchAddress("jetsAK4CHSTight_size",   &jetSize);
   chain.SetBranchAddress("jetsAK4CHSTight_IsCSVL", &jet_iscsvl);
@@ -289,34 +289,36 @@ int main(int argc, char **argv) {
   TH1F *h_2j0t_mtw[maxSysts];            systZero.initHistogramsSysts(h_2j0t_mtw,           "h_2j0t_mtw",     "2j0t mtw ",100,0,500);
   
   //2j1t Category
-  TH1F *h_2j1t_bjetpt[maxSysts];   systZero.initHistogramsSysts(h_2j1t_bjetpt,      "h_2j1t_bjetpt","2j1t Leading jet b jet Pt distribution",100,0,500);
+  TH1F *h_2j1t_bjetpt[maxSysts];   systZero.initHistogramsSysts(h_2j1t_bjetpt,  "h_2j1t_bjetpt",  "2j1t b jet pt",100,0,500);
+  TH1F *h_2j1t_jetpt[maxSysts];    systZero.initHistogramsSysts(h_2j1t_jetpt,   "h_2j1t_jetpt",   "2j1t light jet pt" ,100,0,500);
+  TH1F *h_2j1t_jeteta[maxSysts];   systZero.initHistogramsSysts(h_2j1t_jeteta,  "h_2j1t_jeteta",  "2j1t light jet eta",64,-3.2,3.2);
   TH1F *h_2j1t_nMu[maxSysts];      systZero.initHistogramsSysts(h_2j1t_nMu,     "h_2j1t_nMu",     "2j1t Number of tight Muons",13,-0.5,12.5);
-  TH1F *h_2j1t_MuPt[maxSysts];     systZero.initHistogramsSysts(h_2j1t_MuPt,    "h_2j1t_MuPt",    "2j1t Leading Muon Pt distribution",100,0,500);
-  TH1F *h_2j1t_MuEta[maxSysts];    systZero.initHistogramsSysts(h_2j1t_MuEta,   "h_2j1t_MuEta",   "2j1t Leading Muon Eta distribution",64,-3.2,3.2);
-  TH1F *h_2j1t_MuPhi[maxSysts];    systZero.initHistogramsSysts(h_2j1t_MuPhi,   "h_2j1t_MuPhi",   "2j1t Leading Muon Phi distribution",16, -3.2, 3.2);
-  TH1F *h_2j1t_MuE[maxSysts];      systZero.initHistogramsSysts(h_2j1t_MuE,     "h_2j1t_MuE",     "2j1t Leading Muon E distribution",100,0,500);
-  TH1F *h_2j1t_MuCharge[maxSysts]; systZero.initHistogramsSysts(h_2j1t_MuCharge,"h_2j1t_MuCharge","2j1t Leading Muon Charge distribution",2,-1,1);
+  TH1F *h_2j1t_MuPt[maxSysts];     systZero.initHistogramsSysts(h_2j1t_MuPt,    "h_2j1t_MuPt",    "2j1t muon pt ",100,0,500);
+  TH1F *h_2j1t_MuEta[maxSysts];    systZero.initHistogramsSysts(h_2j1t_MuEta,   "h_2j1t_MuEta",   "2j1t muon eta ",64,-3.2,3.2);
+  TH1F *h_2j1t_MuPhi[maxSysts];    systZero.initHistogramsSysts(h_2j1t_MuPhi,   "h_2j1t_MuPhi",   "2j1t muon phi ",16, -3.2, 3.2);
+  TH1F *h_2j1t_MuE[maxSysts];      systZero.initHistogramsSysts(h_2j1t_MuE,     "h_2j1t_MuE",     "2j1t muon e ",100,0,500);
+  TH1F *h_2j1t_MuCharge[maxSysts]; systZero.initHistogramsSysts(h_2j1t_MuCharge,"h_2j1t_MuCharge","2j1t muon charge ",2,-1,1);
   TH1F *h_2j1t_mtw[maxSysts];      systZero.initHistogramsSysts(h_2j1t_mtw,     "h_2j1t_mtw",     "2j1t mtw ",100,0,500);
   TH1F *h_2j1t_topMass[maxSysts];  systZero.initHistogramsSysts(h_2j1t_topMass, "h_2j1t_topMass", "2j1t top mass",200,100,500);
   TH1F *h_2j1t_topPt[maxSysts];    systZero.initHistogramsSysts(h_2j1t_topPt,   "h_2j1t_topPt",   "2j1t top pt",200,0,500);
   
   //3j1t 
-  TH1F *h_3j1t_bjetpt[maxSysts];   systZero.initHistogramsSysts(h_3j1t_bjetpt,  "h_3j1t_bjetpt","3j1t Leading jet b jet Pt distribution",100,0,500);
-  TH1F *h_3j1t_MuPt[maxSysts];     systZero.initHistogramsSysts(h_3j1t_MuPt,    "h_3j1t_MuPt",    "3j1t Leading Muon Pt distribution",100,0,500);
-  TH1F *h_3j1t_MuEta[maxSysts];    systZero.initHistogramsSysts(h_3j1t_MuEta,   "h_3j1t_MuEta",   "3j1t Leading Muon Eta distribution",64,-3.2,3.2);
-  TH1F *h_3j1t_MuPhi[maxSysts];    systZero.initHistogramsSysts(h_3j1t_MuPhi,   "h_3j1t_MuPhi",   "3j1t Leading Muon Phi distribution",16, -3.2, 3.2);
-  TH1F *h_3j1t_MuE[maxSysts];      systZero.initHistogramsSysts(h_3j1t_MuE,     "h_3j1t_MuE",     "3j1t Leading Muon E distribution",100,0,500);
+  TH1F *h_3j1t_bjetpt[maxSysts];   systZero.initHistogramsSysts(h_3j1t_bjetpt,  "h_3j1t_bjetpt",  "3j1t b jet pt ",100,0,500);
+  TH1F *h_3j1t_MuPt[maxSysts];     systZero.initHistogramsSysts(h_3j1t_MuPt,    "h_3j1t_MuPt",    "muon pt ",100,0,500);
+  TH1F *h_3j1t_MuEta[maxSysts];    systZero.initHistogramsSysts(h_3j1t_MuEta,   "h_3j1t_MuEta",   "muon eta ",64,-3.2,3.2);
+  TH1F *h_3j1t_MuPhi[maxSysts];    systZero.initHistogramsSysts(h_3j1t_MuPhi,   "h_3j1t_MuPhi",   "muon phi ",16, -3.2, 3.2);
+  TH1F *h_3j1t_MuE[maxSysts];      systZero.initHistogramsSysts(h_3j1t_MuE,     "h_3j1t_MuE",     "muon e ",100,0,500);
   TH1F *h_3j1t_mtw[maxSysts];      systZero.initHistogramsSysts(h_3j1t_mtw,     "h_3j1t_mtw",     "3j1t mtw ",100,0,500);
   
   //3j2t
-  TH1F *h_3j2t_bjetpt[maxSysts];   systZero.initHistogramsSysts(h_3j2t_bjetpt,    "h_3j2t_bjetpt",  "3j2t Leading jet b jet Pt ",100,0,500);
-  TH1F *h_3j2t_2ndbjetpt[maxSysts];systZero.initHistogramsSysts(h_3j2t_2ndbjetpt, "h_3j2t_2ndbjetpt",  "3j2t sub lead. jet b jet Pt",100,0,500);
-  TH1F *h_3j2t_MuPt[maxSysts];     systZero.initHistogramsSysts(h_3j2t_MuPt,      "h_3j2t_MuPt",    "3j2t Leading Muon Pt distribution",100,0,500);
-  TH1F *h_3j2t_MuEta[maxSysts];    systZero.initHistogramsSysts(h_3j2t_MuEta,     "h_3j2t_MuEta",   "3j2t Leading Muon Eta distribution",64,-3.2,3.2);
-  TH1F *h_3j2t_MuPhi[maxSysts];    systZero.initHistogramsSysts(h_3j2t_MuPhi,     "h_3j2t_MuPhi",   "3j2t Leading Muon Phi distribution",16, -3.2, 3.2);
-  TH1F *h_3j2t_MuE[maxSysts];      systZero.initHistogramsSysts(h_3j2t_MuE,       "h_3j2t_MuE",     "3j2t Leading Muon E distribution",100,0,500);
-  TH1F *h_3j2t_MuCharge[maxSysts]; systZero.initHistogramsSysts(h_3j2t_MuCharge,  "h_3j2t_MuCharge","3j2t Leading Muon Charge distribution",2,-1,1);
-  TH1F *h_3j2t_mtw[maxSysts];      systZero.initHistogramsSysts(h_3j2t_mtw,       "h_3j2t_mtw",     "3j2t mtw ",100,0,500);
+  TH1F *h_3j2t_bjetpt[maxSysts];   systZero.initHistogramsSysts(h_3j2t_bjetpt,    "h_3j2t_bjetpt",     "3j2t b jet pt ",100,0,500);
+  TH1F *h_3j2t_2ndbjetpt[maxSysts];systZero.initHistogramsSysts(h_3j2t_2ndbjetpt, "h_3j2t_2ndbjetpt",  "3j2t sub lead. b jet pt",100,0,500);
+  TH1F *h_3j2t_MuPt[maxSysts];     systZero.initHistogramsSysts(h_3j2t_MuPt,      "h_3j2t_MuPt",       "3j2t muon pt ",100,0,500);
+  TH1F *h_3j2t_MuEta[maxSysts];    systZero.initHistogramsSysts(h_3j2t_MuEta,     "h_3j2t_MuEta",      "3j2t muon eta ",64,-3.2,3.2);
+  TH1F *h_3j2t_MuPhi[maxSysts];    systZero.initHistogramsSysts(h_3j2t_MuPhi,     "h_3j2t_MuPhi",      "3j2t muon phi ",16, -3.2, 3.2);
+  TH1F *h_3j2t_MuE[maxSysts];      systZero.initHistogramsSysts(h_3j2t_MuE,       "h_3j2t_MuE",        "3j2t muon e ",100,0,500);
+  TH1F *h_3j2t_MuCharge[maxSysts]; systZero.initHistogramsSysts(h_3j2t_MuCharge,  "h_3j2t_MuCharge",   "3j2t muon charge ",2,-1,1);
+  TH1F *h_3j2t_mtw[maxSysts];      systZero.initHistogramsSysts(h_3j2t_mtw,       "h_3j2t_mtw",        "3j2t mtw ",100,0,500);
 
   TopUtilities topUtils;
 
@@ -412,21 +414,21 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   for (int j = 0; j <maxJetLoop;++j){	
       TLorentzVector jet, all_jets;
       
-      if(jet_pt[j]>40.0 && abs(jetEta[j])<2.4){ 
-      all_jets.SetPtEtaPhiE(jet_pt[j], jetEta[j], jet_phi[j], jet_e[j]);
+      if(jetPt[j]>40.0 && abs(jetEta[j])<2.4){ 
+      all_jets.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
       jets.push_back(all_jets);
       }   
 
   if(jetIsCSVM[j]<=0.){
-      jet.SetPtEtaPhiE(jet_pt[j], jetEta[j], jet_phi[j], jet_e[j]);
+      jet.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
       jets_nob.push_back(jet);
       }
   
-  jetsPhi.push_back(jet_phi[j]);
+  jetsPhi.push_back(jetPhi[j]);
   TLorentzVector bjet;
  
-  if( jet_pt[j]>40.0 && jetIsTight[j] && jetIsCSVM[j] && abs(jetEta[j])<2.4){
-     bjet.SetPtEtaPhiE(jet_pt[j], jetEta[j], jet_phi[j], jet_e[j]);
+  if( jetPt[j]>40.0 && jetIsTight[j] && jetIsCSVM[j] && abs(jetEta[j])<2.4){
+     bjet.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
      bjets.push_back(bjet);
      btag b;
      b.vect = bjet;
@@ -464,6 +466,13 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
    if(i==0)systZero.fillHistogramsSysts(h_2j1t_bjetpt,bjets[i].Pt(),1);
     }
   
+  for (size_t j= 0; j< (size_t)jets.size();++j ){
+    if(!(jetIsCSVM[j]) && jetPt[j]>40.0 && abs(jetEta[j])<2.4){
+      systZero.fillHistogramsSysts(h_2j1t_jetpt,jets[j].Pt(),1);
+      systZero.fillHistogramsSysts(h_2j1t_jeteta,jets[j].Eta(),1);
+      }  
+    }
+    
   for(size_t i = 0; i < (size_t)tightMu.size();++i ){
    if(tightMu[i].Pt()>20){
    systZero.fillHistogramsSysts(h_2j1t_MuPt,tightMu[i].Pt(),1.0);
@@ -568,6 +577,8 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   systZero.writeHistogramsSysts(h_2j0t_mtw,   allMyFiles); 
   
   systZero.writeHistogramsSysts(h_2j1t_bjetpt,  allMyFiles); 
+  systZero.writeHistogramsSysts(h_2j1t_jetpt,   allMyFiles); 
+  systZero.writeHistogramsSysts(h_2j1t_jeteta,  allMyFiles); 
   systZero.writeHistogramsSysts(h_2j1t_MuPt,    allMyFiles); 
   systZero.writeHistogramsSysts(h_2j1t_MuEta,   allMyFiles); 
   systZero.writeHistogramsSysts(h_2j1t_MuPhi,   allMyFiles); 
