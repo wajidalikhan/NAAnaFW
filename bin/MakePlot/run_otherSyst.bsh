@@ -1,0 +1,5 @@
+python adjustQ2.py -d histos/
+python symmetrization_normal.py -s jes -d histos/ -n 1
+python met.py -d histos/
+python symmetrizeEWK.py -d histos/
+python xsect.py -d histos/

@@ -1,0 +1,2 @@
+python makeMCStatHistos.py -c semileptonic
+python makeMCStatHistos.py -c fullhadronic

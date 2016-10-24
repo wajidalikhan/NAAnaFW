@@ -1,0 +1,2 @@
+cp output/sl/histos_lin/* ./histos/
+cp output/fh/histos_lin/* ./histos/

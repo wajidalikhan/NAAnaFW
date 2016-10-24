@@ -1,0 +1,62 @@
+python makePlots.py -l 2.2 --store True -c semileptonic
+python makePlots.py -l 2.2 --store True -c fullhadronic
+
+python makePlots.py -l 2.2 --store True -c fullhadronic -s q2Up
+python makePlots.py -l 2.2 --store True -c fullhadronic -s q2Down
+python makePlots.py -l 2.2 --store True -s q2Up
+python makePlots.py -l 2.2 --store True -s q2Down
+
+python makePlots.py -l 2.2 --store True -c fullhadronic -s puUp
+python makePlots.py -l 2.2 --store True -c fullhadronic -s puDown
+python makePlots.py -l 2.2 --store True -s puUp
+python makePlots.py -l 2.2 --store True -s puDown
+
+python makePlots.py -l 2.2 --store True -c fullhadronic -s VHFWeightUp
+python makePlots.py -l 2.2 --store True -c fullhadronic -s VHFWeightDown
+python makePlots.py -l 2.2 --store True -s VHFWeightUp
+python makePlots.py -l 2.2 --store True -s VHFWeightDown
+
+python makePlots.py -l 2.2 --store True -c fullhadronic -s topPtWeightUp
+python makePlots.py -l 2.2 --store True -c fullhadronic -s topPtWeightDown
+python makePlots.py -l 2.2 --store True -s topPtWeightUp
+python makePlots.py -l 2.2 --store True -s topPtWeightDown
+
+python makePlots.py -l 2.2 --store True -c fullhadronic -s lepUp
+python makePlots.py -l 2.2 --store True -c fullhadronic -s lepDown
+python makePlots.py -l 2.2 --store True -s lepUp
+python makePlots.py -l 2.2 --store True -s lepDown
+
+python makePlots.py -l 2.2 --store True -c fullhadronic -s mistagUp
+python makePlots.py -l 2.2 --store True -c fullhadronic -s mistagDown
+python makePlots.py -l 2.2 --store True -s mistagUp
+python makePlots.py -l 2.2 --store True -s mistagDown
+
+python makePlots.py -l 2.2 --store True -c fullhadronic -s btagUp
+python makePlots.py -l 2.2 --store True -c fullhadronic -s btagDown
+python makePlots.py -l 2.2 --store True -s btagUp
+python makePlots.py -l 2.2 --store True -s btagDown
+
+python makePlots.py -l 2.2 --store True -c fullhadronic -s pdf_totalUp
+python makePlots.py -l 2.2 --store True -c fullhadronic -s pdf_totalDown
+python makePlots.py -l 2.2 --store True -s pdf_totalUp
+python makePlots.py -l 2.2 --store True -s pdf_totalDown
+
+python makePlots.py -l 2.2 --store True -c fullhadronic -s jesUp
+python makePlots.py -l 2.2 --store True -c fullhadronic -s jesDown
+python makePlots.py -l 2.2 --store True -s jesUp
+python makePlots.py -l 2.2 --store True -s jesDown
+
+python makePlots.py -l 2.2 --store True -c fullhadronic -s QCDRenUp
+python makePlots.py -l 2.2 --store True -c fullhadronic -s QCDRenDown
+python makePlots.py -l 2.2 --store True -s QCDRenUp
+python makePlots.py -l 2.2 --store True -s QCDRenDown
+
+python makePlots.py -l 2.2 --store True -c fullhadronic -s QCDFacUp
+python makePlots.py -l 2.2 --store True -c fullhadronic -s QCDFacDown
+python makePlots.py -l 2.2 --store True -s QCDFacUp
+python makePlots.py -l 2.2 --store True -s QCDFacDown
+
+python makePlots.py -l 2.2 --store True -c fullhadronic -s EWKUp
+python makePlots.py -l 2.2 --store True -c fullhadronic -s EWKDown
+python makePlots.py -l 2.2 --store True -s EWKUp
+python makePlots.py -l 2.2 --store True -s EWKDown

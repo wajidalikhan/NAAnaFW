@@ -1,0 +1,2 @@
+python makePlots.py -l 2.2 -c semileptonic
+python makePlots.py -l 2.2 -c fullhadronic
