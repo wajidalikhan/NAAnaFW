@@ -142,9 +142,19 @@ int main(int argc, char **argv) {
   TString outfile = "test/"+sample + "_" +cat+"_"+channel+".root";
   
   TString treePath = "DMTreesDumper/ttDM__noSyst";
+  TString treePathNEvents = "DMTreesDumper/WeightHistory";
 
   TChain chain(treePath);
   chain.AddFileInfoList(fc.GetList());
+  TChain chainNEvents(treePathNEvents);
+  chainNEvents.AddFileInfoList(fc.GetList());
+  Int_t nEventsTot = (Int_t)chainNEvents.GetEntries();
+
+  TH1D totalWeightTop("w_top_total","Top pt reweighting: overall sample weight",2000,0,2.0);
+  chainNEvents.Project("w_top_total","Event_T_Weight","Event_T_Weight!=1.00");
+  double topWeight=totalWeightTop.GetMean();
+  cout << "totaltopweight is "<< topWeight<<endl;
+  if(topWeight==0)topWeight=1;
 
   Int_t nEvents = (Int_t)chain.GetEntries();
   std::cout<<"Info: Number of Events: "<<nEvents<< endl;
@@ -152,7 +162,7 @@ int main(int argc, char **argv) {
   
   TString weightedSystsNames (weightedSysts sy);
   
-  systWeights systZero,syst0B; 
+  systWeights systZero,syst0BM,syst1BM,syst2BM; 
   int maxSysts=0; 
   int sizeMax=50;
   int muSize, elSize, jetSize;
@@ -172,7 +182,20 @@ int main(int argc, char **argv) {
 
   float elEta[sizeMax], elIso[sizeMax], elIsTight[sizeMax], elIsVeto[sizeMax], elE[sizeMax], elPhi[sizeMax], elPassesDRmu[sizeMax];    
   float lep1Pt(0), lep1Eta(0), lep1Phi(0), lep1E(0), lep2Pt(0), lep2Eta(0), lep2Phi(0),  lep2E(0), lep1Flavour(0), lep1Charge(0), lep2Flavour(0), lep2Charge(0);
+  int nPDF=102;
 
+  float LHEWeightSign[1] = {1.};
+  float w(1.),w_q2up(1.),w_q2down(1.),w_zero(1.),w_top(1.);
+  float w_pdfs[nPDF];
+
+  float bWeight0CSVM, bWeight0CSVMBTagUp,bWeight0CSVMBTagDown,bWeight0CSVMMisTagUp,bWeight0CSVMMisTagDown;
+  float bWeight1CSVM, bWeight1CSVMBTagUp,bWeight1CSVMBTagDown,bWeight1CSVMMisTagUp,bWeight1CSVMMisTagDown;
+  float bWeight2CSVM, bWeight2CSVMBTagUp,bWeight2CSVMBTagDown,bWeight2CSVMMisTagUp,bWeight2CSVMMisTagDown;
+
+  //  float bWeight0CSVT, bWeight0CSVTBTagUp,bWeight0CSVTBTagDown,bWeight0CSVTMisTagUp,bWeight0CSVTMisTagDown;
+  //  float bWeight1CSVT, bWeight1CSVTBTagUp,bWeight1CSVTBTagDown,bWeight1CSVTMisTagUp,bWeight1CSVTMisTagDown;
+  //  float bWeight2CSVT, bWeight2CSVTBTagUp,bWeight2CSVTBTagDown,bWeight2CSVTMisTagUp,bWeight2CSVTMisTagDown;
+  
   bool onlyNominal=false;
   systZero.setOnlyNominal(onlyNominal);
 
@@ -198,8 +221,26 @@ int main(int argc, char **argv) {
 
   //addVHF=false;
   //addWZNLO=false;
-  //int nPDF=102;
   //if(isData=="DATA"){addPDF=false, addQ2=false;addVHF=false;addTTSplit=false;} 
+
+  if(isData=="MC"){chain.SetBranchAddress("Event_LHEWeight0", &w_zero); LHEWeightSign[0]=w_zero/fabs(w_zero);}
+  
+  if(addQ2){
+    chain.SetBranchAddress("Event_LHEWeight4", &w_q2up);
+    chain.SetBranchAddress("Event_LHEWeight8", &w_q2down);
+  }
+  if(addPDF){
+    for (int p = 1; p <= nPDF;++p){
+      stringstream pdfss;
+      pdfss<<(p+8);
+      string pstr =(pdfss.str());
+      chain.SetBranchAddress(("Event_LHEWeight"+pstr).c_str(), &w_pdfs[p-1]);
+    //    cout << "Event_LHEWeight"+pstr<<w_pdfs<<endl;
+    }
+    chain.SetBranchAddress("Event_T_Weight",&w_top);
+    //    chain.SetBranchAddress("Event_T_Weight",&w_top);
+  }
+
   chain.SetBranchAddress("electronsTight_E", elE);
   chain.SetBranchAddress("electronsTight_Phi", elPhi);
   chain.SetBranchAddress("electronsTight_Eta", elEta);
@@ -261,6 +302,31 @@ int main(int argc, char **argv) {
   chain.SetBranchAddress("Event_nVetoElectrons",&nVetoElectrons);
   chain.SetBranchAddress("Event_nLooseMuons",&nLooseMuons);
   chain.SetBranchAddress("Event_nTightMuons",&nTightMuons);
+
+
+  //  float bWeight0CSVM, bWeight0CSVMBTagUp,bWeight0CSVMBTagDown,bWeight0CSVMMisTagUp,bWeight0CSVMMisTagDown;
+  //  float bWeight1CSVM, bWeight1CSVMBTagUp,bWeight1CSVMBTagDown,bWeight1CSVMMisTagUp,bWeight1CSVMMisTagDown;
+  //  float bWeight2CSVM, bWeight2CSVMBTagUp,bWeight2CSVMBTagDown,bWeight2CSVMMisTagUp,bWeight2CSVMMisTagDown;
+  //b-weight settings
+  chain.SetBranchAddress("Event_bWeight2CSVMTight", &bWeight2CSVM);
+  chain.SetBranchAddress("Event_bWeightMisTagUp2CSVMTight", &bWeight2CSVMMisTagUp);
+  chain.SetBranchAddress("Event_bWeightMisTagDown2CSVMTight", &bWeight2CSVMMisTagDown);
+  chain.SetBranchAddress("Event_bWeightBTagUp2CSVMTight", &bWeight2CSVMBTagUp);
+  chain.SetBranchAddress("Event_bWeightBTagDown2CSVMTight", &bWeight2CSVMBTagDown);
+
+  chain.SetBranchAddress("Event_bWeight0CSVMTight", &bWeight0CSVM);
+
+  chain.SetBranchAddress("Event_bWeightMisTagUp0CSVMTight", &bWeight0CSVMMisTagUp);
+  chain.SetBranchAddress("Event_bWeightMisTagDown0CSVMTight", &bWeight0CSVMMisTagDown);
+  chain.SetBranchAddress("Event_bWeightBTagUp0CSVMTight", &bWeight0CSVMBTagUp);
+  chain.SetBranchAddress("Event_bWeightBTagDown0CSVMTight", &bWeight0CSVMBTagDown);
+
+  chain.SetBranchAddress("Event_bWeight1CSVMTight", &bWeight1CSVM);
+  chain.SetBranchAddress("Event_bWeightMisTagUp1CSVMTight", &bWeight1CSVMMisTagUp);
+  chain.SetBranchAddress("Event_bWeightMisTagDown1CSVMTight", &bWeight1CSVMMisTagDown);
+  chain.SetBranchAddress("Event_bWeightBTagUp1CSVMTight", &bWeight1CSVMBTagUp);
+  chain.SetBranchAddress("Event_bWeightBTagDown1CSVMTight", &bWeight1CSVMBTagDown);
+
 
   if(isData=="MC"){
     chain.SetBranchAddress("metFull_CorrPt",metPt);
@@ -332,6 +398,33 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   int maxMuLoop = min(6, muSize);
   int maxElLoop = min(6, elSize);
 
+
+
+  if(isData=="MC"){
+    w = LHEWeightSign[0];
+    //       w=1.;
+    //    w_pu = LumiWeights_.weight(numTrueInt);
+    
+    //    w = w * w_pu;
+    //    w*=k_fact;
+    //cout << " --> bef top pt " << w << endl;
+    
+    if(sample=="TTNoTT"){
+      w*=w_top/topWeight;
+    }
+
+       //cout << "     after top pt " << w << endl; 
+       //w*= ((METturnon13TeV(metPt[0],1,true))/(METturnon13TeV(metPt[0],1,false)));
+       //       cout << "vhf "<<vhf << " eventFlavour "<<eventFlavour << endl;
+    //vhf=(int)eventFlavour;
+       //FIXXX
+       //       w_top=1.0;
+       //       topWeight=1.0;
+       //std::cout<<"K-factor: "<<k_fact<<std::endl;
+     }
+     
+     //added for sync
+
   systZero.setWeight(0,1.);
   systZero.setWeight("btagUp",1.);
   systZero.setWeight("btagDown",1.);
@@ -341,6 +434,33 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   systZero.setWeight("puUp",1.);
   systZero.setWeight("lepDown",1.);
   systZero.setWeight("lepUp",1.);
+  
+  if(addPDF)systZero.setPDFWeights(w_pdfs,nPDF,w_zero,true);
+  if(addQ2)systZero.setQ2Weights(w_q2up,w_q2down,w_zero,true);
+  if(addTopPt)systZero.setTWeight(w_top,topWeight,true);
+
+
+  syst0BM.copySysts(systZero);
+  syst0BM.setWeight(0,bWeight0CSVM);
+  syst0BM.setWeight("btagUp",bWeight0CSVMBTagUp);
+  syst0BM.setWeight("btagDown",bWeight0CSVMBTagDown);
+  syst0BM.setWeight("mistagUp",bWeight0CSVMMisTagUp);
+  syst0BM.setWeight("mistagDown",bWeight0CSVMMisTagDown);
+
+  syst1BM.copySysts(systZero);
+  syst1BM.setWeight(0,bWeight1CSVM);
+  syst1BM.setWeight("btagUp",bWeight1CSVMBTagUp);
+  syst1BM.setWeight("btagDown",bWeight1CSVMBTagDown);
+  syst1BM.setWeight("mistagUp",bWeight1CSVMMisTagUp);
+  syst1BM.setWeight("mistagDown",bWeight1CSVMMisTagDown);
+
+  syst2BM.copySysts(systZero);
+  syst2BM.setWeight(0,bWeight2CSVM);
+  syst2BM.setWeight("btagUp",bWeight2CSVMBTagUp);
+  syst2BM.setWeight("btagDown",bWeight2CSVMBTagDown);
+  syst2BM.setWeight("mistagUp",bWeight2CSVMMisTagUp);
+  syst2BM.setWeight("mistagDown",bWeight2CSVMMisTagDown);
+
   
   met = metPt[0];
   metpx = metPx[0];
@@ -470,9 +590,9 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
     if(!(jetIsCSVM[j]) && jetPt[j]>40.0 && abs(jetEta[j])<2.4){
       systZero.fillHistogramsSysts(h_2j1t_jetpt,jets[j].Pt(),1);
       systZero.fillHistogramsSysts(h_2j1t_jeteta,jets[j].Eta(),1);
-      }  
-    }
-    
+    }  
+  }
+  
   for(size_t i = 0; i < (size_t)tightMu.size();++i ){
    if(tightMu[i].Pt()>20){
    systZero.fillHistogramsSysts(h_2j1t_MuPt,tightMu[i].Pt(),1.0);
@@ -807,6 +927,23 @@ void systWeights::fillHistogramsSysts(TH1F** histo, float v, float w, double * w
 //          }
 //        }
 
+void systWeights::copySysts(systWeights sys){
+  for(int i =0; i < sys.maxSysts;++i){
+    this->weightedNames[i]=sys.weightedNames[i];
+    this->weightedSysts[i]=sys.weightedSysts[i];
+
+  }
+  this->setMax(sys.maxSysts);
+  this->setMaxNonPDF(sys.maxSystsNonPDF);
+  this->nPDF=sys.nPDF;
+  this->nCategories=sys.nCategories;  
+  this->addQ2=sys.addQ2;
+  this->addPDF=sys.addPDF;
+  this->addTopPt=sys.addTopPt;
+  this->addVHF=sys.addVHF;
+  this->addTTSplit=sys.addTTSplit;
+}
+
 void systWeights::setMax(int max){
   this->maxSysts =  max;
   }
@@ -938,3 +1075,93 @@ void systWeights::writeSingleHistogramSysts(TH1F* histo, TFile **filesout){
     }
   }
 }
+
+
+void systWeights::setPDFWeights(float * wpdfs, int numPDFs, float wzero,bool mult){
+  float zerofact=1.0;
+  if(mult)zerofact=this->weightedSysts[0];
+  for (int i = 0; i < numPDFs; ++i){
+    this->setPDFValue(i,zerofact*wpdfs[i]/wzero);
+  }
+  this->setSystValue("pdf_asUp", this->getPDFValue(this->nPDF-2)/wzero);
+  this->setSystValue("pdf_asDown", zerofact);
+  this->setSystValue("pdf_zmUp", this->getPDFValue(this->nPDF-1)/wzero);
+  this->setSystValue("pdf_zmDown", zerofact);
+  this->setSystValue("pdf_totalUp", zerofact);
+  this->setSystValue("pdf_totalDown", zerofact);
+}
+
+//void systWeights::setTWeight(float tweight, float totalweight){
+void systWeights::setTWeight(float tweight, float wtotsample,bool mult){
+  float zerofact=1.0;
+  //  cout << " weighted syst 0 is "<< weightedSysts[0]<<endl;
+  if(mult)zerofact=this->weightedSysts[0];
+  this->setSystValue("topPtWeightUp", zerofact*tweight/wtotsample);
+  this->setSystValue("topPtWeightDown", zerofact/tweight*wtotsample);
+}
+
+void systWeights::setVHFWeight(int vhf,bool mult,double shiftval){
+  float zerofact=1.0;
+  double w_shift=0.0;
+  //  cout << "vhf is "<<vhf<<endl;
+  if (vhf>1)w_shift=shiftval;
+  //  cout << " weighted syst 0 is "<< weightedSysts[0]<<endl;
+  if(mult)zerofact=this->weightedSysts[0];
+  this->setSystValue("VHFWeightUp", zerofact*(1+w_shift));
+  this->setSystValue("VHFWeightDown", zerofact*(1-w_shift));
+}
+
+
+void systWeights::setQ2Weights(float q2up, float q2down, float wzero, bool mult){
+  float zerofact=1.0;
+  if(mult){
+    zerofact=this->weightedSysts[0];
+    //    cout <<  "zerofact "<< zerofact << endl;
+  }
+  //  cout <<  "zerofact "<< zerofact << " q2up weight "<< q2up/wzero << " tot to fill "<< zerofact*q2up/wzero<<endl;
+  //  cout <<  "zerofact "<< zerofact << " q2down weight "<< q2down/wzero << " tot to fill "<< zerofact*q2down/wzero<<endl;
+  this->setSystValue("q2Up", zerofact*q2up/wzero);
+  this->setSystValue("q2Down", zerofact*q2down/wzero);
+}
+
+double systWeights::getPDFValue(int numPDF){
+  if(!addPDF){ cout << "error! No PDF used, this will do nothing."<<endl;return 0.;}
+  int MIN = this->maxSystsNonPDF;
+  return (double)this->weightedSysts[numPDF+MIN];
+
+}
+void systWeights::setPDFValue(int numPDF, double w){
+  if(!addPDF){ cout << "error! No PDF used, this will do nothing."<<endl;return;}
+  int MIN = this->maxSystsNonPDF;
+  this->weightedSysts[numPDF+MIN]=w;
+
+}
+
+void systWeights::calcPDFHisto(TH1F** histo, TH1F* singleHisto, double scalefactor, int c){//EXPERIMENTAL
+  if(!addPDF){ cout << "error! No PDF used, this will do nothing."<<endl;return;}
+  int MAX = this->maxSysts;
+  //  for (int c = 0; c < this->nCategories; c++){
+    int MIN = this->maxSystsNonPDF+(MAX+1)*c;
+    for(int b = 0; b< singleHisto->GetNbinsX();++b){
+      float val = singleHisto->GetBinContent(b);
+      //      cout << "bin # "<<b << " val "<<val<<endl;
+      float mean = 0, devst=0;
+      //      cout << "name is "<< singleHisto->GetName()<<endl;
+      for(int i = 0; i<this->nPDF;++i ){
+	//cout<< " now looking at pdf # "<<i<< " coordinate is "<< MIN+i<<endl;
+	//	cout << "is histo there? "<< histo[i+MIN]<<endl;
+	//	cout << " histo should be "<< (histo[i+MIN])->GetName()<<endl;
+	mean = mean+ histo[i+MIN]->GetBinContent(b);
+      }
+      mean = mean/this->nPDF;
+      //mean = val;//mean/this->nPDF;
+      for(int i = 0; i<this->nPDF;++i ){
+	devst+=(mean-histo[i+MIN]->GetBinContent(b))*(mean-histo[i+MIN]->GetBinContent(b));
+      }
+      devst= sqrt(devst/this->nPDF);
+      singleHisto->SetBinContent(b,val+devst*scalefactor);
+      //      singleHisto->SetBinContent(b,mean+devst*scalefactor);
+    }
+    //}
+}
+
