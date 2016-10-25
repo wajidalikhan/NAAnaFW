@@ -159,8 +159,8 @@ DMTreesDumper = cms.EDAnalyzer(
     vertexRho =  cms.InputTag("vertexInfo","rho"),
 
     #resolved top part:
-    doResolvedTopHad=cms.untracked.bool(True),
-    doResolvedTopSemiLep=cms.untracked.bool(True),
+    doResolvedTopHad=cms.untracked.bool(False),
+    doResolvedTopSemiLep=cms.untracked.bool(False),
     #cuts for the jet scan
     jetScanCuts=cms.vdouble(30), #Note: the order is important, as the jet collection with the first cut is used for the definition of mt2w.
     
