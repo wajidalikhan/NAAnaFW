@@ -9,6 +9,9 @@ parser = optparse.OptionParser(usage)
 #Input/Output options:
 parser.add_option('-s', '--storageElement',      dest='se',     type='string',     default = 'storage01.lcg.cscs.ch:8443/srm/managerv2',    help='Remote storaga element to fetch including port and manager version, examples: srm://storage01.lcg.cscs.ch:8443/srm/managerv2, stormfe1.pi.infn.it:8444/srm/managerv2')
 parser.add_option('-o', '--outputDir',   dest='outdir',  type='string',     default = './mc/trees/',      help='Directory to create the trees folder')
+parser.add_option('-F', '--format',   dest='format',  type='string',     default = 'py',      help='Format of the output file: python list (py) or plain txt file (txt)')
+parser.add_option('-x', '--xrootdServer',   dest='xrd',  type='string',     default = 'cms-xrd-global.cern.ch',      help='Xrootd server to retrieve the data files') #other options:xrootd.ba.infn.it
+parser.add_option('-g', '--gridCommands',      dest='gridCommands',     type='string',     default = 'lcg',    help='grid commands. Possibilities: lcg, gfal')
 
 #String fetching options:
 parser.add_option('-d', '--date',      dest='date',     type='string',     default = '',   help='date of the job, in the crab format yymmdd_hhmmss, also accepts partial (e.g: 1610 for october 2016)')
@@ -28,7 +31,7 @@ parser.add_option('-n', '--dryrun',   dest='dryrun',  action='store_true', defau
 (opt, args) = parser.parse_args()
 
 ###This funcTion searches recursively for root files in a remote path, requesting the path contains the word "sampleToFind" and returning an output file list:
-def findRootFileInPath(ls_command,srm, initialPath,sampleToFind,extraString="",date="", veto = "failed",verbose=False):
+def findRootFileInPath(ls_command,srm, initialPath,sampleToFind,extraString="",date="", veto = "failed",verbose=False,grid="lcg"):
     ls_command_exec = ls_command+srm+initialPath
     if verbose: print "command is: "+ ls_command_exec
     status,ls_la = commands.getstatusoutput( ls_command_exec )
@@ -38,8 +41,9 @@ def findRootFileInPath(ls_command,srm, initialPath,sampleToFind,extraString="",d
     fetchlist =[]
     pulledlist =[]
     #print list
-        
     for l in list:
+        if grid=="gfal":
+            l=initialPath+"/"+l 
         if l == initialPath:
 #            print " can't search further! "
             continue
@@ -68,7 +72,8 @@ def findRootFileInPath(ls_command,srm, initialPath,sampleToFind,extraString="",d
     if(len(outlist)==0):
         for l in fetchlist:
             if verbose: print " fetching now path " + l 
-            pulledlist = findRootFileInPath(ls_command=ls_command,srm=srm, initialPath=l,sampleToFind=sampleToFind,extraString = extraString, date = date, veto = veto)
+            #print ls_command+srm+initialPath
+            pulledlist = findRootFileInPath(ls_command=ls_command,srm=srm, initialPath=l,sampleToFind=sampleToFind,extraString = extraString, date = date, veto = veto, verbose=verbose, grid=grid)
 
             if verbose: print " pulled list:"
             if verbose: print pulledlist
@@ -109,23 +114,38 @@ def copyFilesInList(cp_command,srm, inputList, outputDir, maxSimultaneousCopies=
             os.system(command_cp_exec)
 
 ###This one copies a files in an input list to another directory, returning a list wiht the copied file names:
-def printFilesInList(inputList, path, nameOut, outputDir, option = 'w',verbose=False):
- 
-    filename = outputDir+"list"+nameOut+".py"
+def printFilesInList(inputList, path, nameOut, outputDir, option = 'w', format="py",verbose=False):
+
+    filename = outputDir+"list"+nameOut+"."+format
     if (option == 'a'):
-        filename = outputDir+"listAllSamples.py"
+        filename = outputDir+"listAllSamples."+format
         
     f = open(filename, option)
     
 
+#    print "format is " ,format
 #    f.write("import FWCore.ParameterSet.Config as cms \n")
-    if(option == 'a'): f.write("filelist"+nameOut.replace("-","_")+" = [")
-    if(option == 'w'): f.write("filelist = [")
+    if(option == 'a'): 
+        if format=="py":
+            f.write("filelist"+nameOut.replace("-","_")+" = [")
+        if format=="txt":
+            f.write("filelist"+nameOut.replace("-","_")+" \n")
+    if(option == 'w'): 
+        if format=="py":
+            f.write("filelist = [")
     for l in inputList:
+        #print inputList
         for lsplit in l.split(path):
             if verbose: print lsplit
-            if (".root" in lsplit): f.write("'root://xrootd.ba.infn.it//"+lsplit+"', \n")
-    f.write("]\n")        
+            if (".root" in lsplit): 
+                if format=="py":
+                    f.write("'root://"+opt.xrd+"//"+lsplit+"', \n")
+                if format=="txt":
+                    f.write("root://"+opt.xrd+"//"+lsplit+"\n")
+    if format=="py":
+        f.write("]\n")  
+    if format=="txt":
+        f.write("\n")
 
 def listFromSamples(f,p,verbose=False):
     fopen = open(f,'r')
@@ -143,10 +163,19 @@ def listFromSamples(f,p,verbose=False):
 ###MAIN###
 
 cmdls = "lcg-ls"
-cmdcp = "lcg-cp"
-#srmLocal = "  -b -D srmv2 srm://storage01.lcg.cscs.ch:8443/srm/managerv2\?SFN="
-
 srmLocal = "  -b -D srmv2 srm://"+ opt.se + "\?SFN="
+if opt.gridCommands=="lcg":
+    print "using lcg commands"
+if opt.gridCommands=="gfal":
+    print "using gfal commands"
+    cmdls = "gfal-ls"
+    SE = opt.se.split('/srm/')[0][:-5]
+    print SE
+    srmLocal = "  srm://" + SE + ""
+    print "base command is ", cmdls+srmLocal+opt.path
+    
+#srmLocal = "  -b -D srmv2 srm://storage01.lcg.cscs.ch:8443/srm/managerv2\?SFN="
+#srmLocal = "  -b -D srmv2 srm://"+ opt.se + "\?SFN="
 
 #samplesAndPaths = {"TTJets":"/pnfs/lcg.cscs.ch/cms/trivcat/store/user/decosa/ttDM/Phys14_Tree_v2/"}
 
@@ -163,18 +192,21 @@ samplesAndPaths = {
 
 
 outDir = opt.outdir
+if not outDir.endswith("/"):outDir= outDir+"/"
 print "output directory is: ", outDir, " , fetching se: ", opt.se
 
 if not opt.file == '':
-    if not opt.singleSample=='':
+    if opt.singleSample=='':
         print "using file: ", opt.file, " through path: ", opt.path
         samplesAndPaths = listFromSamples(opt.file, opt.path)
     else: print "!!!WARNING!!! both -f and -S options are present! The latter will override the former, be sure this is what you intended!"
-
+    
 if not opt.singleSample=='':
-    samplesAndPaths ={opt.singleSample,opt.path}
-
+    samplesAndPaths ={opt.singleSample:opt.path}
+if(opt.verbose>0): print "samples being fetched are: ",samplesAndPaths
+    
 def writeSamplesAndPaths(sap, outputDir=outDir, option = 'w'):
+    #print sap
     filename = outputDir+"samplesAndPaths.py"
         
     f = open(filename, option)
@@ -187,9 +219,16 @@ def writeSamplesAndPaths(sap, outputDir=outDir, option = 'w'):
   
 
 
+
+Format=opt.format
+
+if Format.startswith("."):Format = Format[1:]
+print "format is:", Format 
+
 os.system("mkdir "+outDir)
-os.system("rm "+outDir+"/listAllSamples.py")
+os.system("rm "+outDir+"/listAllSamples."+Format)
 writeSamplesAndPaths(samplesAndPaths)
+
 
 for sample in samplesAndPaths:
     path = samplesAndPaths[sample]
@@ -197,12 +236,12 @@ for sample in samplesAndPaths:
 #    outputList = []
     outputListJES = []
     #print path
-    outputListJES= findRootFileInPath(cmdls,srmLocal,path,sample,extraString ="",date=opt.date, veto = opt.veto, verbose=opt.verbose>1)
+    outputListJES= findRootFileInPath(cmdls,srmLocal,path,sample,extraString ="",date=opt.date, veto = opt.veto, verbose=opt.verbose>1,grid=opt.gridCommands)
     if opt.verbose>0:
         print "final output list for "+sample+" is : "
         print outputListJES
 
     if not opt.dryrun:
-        printFilesInList(outputListJES, "/pnfs/lcg.cscs.ch/cms/trivcat/", sample,outDir,"w",verbose=opt.verbose>1)
-        printFilesInList(outputListJES, "/pnfs/lcg.cscs.ch/cms/trivcat/", sample,outDir,"a",verbose=opt.verbose>1)
+        printFilesInList(outputListJES, "/pnfs/lcg.cscs.ch/cms/trivcat/", sample,outDir,"w",format=Format, verbose=opt.verbose>1)
+        printFilesInList(outputListJES, "/pnfs/lcg.cscs.ch/cms/trivcat/", sample,outDir,"a",format=Format, verbose=opt.verbose>1)
     
