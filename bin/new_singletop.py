@@ -5,13 +5,14 @@ import optparse
 import subprocess
 import sys
 import glob
+import utils
 #import colorama
 #from colorama import Fore, Back, Style
 #text = "The quick brown fox jumps over the lazy dog"
 #print(Fore.RED + text)
-#Usage: python new_singletop.py -c fullhadronic -s noSys --t3batch 
-#Usage: python new_singletop.py -c fullhadronic -s noSys -m t3se 
-#Usage: python new_singletop.py -c fullhadronic -s noSys -m local 
+#Usage: python new_singletop.py -c muon -s noSys --t3batch 
+#Usage: python new_singletop.py -c muon -s noSys -m t3se 
+#Usage: python new_singletop.py -c muon -s noSys -m local 
 
 from os.path import join,exists
 print 'Python version', sys.version_info
@@ -27,9 +28,6 @@ fileListDir = join(workdir,'files')
 pathlocal = "/afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_20/src/Analysis/NAAnaFW/bin/ST/"
 filepath='/afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_20/src/Analysis/NAAnaFW/bin/files/trees/mc/'
 
-#define samples, one folder for each mass value
-samples = []
-samples.append("ST")
 
 usage = 'usage: %prog -l lumi'
 parser = optparse.OptionParser(usage)
@@ -42,12 +40,50 @@ parser.add_option('-g', '--gdb',      dest='gdb',     action='store_true', defau
 parser.add_option('-n', '--dryrun',   dest='dryrun',  action='store_true', default=False)
 parser.add_option('-m', '--mode',     dest='mode',    default='t3se', choices=['local','t3se'])
 parser.add_option('--t3batch',        dest='t3batch', action='store_true', default=False)
+parser.add_option('-f', '--filepath',        dest='filepath',  type='string',     default = '/afs/cern.ch/work/o/oiorio/public/xNAAnaFW2016/files/trees/',      help='files with the trees location, default to the afs area where the latest version is always located')
+parser.add_option('-S', '--split',        dest='split',  type=int,     default = 0, help="Splitting each channel by batches of n jobs running simultaneously, where n= opt.splitMultiplicity. If s==0, no splitting is done(default). NOTA BENE! Doesn't work on local files atm.")
+parser.add_option('-P', '--process',        dest='process',  type='string',     default = 'all', help="samples to add, according to the convention in 'script_rename.py'. Options are: 'All','ST','VJ','VV','QCDMu','QCDEle', or '_'+specific process, e.g. _ST_T_tch to add only the _ST_T_tch. Accepts also multiple processes, separated by comma, e.g. -P ST,_TT,VJ will select the V+jets samples and single top sample sets, as well as the one sample named TT.")
 
 isData="MC"
 (opt, args) = parser.parse_args()
 
 if opt.sys not in ["noSys", "jesUp", "jesDown", "jerUp", "jerDown", "metUnclUp", "metUnclDown"]:
     parser.error('Please choose an allowed value for sys: "noSys", "jesUp", "jesDown", "jerUp", "jerDown","metUnclUp", "metUnclDown"')
+
+
+
+#define samples, one folder for each mass value
+samples = []
+def formSamples(proclist):
+    samp=[]
+    procs= proclist.split(",")
+    for proc in procs:
+        isAllProcesses = proc=="All"
+        if proc=="ST" or isAllProcesses:
+            from samplesST import samples as stemp
+            samp.extend(stemp)
+        if proc=="TT" or isAllProcesses:
+            from samplesTT import samples as stemp
+            samp.extend(stemp)
+        if proc=="VJ" or isAllProcesses:
+            from samplesVJ import samples as stemp
+            samp.extend(stemp)
+        if proc=="VV" or isAllProcesses:
+            from samplesVV import samples as stemp
+            samp.extend(stemp)
+        if proc=="QCDMu" or isAllProcesses:
+            from samplesQCDMu import samples as stemp
+            samp.extend(stemp)
+        if proc=="QCDEle" or isAllProcesses:
+            from samplesQCDEle import samples as stemp
+            samp.extend(stemp)
+        if proc.startswith("_"):
+            samp.append(proc[1:])
+    return samp
+
+samples = formSamples(opt.process)
+
+print "samples are:",samples
 
 # Create working area if it doesn't exist
 if not exists(fileListDir):
@@ -57,9 +93,46 @@ if not exists(fileListDir):
 if not exists('test'):
     os.makedirs('test')
 
+filePath= opt.filepath
+
+if opt.split!=0:#Modify the samples and txt list!
+    samplesOld=samples
+    samples=[]
+    os.system("mkdir "+workdir+"/splitfiles")
+    filePath= workdir+"/splitfiles"
+    for s in samplesOld:
+        sT2Path = join(opt.filepath,s+'.txt')
+        print sT2Path 
+        f = open(sT2Path,'r')
+        listing = f.read()                
+        files = listing.split()
+        splitfiles=[]
+        last =0.0
+        while last < (len(files)):
+            splitfiles.append(files[int(last):int(last + opt.split)])
+#            print files[int(last)]
+#            print files[int(last+opt.split)]
+            last +=opt.split
+        print splitfiles
+        nsplit = len(splitfiles)
+        print nsplit
+        os.system("rm "+filePath+"/"+s+"_part*")
+        for n in xrange(0,nsplit):
+            partname=s+"_part"+str(n)
+            samples.append(partname)
+            fnew = open(filePath+"/"+partname+".txt",'w')
+            for fl in splitfiles[n]:
+                fnew.write(fl+"\n")
+            fnew.close()
+            
+    for s in samples:
+        print s 
+        print join(filePath,s+'.txt')
+
 for s in samples:
+#    if opt.dry: continue
     if (s.startswith("JetHT") or s.startswith("SingleMu") or s.startswith("SingleEl") or  s.startswith("MET")): isData="DATA"
-    
+
     if opt.mode == 'local':
         print 'Info: Running in local mode ...'
         sPath = join(pathlocal,'*.root')
@@ -73,7 +146,7 @@ for s in samples:
     elif opt.mode == 't3se':
         print 'Info: Running on t3se in interactive mode ...'
         sPath = join(pathlocal,'*.root')
-        sT2Path = join(filepath,s+'.txt')
+        sT2Path = join(filePath,s+'.txt')
         print sT2Path 
         f = open(sT2Path,'r')
         listing = f.read()
