@@ -14,6 +14,9 @@ import utils
 #Usage: python new_singletop.py -c muon -s noSys -m t3se 
 #Usage: python new_singletop.py -c muon -s noSys -m local 
 
+#More complex working example: this will run only the ST_T_tch and the V+Jets samples and split them into batches of 10 files, taking them from the remote folder on Orso's public:
+#Usage: python new_singletop.py -c muon -s noSys -m local -S 10 -P _ST_T_tch,VJ --t3batch
+
 from os.path import join,exists
 print 'Python version', sys.version_info
 print '--------------------'
@@ -31,18 +34,27 @@ filepath='/afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_20/src/Analysis/NAAnaFW/b
 
 usage = 'usage: %prog -l lumi'
 parser = optparse.OptionParser(usage)
+
+#Input files:
+parser.add_option('-f', '--filepath',        dest='filepath',  type='string',     default = '/afs/cern.ch/work/o/oiorio/public/xNAAnaFW2016/files/trees/',      help='files with the trees location, default to the afs area where the latest version is always located')
+#Target process
+parser.add_option('-P', '--process',        dest='process',  type='string',     default = 'all', help="samples to add, according to the convention in 'script_rename.py'. Options are: 'All','ST','VJ','VV','QCDMu','QCDEle', or '_'+specific process, e.g. _ST_T_tch to add only the _ST_T_tch. Accepts also multiple processes, separated by comma, e.g. -P ST,_TT,VJ will select the V+jets samples and single top sample sets, as well as the one sample named TT.")
+
+#Details of the analysis step:
 parser.add_option('-c', '--channel',  dest='channel', type='string',     default = 'singleH', help='Channel to analyze: singleH or singleZ')
 parser.add_option('-C', '--cat',      dest='cat',     type='string',     default = 'cat2',    help='Category to analyze: cat0 or cat1 or cat2')
 parser.add_option('-s', '--sys',      dest='sys',     type='string',     default = 'noSys',   help='Systematics: jesUp, jesDown, jerUp, jerDown')
 parser.add_option('',   '--sync',     dest='sync',    type='string',     default = 'noSync',  help='Synchro exercise')
 parser.add_option('-d', '--isData',   dest='isData',  type='string',     default = 'MC',      help='is Data or MC?')
+
+#Running mode details:
 parser.add_option('-g', '--gdb',      dest='gdb',     action='store_true', default=False)
 parser.add_option('-n', '--dryrun',   dest='dryrun',  action='store_true', default=False)
 parser.add_option('-m', '--mode',     dest='mode',    default='t3se', choices=['local','t3se'])
 parser.add_option('--t3batch',        dest='t3batch', action='store_true', default=False)
-parser.add_option('-f', '--filepath',        dest='filepath',  type='string',     default = '/afs/cern.ch/work/o/oiorio/public/xNAAnaFW2016/files/trees/',      help='files with the trees location, default to the afs area where the latest version is always located')
+#Splitting options:
 parser.add_option('-S', '--split',        dest='split',  type=int,     default = 0, help="Splitting each channel by batches of n jobs running simultaneously, where n= opt.splitMultiplicity. If s==0, no splitting is done(default). NOTA BENE! Doesn't work on local files atm.")
-parser.add_option('-P', '--process',        dest='process',  type='string',     default = 'all', help="samples to add, according to the convention in 'script_rename.py'. Options are: 'All','ST','VJ','VV','QCDMu','QCDEle', or '_'+specific process, e.g. _ST_T_tch to add only the _ST_T_tch. Accepts also multiple processes, separated by comma, e.g. -P ST,_TT,VJ will select the V+jets samples and single top sample sets, as well as the one sample named TT.")
+
 
 isData="MC"
 (opt, args) = parser.parse_args()
