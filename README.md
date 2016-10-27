@@ -18,6 +18,8 @@ scram b -j 10 > & compilation.log &
 
 ## Part 2: Tree running  ##
 
+#Everything is in the NAAnaFW/test folder:
+
 cd test 
 
 ##MC:
@@ -30,7 +32,17 @@ nohup cmsRun topplusdmTrees_skim_cfg.py isData=True
 ##Finding files for trees:
 cd macros
 
-python treesFinder.py -f samples_HLTv1_muons.txt -s storage01.lcg.cscs.ch:8443/srm/managerv2 -o samples/mc/ -p /pnfs/lcg.cscs.ch/cms/trivcat/store/user/oiorio/ ttDM/samples/2016/Oct/ -V 2 
+python treesFinder.py -g gfal -f samples_HLTv1_muons.txt -s storage01.lcg.cscs.ch:8443/srm/managerv2 -o samples/mc/ -p /pnfs/lcg.cscs.ch/cms/trivcat/store/user/oiorio/ttDM/trees/2016/Oct/ -o trees/mc/
+
+#NOTA BENE 1) CURRENTLY THIS DOES NOT WORK ON LXPLUS AND CMSSW_8_0_X BECAUSE OF MISSING lcg-ls COMMANDS! WILL NEED TO USE gfal!!!
+#NOTA EVEN MORE BENE: Unfortunately, gfal does not work on CMSSW_8_0_X, so you'll have to migrate to 81X to make this script work:
+#TO MAKE IT WORK PLEASE DO 
+cd $HOME 
+cmsrel CMSSW_8_1_0_pre12 
+cd CMSSW_8_1_0_pre12/src
+cmsenv
+#END NOTA BENE
+
  # This one fetches recursively all directories in a path [option -p] in the storage element [option -s] looking for samples indicated in 
  # a txt file [option -f], with some parsing options (veto  a word, look for a particular date etc. ). 
  # The output are python files including the list of samples, as list of strings with the xrootd paths to all.
@@ -39,31 +51,52 @@ python treesFinder.py -f samples_HLTv1_muons.txt -s storage01.lcg.cscs.ch:8443/s
  # Can also use the built-in help function:
   #python treesFinder.py --help 
 
+
 ## part 3: Running the detailed selection and analysis  
-The SingleTopAnalysis.cpp contains the event selection and then it can be used with the following python script as:
- 
-1- python new_singletop.py -c fullhadronic -s noSys --t3batch 
 
-2- python new_singletop.py -c fullhadronic -s noSys -m t3se 
+#Everything is stored in the NAAnaFW/bin folder
 
-3- python new_singletop.py -c fullhadronic -s noSys -m local 
+cd bin
 
-PS: The "--t3batch" option will run via batch jobs 
+#To rename the output to the standard naming of the analysis please follow the convention found in 
+
+script_rename.py -s trees/mc/ -l trees/mc/renamed/
+
+The SingleTopAnalysis.cpp contains the event selection and then it can be used with the following python script:
+python new_singletop.py --t3batch -f trees/mc/renamed/ -P ST,TT,VJ,VV -S 10
+
+
+# this launches the analysis on batch queues at Cern by splitting it in groups of 10 root files.
+# other options for launching the analysis are are: 
 
 -- The "t3se" option will run it interactively on t3 Storage Element
-
 -- The "local" will run the job locally
+#Examples are therefore
+1- python new_singletop.py --t3batch -f trees/mc/renamed/ -P ST,TT,VJ,VV -S 10
+2- python new_singletop.py -m t3se -P ... -> launches interactively taking files from the grid
+3- python new_singletop.py  -m local -l localfiles/ST  -P... ->launches interactively on the files in the local folder -l blabla
 
--- The script "new_singletop.py" takes in the list of root files stoared at any SE. 
+#The -P option will take the input processes specified in the samplesST.py, samplesTT.py, samplesVJ.py etc files, also separated by comma.
+#the results are put in the ./res folder, unless differently specified, in the form of root files like ST_T_muon.root, etc.
 
--- The user has to give the path of text files of sample e.g. ST.txt:
+#If the -S NJobs option is specified, the output will be split in parts ST_T_partN_muon.root.
 
--- /afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_20/src/Analysis/NAAnaFW/bin/files/trees/ST.txt  
+#The parts can be merged with the
 
--- /afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_20/src/Analysis/NAAnaFW/bin/files/trees/TT.txt  
+merge_res.py -l ./res -P ST,TT,VJ,VV --rm True
 
--- Please make sure that you append the name of the sample you want to process in the script "new_singletop.py"
+#which will merge them together for ALL systematics available and, if with the --rm True option is specified, will remove all the separate *_partN_* files.
 
--- There is another script which automatically generates these sample text files
+
+#Summary of the analyis steps:
+3.1 Retrieve the files location with
+
+3.2 Rename the files location according to the convention we follow
+
+3.3 Launch the batch queues, splitting it wherever needed
+
+3.4 merge the batch queue result
+
+3.5 make the plots with the makePlot
 
 ## part 4: Statistical inference  ##
