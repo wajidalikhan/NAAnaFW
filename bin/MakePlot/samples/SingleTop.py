@@ -82,19 +82,6 @@ ST_Tbar_tW.leglabel = "ST"
 ST_Tbar_tW.label = "ST_Tbar_tW"
 
 
-WJetsToLNu = sample()
-WJetsToLNu.files = outlist (d,"WJetsToLNu")
-WJetsToLNu.skimEff = 1.
-#WJetsToLNu.sigma = 23.1363
-WJetsToLNu.sigma = 0.03216
-WJetsToLNu.jpref = jetLabel 
-WJetsToLNu.jp = jetLabel
-WJetsToLNu.color = ROOT.kGreen+2
-WJetsToLNu.style = 1
-WJetsToLNu.fill = 1001
-WJetsToLNu.leglabel = "WJets"
-WJetsToLNu.label = "WJetsToLNu"
-
 
 #Grouping up the components:
 ST_tch = sample()
@@ -122,22 +109,6 @@ ST_tW.fill = 1001
 ST_tW.leglabel = "Single Top, tW"
 ST_tW.label = "ST_tW"
 ST_tW.components = [ST_T_tW,ST_Tbar_tW]
-
-
-
-WJets = sample()
-#WJets.color = 6
-#WJets.color = ROOT.kTeal -6
-WJets.color = ROOT.kGreen - 2
-WJets.style = 1
-WJets.fill = 1001
-WJets.leglabel = "W + Jets"
-WJets.label = "WJets"
-WJets.components = [WJetsToLNu]
-#WJets.components = [WJets_HT100_200, WJets_HT200_400, WJets_HT400_600, WJets_HT600_800, WJets_HT800_1200, WJets_HT1200_2500, WJets_HT2500_Inf]
-# WJets.components = [WJets_HT100_200, WJets_HT200_400,  WJets_HT800_1200, WJets_HT1200_2500 ]
-
-
 
 
 

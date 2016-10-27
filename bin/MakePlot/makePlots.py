@@ -10,7 +10,7 @@ usage = 'usage: %prog -l lumi'
 parser = optparse.OptionParser(usage)
 
 parser.add_option('-l', '--lumi', dest='lumi', type='float', default = '1.26', help='Luminosity')
-parser.add_option('-c', '--channel', dest='channel', type='string', default = 'muonic', help='Channel to analyze: muonic or electronic')
+parser.add_option('-c', '--channel', dest='channel', type='string', default = 'muon', help='Channel to analyze: muonic or electronic')
 parser.add_option('-s', '--sys', dest='sys', type='string', default = 'noSys', help='Systematics: noSys, jesUp, jesDown')
 parser.add_option('-n', '--normData', dest='normData', type='int', default = '0', help='Normalise to data?')
 parser.add_option('-r', '--resdir', dest='resdir', type='string', default = './../newTTDManalysis/', help='res directory')
@@ -31,7 +31,7 @@ import numpy as n
 # from plots.services import Histo, Stack, Legend, deltaPhi, Histo1
 from plots.services import deltaPhi
 from samples.toPlot import samples
-import plots.common, plots.electronic, plots.muonic
+import plots.common, plots.electronic, plots.muon
 
 
 import tdrstyle, CMS_lumi
@@ -56,12 +56,12 @@ def writeSummary(label, channel, sys, h, lumi):
     ofile.write("Events after bjet cut     : %.2f\n" %(h.GetBinContent(4)) )
     ofile.write("Events after met160 cut   : %.2f\n" %(h.GetBinContent(5)) )
     ofile.write("Events after met320 cut   : %.2f\n" %(h.GetBinContent(6)) )
-    if(channel == "muonic"):
+    if(channel == "muon"):
         ofile.write("Events after mt cut       : %.2f\n" %(h.GetBinContent(7)) )
         ofile.write("Events after mt2w cut     : %.2f\n" %(h.GetBinContent(8)) )
         ofile.write("Events after minDPhi cut  : %.2f\n" %(h.GetBinContent(9)) )
         if(h.GetBinContent(0)!=0):ofile.write("Selection efficiency      : %.2f\n" %(h.GetBinContent(9)/h.GetBinContent(0)) )
-    elif(channel == "electronic"):
+    elif(channel == "electron"):
         ofile.write("Events after minDPhi cut  : %.2f\n" %(h.GetBinContent(7)) )
         if(h.GetBinContent(0)!=0):ofile.write("Selection efficiency      : %.2f\n" %(h.GetBinContent(7)/h.GetBinContent(0)) )
 
@@ -82,10 +82,10 @@ store = []
 settings.update(plots.common.settings)
 store += plots.common.store
 
-if opt.channel == 'muonic':
-    # Add muonic specific settings and plots to store
-    settings.update(plots.muonic.settings)
-    store += plots.muonic.store
+if opt.channel == 'muon':
+    # Add muon specific settings and plots to store
+    settings.update(plots.muon.settings)
+    store += plots.muon.store
 
     # Define sl output_newLayout paths
     #outhistos = 'output_newLayout/sl/histos'
@@ -96,10 +96,10 @@ if opt.channel == 'muonic':
     outpdfs = 'output/sl/pdfs_lin'
     outtxt = 'output/sl/txt_lin'
 
-elif opt.channel == 'electronic':
-    # Add electronic specific settings and plots to store
-    settings.update(plots.electronic.settings)
-    store += plots.electronic.store
+elif opt.channel == 'electron':
+    # Add electron specific settings and plots to store
+    settings.update(plots.electron.settings)
+    store += plots.electron.store
 
     # Define fh output_newLayout paths
     #outhistos = 'output_newLayout/fh/histos'

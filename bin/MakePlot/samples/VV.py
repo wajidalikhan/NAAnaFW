@@ -146,7 +146,7 @@ WZTo3LNu.fill = 1001
 WZTo3LNu.leglabel = "WZTo3LNu"
 WZTo3LNu.label = "WZTo3LNu"
 
-
+#Grouping up the components:
 VV = sample()
 #VV.color = 38
 #VV.color = ROOT.kPink + 2
@@ -155,5 +155,9 @@ VV.style = 1
 VV.fill = 1001
 VV.leglabel = "VV"
 VV.label = "VV"
-VV.components = [ WZTo1L3Nu, ZZTo4L, ZZTo2L2Nu, WWTo2L2Nu, WWTo1L1Nu2Q, ZZTo4Q, WWTo4Q, ZZTo2Q2Nu, ZZTo2L2Q, WZTo3LNu, WZTo2L2Q, WZTo1L1Nu2Q]
+#VV.components = [ WWTo2L2Nu, WWTo1L1Nu2Q, WZTo1L1Nu2Q]
+VV.components = [ WWTo2L2Nu, WWTo1L1Nu2Q,  WZTo2L2Q, WZTo1L1Nu2Q, ZZTo2L2Q]
+
+
+#VV.components = [ WZTo1L3Nu, ZZTo4L, ZZTo2L2Nu, WWTo2L2Nu, WWTo1L1Nu2Q, ZZTo4Q, WWTo4Q, ZZTo2Q2Nu, ZZTo2L2Q, WZTo3LNu, WZTo2L2Q, WZTo1L1Nu2Q]
 #WZTo2L2Q, WZTo1L1Nu2Q
