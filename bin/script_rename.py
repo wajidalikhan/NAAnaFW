@@ -1,10 +1,22 @@
 import os, sys
 import shutil
 import errno
+os.seteuid(os.geteuid())
+import optparse 
 
-src='/afs/cern.ch/user/o/oiorio/public/xWajid/files/trees/mc/'
-dest='/afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_20/src/Analysis/NAAnaFW/bin/files/trees/mc'
+usage = 'usage: %prog '
+parser = optparse.OptionParser(usage)
+parser.add_option('-s', '--src',        dest='src',  type='string',     default = './', help="directory to rename files")
+parser.add_option('-d', '--dest',        dest='dest',  type='string',     default = './renamed/', help="directory to rename files")
 
+(opt, args) = parser.parse_args()
+#src='./'
+#dest='./renamed'
+
+src = opt.src
+dest= opt.dest
+
+os.system('mkdir '+dest)
 
 def remove_folder(path):
     # check if folder exists
@@ -36,7 +48,7 @@ for i in list:
   if 'listST_t-channel_top_4f_inclusiveDecays_13TeV-powhegV2-madspin-pythia8_TuneCUETP8M1.txt' in i:
     print '*** Renaming file', i 
     os.renames(i,"ST_T_tch.txt")
-
+    
   if 'listST_t-channel_antitop_4f_inclusiveDecays_13TeV-powhegV2-madspin-pythia8_TuneCUETP8M1.txt' in i:
     print '*** Renaming file', i 
     os.renames(i,"ST_Tbar_tch.txt")
@@ -44,10 +56,6 @@ for i in list:
   if 'listST_s-channel_4f_leptonDecays_13TeV-amcatnlo-pythia8_TuneCUETP8M1.txt' in i:
     print '*** Renaming file', i 
     os.renames(i,"ST_T_sch.txt")
-  
-  if 'listST_s-channel_antitop_4f_leptonDecays_13TeV-amcatnlo-pythia8_TuneCUETP8M1.txt' in i:
-    print '*** Renaming file', i 
-    os.renames(i,"ST_Tbar_sch.txt")
   
   if 'listST_tW_top_5f_NoFullyHadronicDecays_13TeV-powheg_TuneCUETP8M1.txt' in i:
     print '*** Renaming file', i 
@@ -79,15 +87,15 @@ for i in list:
 
   if 'listWZTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8.txt' in i:
     print '*** Renaming file', i 
-    os.renames(i,"WZTo1L1Nu2Q")
+    os.renames(i,"WZTo1L1Nu2Q.txt")
    
   if 'listWZTo2L2Q_13TeV_amcatnloFXFX_madspin_pythia8.txt' in i:
     print '*** Renaming file', i 
-    os.renames(i,"WZTo2L2Q")
+    os.renames(i,"WZTo2L2Q.txt")
     
   if 'listZZTo2L2Q_13TeV_amcatnloFXFX_madspin_pythia8.txt' in i:
     print '*** Renaming file', i 
-    os.renames(i,"ZZTo2L2Q")
+    os.renames(i,"ZZTo2L2Q.txt")
 
   if 'listQCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8.txt' in i:
     print '*** Renaming file', i 

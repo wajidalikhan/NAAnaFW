@@ -135,10 +135,11 @@ int main(int argc, char **argv) {
 
   string reportName = "SelectedEvents_"+channel+"_"+cat+"_"+sample+".txt";
   ofstream fileout;
-  
-  fileout.open(reportName.c_str(),ios::in | ios::out | ios::trunc);
-  fileout<<"RunNumber EvtNumber Lumi "<<std::endl;
-
+  bool doSynch=false;
+  if(doSynch){
+    fileout.open(reportName.c_str(),ios::in | ios::out | ios::trunc);
+    fileout<<"RunNumber EvtNumber Lumi "<<std::endl;
+  }
   TString outfile = "test/"+sample + "_" +cat+"_"+channel+".root";
   
   TString treePath = "DMTreesDumper/ttDM__noSyst";
@@ -390,7 +391,7 @@ int main(int argc, char **argv) {
 
 
 for(Int_t evt=0; evt<nEvents; evt++ ){
-    if(evt%100000==1 ){
+    if(evt%10000==1 ){
     cout<<"Info: Running on event: "<<evt<<endl; 
     }
   chain.GetEntry(evt);
@@ -674,11 +675,11 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   nTightMuons = nMu;    
 
 
-  fileout<<std::fixed<<std::setprecision(0)<<runNumber<<"   "<<evtNumber<<"   "<<lumiSec<<"   "<<std::endl;
+  if(doSynch)fileout<<std::fixed<<std::setprecision(0)<<runNumber<<"   "<<evtNumber<<"   "<<lumiSec<<"   "<<std::endl;
   
   }//end of loop over events 
   
-  fileout.close();  //return h
+ if(doSynch)fileout.close();  //return h
   
   // Cut Flow
   h_cutFlow->SetBinContent(1,nEvents);
