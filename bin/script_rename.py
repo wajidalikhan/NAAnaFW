@@ -3,6 +3,8 @@ import shutil
 import errno
 os.seteuid(os.geteuid())
 import optparse 
+from utils import *
+
 
 usage = 'usage: %prog '
 parser = optparse.OptionParser(usage)
@@ -15,26 +17,8 @@ parser.add_option('-d', '--dest',        dest='dest',  type='string',     defaul
 
 src = opt.src
 dest= opt.dest
+mymkdir(dest)
 
-os.system('mkdir '+dest)
-
-def remove_folder(path):
-    # check if folder exists
-    if os.path.exists(path):
-         # remove if exists
-         print '*** Removing the folder : ',dest
-         shutil.rmtree(path)
-remove_folder(dest)
- 
-def copy(src, dest):
-    try:
-        shutil.copytree(src, dest)
-    except OSError as e:
-        # If the error was caused because the src wasn't a directory
-        if e.errno == errno.ENOTDIR:
-            shutil.copy(src, dest)
-        else:
-            print('Directory not copied. Error: %s' % e)
 
 print '*** Copying the list of files from : ',src, 'to : ', dest 
 copy(src,dest)

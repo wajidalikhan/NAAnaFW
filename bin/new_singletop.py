@@ -5,14 +5,14 @@ import optparse
 import subprocess
 import sys
 import glob
-import utils
+from utils import *
 #import colorama
 #from colorama import Fore, Back, Style
 #text = "The quick brown fox jumps over the lazy dog"
 #print(Fore.RED + text)
 #Usage: python new_singletop.py -c muon -s noSys --t3batch 
 #Usage: python new_singletop.py -c muon -s noSys -m t3se 
-#Usage: python new_singletop.py -c muon -s noSys -m local 
+#Usage: python new_singletop.py -c muon -s noSys -m local -P _test
 
 #More complex working example: this will run only the ST_T_tch and the V+Jets samples and split them into batches of 10 files, taking them from the remote folder on Orso's public:
 #Usage: python new_singletop.py -c muon -s noSys -m local -S 10 -P _ST_T_tch,VJ --t3batch
@@ -32,7 +32,7 @@ pathlocal = "/afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_20/src/Analysis/NAAnaF
 filepath='/afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_20/src/Analysis/NAAnaFW/bin/files/trees/mc/'
 
 
-usage = 'usage: %prog -l lumi'
+usage = ''
 parser = optparse.OptionParser(usage)
 
 #Input files:
@@ -67,32 +67,6 @@ if opt.sys not in ["noSys", "jesUp", "jesDown", "jerUp", "jerDown", "metUnclUp",
 
 #define samples, one folder for each mass value
 samples = []
-def formSamples(proclist):
-    samp=[]
-    procs= proclist.split(",")
-    for proc in procs:
-        isAllProcesses = proc=="All"
-        if proc=="ST" or isAllProcesses:
-            from samplesST import samples as stemp
-            samp.extend(stemp)
-        if proc=="TT" or isAllProcesses:
-            from samplesTT import samples as stemp
-            samp.extend(stemp)
-        if proc=="VJ" or isAllProcesses:
-            from samplesVJ import samples as stemp
-            samp.extend(stemp)
-        if proc=="VV" or isAllProcesses:
-            from samplesVV import samples as stemp
-            samp.extend(stemp)
-        if proc=="QCDMu" or isAllProcesses:
-            from samplesQCDMu import samples as stemp
-            samp.extend(stemp)
-        if proc=="QCDEle" or isAllProcesses:
-            from samplesQCDEle import samples as stemp
-            samp.extend(stemp)
-        if proc.startswith("_"):
-            samp.append(proc[1:])
-    return samp
 
 samples = formSamples(opt.process)
 

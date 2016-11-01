@@ -822,7 +822,7 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
     trees[syst]->SetName((channel+"__"+syst).c_str());
     trees[syst]->SetTitle((channel+"__"+syst).c_str());
   }
-
+  
   initTreeWeightHistory(useLHEWeights);
 
   string L1Name = "Fall15_25nsV2_MC_L1FastJet_AK4PFchs.txt"; //
@@ -913,6 +913,12 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
   //  useLHEWeights=false;
   //  useLHE=false;
   //  useLHEWeights=false;
+
+  if(useLHEWeights){
+      getEventLHEWeights();
+    }
+  
+
   if(getPartonW || getPartonTop || doWReweighting || doTopReweighting){
     if(!useLHE)return;
     genlep.clear();
@@ -944,7 +950,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     float_values["Event_T_Weight"]= 1.0;
     float_values["Event_T_Ext_Weight"]= 1.0;
     size_t nup=lhes->hepeup().NUP;
-    
+
     for( size_t i=0;i<nup;++i){
       //      cout << " particle number " << i << endl;
       int id = lhes->hepeup().IDUP[i];
@@ -1060,10 +1066,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       else {(float_values["Event_T_Weight"]=1.0);
 	(float_values["Event_T_Ext_Weight"]=1.0);}
     }
-    if(useLHEWeights){
-      getEventLHEWeights();
-    }
-
+    
 
     if( (getParticleWZ)) {
       for(size_t p=0;p<partID->size();++p){
@@ -1162,7 +1165,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 
   }
   trees["WeightHistory"]->Fill();
-
+  
   //Part 3: filling the additional variables
 
 
@@ -3131,7 +3134,7 @@ void DMAnalysisTreeMaker::getEventLHEWeights(){
 
 void DMAnalysisTreeMaker::initTreeWeightHistory(bool useLHEW){
   //  cout << " preBranch "<<endl;
-
+  
   trees["WeightHistory"]->Branch("Event_Z_EW_Weight",&float_values["Event_Z_EW_Weight"]);
   trees["WeightHistory"]->Branch("Event_W_EW_Weight",&float_values["Event_W_EW_Weight"]);
   trees["WeightHistory"]->Branch("Event_Z_QCD_Weight",&float_values["Event_Z_QCD_Weight"]);
@@ -3158,6 +3161,7 @@ void DMAnalysisTreeMaker::initTreeWeightHistory(bool useLHEW){
       string name = "Event_LHEWeight"+w_n.str();
       cout << " pre single w # "<< w <<endl;
       trees["WeightHistory"]->Branch(name.c_str(),&float_values[name],(name+"/F").c_str());
+      cout << " branched "<< float_values[name]<<endl;
       //trees["noSyst"]->Branch(name.c_str(), &float_values[name],(name+"/F").c_str());
     }
   }

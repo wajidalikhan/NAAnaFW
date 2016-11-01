@@ -408,13 +408,13 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
     
     //    w = w * w_pu;
     //    w*=k_fact;
-    //cout << " --> bef top pt " << w << endl;
+    //    cout << " --> bef top pt " << w << endl;
     
     if(sample=="TTNoTT"){
       w*=w_top/topWeight;
     }
 
-       //cout << "     after top pt " << w << endl; 
+    //    cout << "     after top pt " << w << endl; 
        //w*= ((METturnon13TeV(metPt[0],1,true))/(METturnon13TeV(metPt[0],1,false)));
        //       cout << "vhf "<<vhf << " eventFlavour "<<eventFlavour << endl;
     //vhf=(int)eventFlavour;
@@ -439,7 +439,7 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   if(addPDF)systZero.setPDFWeights(w_pdfs,nPDF,w_zero,true);
   if(addQ2)systZero.setQ2Weights(w_q2up,w_q2down,w_zero,true);
   if(addTopPt)systZero.setTWeight(w_top,topWeight,true);
-
+  
 
   syst0BM.copySysts(systZero);
   syst0BM.setWeight(0,bWeight0CSVM);
@@ -454,6 +454,7 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   syst1BM.setWeight("btagDown",bWeight1CSVMBTagDown);
   syst1BM.setWeight("mistagUp",bWeight1CSVMMisTagUp);
   syst1BM.setWeight("mistagDown",bWeight1CSVMMisTagDown);
+
 
   syst2BM.copySysts(systZero);
   syst2BM.setWeight(0,bWeight2CSVM);
@@ -568,8 +569,8 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   if((jets.size() == 2 && bjets.size() == 0 && nMu == 1 && nEl==0)){
   for(size_t i= 0; i< (size_t)jets.size();++i ){
     //cout <<runNumber<<"   "<<evtNumber<<"   "<<"jet["<<i<< "] "<<jets[i].Pt()<<"   bjetsize "<< bjets.size() <<"   Mu["<<i<< "] "<<tightMu[i].Pt()<< std::endl;
-    if(i==0)systZero.fillHistogramsSysts(h_2j0t_jetpt40_1st,jets[i].Pt(),1);  
-    if(i==1)systZero.fillHistogramsSysts(h_2j0t_jetpt40_2nd,jets[i].Pt(),1);  
+    if(i==0)syst0BM.fillHistogramsSysts(h_2j0t_jetpt40_1st,jets[i].Pt(),1);  
+    if(i==1)syst0BM.fillHistogramsSysts(h_2j0t_jetpt40_2nd,jets[i].Pt(),1);  
    }
     
   for(size_t i = 0; i < (size_t)tightMu.size();++i ){
@@ -577,35 +578,39 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
           TVector2 met_( met*cos(metPhi[0]), met*sin(metPhi[0]));
           float phi_lmet = fabs(deltaPhi(tightMu[i].Phi(), metPhi[0]) );
           mt = sqrt(2* tightMu[i].Pt() * met* ( 1- cos(phi_lmet)));
-          systZero.fillHistogramsSysts(h_2j0t_mtw,mt,1.0);
+          syst0BM.fillHistogramsSysts(h_2j0t_mtw,mt,1.0);
           }
       }
   }
   //2j1t
   if((jets.size() == 2 && bjets.size() == 1 && nMu == 1 && nEl==0)){
-  for(size_t i= 0; i< (size_t)bjets.size();++i ){
-   if(i==0)systZero.fillHistogramsSysts(h_2j1t_bjetpt,bjets[i].Pt(),1);
+    for(size_t i= 0; i< (size_t)bjets.size();++i ){
+      //      cout << " w "<< w <<" b weight 1 "<< bWeight1CSVM << endl;
+      if(i==0){
+	syst1BM.fillHistogramsSysts(h_2j1t_bjetpt,bjets[i].Pt(),w,NULL,false);
+	//	cout << bjets[i].Pt()<< endl;
+      }
     }
   
   for (size_t j= 0; j< (size_t)jets.size();++j ){
     if(!(jetIsCSVM[j]) && jetPt[j]>40.0 && abs(jetEta[j])<2.4){
-      systZero.fillHistogramsSysts(h_2j1t_jetpt,jets[j].Pt(),1);
-      systZero.fillHistogramsSysts(h_2j1t_jeteta,jets[j].Eta(),1);
+      syst1BM.fillHistogramsSysts(h_2j1t_jetpt,jets[j].Pt(),1);
+      syst1BM.fillHistogramsSysts(h_2j1t_jeteta,jets[j].Eta(),1);
     }  
   }
   
   for(size_t i = 0; i < (size_t)tightMu.size();++i ){
    if(tightMu[i].Pt()>20){
-   systZero.fillHistogramsSysts(h_2j1t_MuPt,tightMu[i].Pt(),1.0);
-   systZero.fillHistogramsSysts(h_2j1t_MuEta,tightMu[i].Eta(),1.0);
-   systZero.fillHistogramsSysts(h_2j1t_MuPhi,tightMu[i].Phi(),1.0);
-   systZero.fillHistogramsSysts(h_2j1t_MuE,tightMu[i].E(),1.0);
+   syst1BM.fillHistogramsSysts(h_2j1t_MuPt,tightMu[i].Pt(),1.0);
+   syst1BM.fillHistogramsSysts(h_2j1t_MuEta,tightMu[i].Eta(),1.0);
+   syst1BM.fillHistogramsSysts(h_2j1t_MuPhi,tightMu[i].Phi(),1.0);
+   syst1BM.fillHistogramsSysts(h_2j1t_MuE,tightMu[i].E(),1.0);
    
    if((tightMu.size())<2 ){
         TVector2 met_( met*cos(metPhi[0]), met*sin(metPhi[0]));
         float phi_lmet = fabs(deltaPhi(tightMu[i].Phi(), metPhi[0]) );
         mt = sqrt(2* tightMu[i].Pt() * met* ( 1- cos(phi_lmet)));
-        systZero.fillHistogramsSysts(h_2j1t_mtw,mt,1.0);
+        syst1BM.fillHistogramsSysts(h_2j1t_mtw,mt,1.0);
         }
       }
     }    
@@ -615,8 +620,8 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   if(tops.size()!=0){
     double mass = tops.at(0).M();
     double pt = tops.at(0).Pt();
-    systZero.fillHistogramsSysts(h_2j1t_topMass,mass,1.0);
-    systZero.fillHistogramsSysts(h_2j1t_topPt,pt,1.0);
+    syst1BM.fillHistogramsSysts(h_2j1t_topMass,mass,1.0);
+    syst1BM.fillHistogramsSysts(h_2j1t_topPt,pt,1.0);
     }
   }
   
@@ -627,10 +632,10 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
    } 
   
   for(size_t i = 0; i < (size_t)tightMu.size();++i ){
-        systZero.fillHistogramsSysts(h_3j1t_MuPt,tightMu[i].Pt(),1.0);
-        systZero.fillHistogramsSysts(h_3j1t_MuEta,tightMu[i].Eta(),1.0);
-        systZero.fillHistogramsSysts(h_3j1t_MuPhi,tightMu[i].Phi(),1.0);
-        systZero.fillHistogramsSysts(h_3j1t_MuE,tightMu[i].E(),1.0);
+        syst1BM.fillHistogramsSysts(h_3j1t_MuPt,tightMu[i].Pt(),1.0);
+        syst1BM.fillHistogramsSysts(h_3j1t_MuEta,tightMu[i].Eta(),1.0);
+        syst1BM.fillHistogramsSysts(h_3j1t_MuPhi,tightMu[i].Phi(),1.0);
+        syst1BM.fillHistogramsSysts(h_3j1t_MuE,tightMu[i].E(),1.0);
         if((tightMu.size())<2 ){
           TVector2 met_( met*cos(metPhi[0]), met*sin(metPhi[0]));
           float phi_lmet = fabs(deltaPhi(tightMu[i].Phi(), metPhi[0]) );
@@ -643,15 +648,17 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   //3j2t
   if((jets.size() == 3 && bjets.size()==2 && nMu==1 && nEl==0)){
     for(size_t i=0; i< (size_t)bjets.size();++i ){
-      if(i==0)systZero.fillHistogramsSysts(h_3j2t_bjetpt,bjets[i].Pt(),1);
-      if(i==1)systZero.fillHistogramsSysts(h_3j2t_2ndbjetpt,bjets[i].Pt(),1);
+      //      cout << " ,bWeight2CSVM "<< <<",bWeight2CSVMBTagUp "<<bWeight2CSVMBTagUp<<endl;
+
+      if(i==0)syst2BM.fillHistogramsSysts(h_3j2t_bjetpt,bjets[i].Pt(),1,NULL,true);
+      if(i==1)syst2BM.fillHistogramsSysts(h_3j2t_2ndbjetpt,bjets[i].Pt(),1);
       }
       for(size_t i = 0; i < (size_t)tightMu.size();++i ){
         if(tightMu[i].Pt()>20){
-        systZero.fillHistogramsSysts(h_3j2t_MuPt,tightMu[i].Pt(),1.0);
-        systZero.fillHistogramsSysts(h_3j2t_MuEta,tightMu[i].Eta(),1.0);
-        systZero.fillHistogramsSysts(h_3j2t_MuPhi,tightMu[i].Phi(),1.0);
-        systZero.fillHistogramsSysts(h_3j2t_MuE,tightMu[i].E(),1.0);
+        syst2BM.fillHistogramsSysts(h_3j2t_MuPt,tightMu[i].Pt(),1.0);
+        syst2BM.fillHistogramsSysts(h_3j2t_MuEta,tightMu[i].Eta(),1.0);
+        syst2BM.fillHistogramsSysts(h_3j2t_MuPhi,tightMu[i].Phi(),1.0);
+        syst2BM.fillHistogramsSysts(h_3j2t_MuE,tightMu[i].E(),1.0);
         if((tightMu.size())<2 ){
           TVector2 met_( met*cos(metPhi[0]), met*sin(metPhi[0]));
           float phi_lmet = fabs(deltaPhi(tightMu[i].Phi(), metPhi[0]) );
@@ -682,7 +689,8 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
  if(doSynch)fileout.close();  //return h
   
   // Cut Flow
-  h_cutFlow->SetBinContent(1,nEvents);
+ h_cutFlow->SetBinContent(0,nEventsTot);//Underflow: number of events pre-preselection.
+ h_cutFlow->SetBinContent(1,nEvents);
   h_cutFlow->GetXaxis()->SetBinLabel(1,"no selection");
   h_cutFlow->SetBinContent(2, 0);
   h_cutFlow->GetXaxis()->SetBinLabel(2, "trigger");
@@ -906,16 +914,20 @@ void systWeights::fillHistogramsSysts(TH1F** histo, float v, float w, double * w
     wcats=this->wCats;
   }
   for (int c = 0; c < this->nCategories; c++){
-    //cout<< " in cat loop "<< c<<endl;
-    //cout<< " value "<< wcats[c] <<endl;
+    if(verbose){
+      cout<< " in cat loop "<< c<<endl;
+      cout<< " value "<< wcats[c] <<endl;
+    }
     int MAX = this->maxSysts;
     bool useOnlyNominal = this->onlyNominal;
     for(int sy=0;sy<(int)MAX;++sy){
-      //cout<< " in syst loop "<< sy<< endl;
-      //cout<<" value "<< this->weightedSysts[(int)sy] <<endl ;
+      if(verbose){
+	cout<< " in syst loop "<< sy<< endl;
+	cout<<" value "<< this->weightedSysts[(int)sy] <<endl ;
+      }
       if(sy!=0&& useOnlyNominal)continue;
       float ws = (this->weightedSysts[(int)sy])*wcats[c];
-      //cout << " filling histogram "<< histo[(int)sy]->GetName() << " with value "<< v <<" and weight "<< w <<" ws "<< ws<<endl;
+      if(verbose)cout << " filling histogram "<< histo[(int)sy]->GetName() << " with value "<< v <<" and weight "<< w <<" ws "<< ws<<endl;
       histo[sy+(MAX+1)*(c)]->Fill(v, w*ws);
     }
   }
@@ -928,12 +940,21 @@ void systWeights::fillHistogramsSysts(TH1F** histo, float v, float w, double * w
 //          }
 //        }
 
+void systWeights::setWCats(double * wcats){
+  for(int i =0;i<this->nCategories;++i){
+    //    cout << "setting wcat #"<< i << " to be "<<wcats[i]<<endl;
+    this->wCats[i]=wcats[i];
+  }
+ 
+}
+
 void systWeights::copySysts(systWeights sys){
   for(int i =0; i < sys.maxSysts;++i){
     this->weightedNames[i]=sys.weightedNames[i];
     this->weightedSysts[i]=sys.weightedSysts[i];
 
   }
+  this->setOnlyNominal(sys.onlyNominal);
   this->setMax(sys.maxSysts);
   this->setMaxNonPDF(sys.maxSystsNonPDF);
   this->nPDF=sys.nPDF;
@@ -943,6 +964,8 @@ void systWeights::copySysts(systWeights sys){
   this->addTopPt=sys.addTopPt;
   this->addVHF=sys.addVHF;
   this->addTTSplit=sys.addTTSplit;
+  this->setWCats(sys.wCats);
+
 }
 
 void systWeights::setMax(int max){
