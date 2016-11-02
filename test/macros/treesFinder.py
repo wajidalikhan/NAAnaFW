@@ -9,7 +9,7 @@ parser = optparse.OptionParser(usage)
 #Input/Output options:
 parser.add_option('-s', '--storageElement',      dest='se',     type='string',     default = 'storage01.lcg.cscs.ch:8443/srm/managerv2',    help='Remote storaga element to fetch including port and manager version, examples: srm://storage01.lcg.cscs.ch:8443/srm/managerv2, stormfe1.pi.infn.it:8444/srm/managerv2')
 parser.add_option('-o', '--outputDir',   dest='outdir',  type='string',     default = './mc/trees/',      help='Directory to create the trees folder')
-parser.add_option('-F', '--format',   dest='format',  type='string',     default = 'py',      help='Format of the output file: python list (py) or plain txt file (txt)')
+parser.add_option('-F', '--format',   dest='format',  type='string',     default = 'txt',      help='Format of the output file: python list (py) or plain txt file (txt)')
 parser.add_option('-x', '--xrootdServer',   dest='xrd',  type='string',     default = 'cms-xrd-global.cern.ch',      help='Xrootd server to retrieve the data files') #other options:xrootd.ba.infn.it
 parser.add_option('-g', '--gridCommands',      dest='gridCommands',     type='string',     default = 'lcg',    help='grid commands. Possibilities: lcg, gfal')
 
@@ -23,6 +23,7 @@ parser.add_option('-f', '--file',      dest='file',     type='string',     defau
 #If you want to get a single sample specifying it directly in the command:
 parser.add_option('-S','--singleSample',      dest='singleSample',     type='string',     default = '',    help='force to look for a single sample if specified. Overrides the -f option if both are present.')
 parser.add_option('-p','--path',      dest='path',     type='string',     default = '/pnfs/lcg.cscs.ch/cms/trivcat/store/user/oiorio/ttDM/trees/2016/Oct/',    help='local path for the samples, if -f or -S options are specified.')
+parser.add_option('-D', '--isData',      dest='isData',  action='store_true', default=False, help="if it is data the file will be fetched loking for the secondary dataset name")
 
 #Quality of life options:
 parser.add_option('-V',   '--verbose',     dest='verbose', type='int', default=0,help="verbose level:0=steps performed, 1=final output list,2= detail from all functions")
@@ -44,6 +45,7 @@ def findRootFileInPath(ls_command,srm, initialPath,sampleToFind,extraString="",d
     for l in list:
         if grid=="gfal":
             l=initialPath+"/"+l 
+        if l.endswith("//"): l=l[:-1]
         if l == initialPath:
 #            print " can't search further! "
             continue
@@ -147,7 +149,7 @@ def printFilesInList(inputList, path, nameOut, outputDir, option = 'w', format="
     if format=="txt":
         f.write("\n")
 
-def listFromSamples(f,p,verbose=False):
+def listFromSamples(f,p,verbose=False,isData=False):
     fopen = open(f,'r')
     sp = {}
 #
@@ -156,8 +158,18 @@ def listFromSamples(f,p,verbose=False):
 #        print l 
         parts = l.split("/")
         if len(parts)<2: continue
-        sp[parts[1]] = p
-        if verbose: print sp
+        if not isData: sp[parts[1]] = p
+        if isData:
+            if len(parts)<3: continue
+#            print "parts are ", parts
+            subparts=parts[2].split("-")[1:-1]
+#            print "subparts of part 2 are ",subparts
+            secds=""
+            for f in subparts:  secds = secds +f+"-"
+#            print secds
+            secds = secds[:-1].replace("crab_","")
+            sp[secds] = p
+#        if verbose: print,"output" sp
     return sp
         
 ###MAIN###
@@ -198,7 +210,7 @@ print "output directory is: ", outDir, " , fetching se: ", opt.se
 if not opt.file == '':
     if opt.singleSample=='':
         print "using file: ", opt.file, " through path: ", opt.path
-        samplesAndPaths = listFromSamples(opt.file, opt.path)
+        samplesAndPaths = listFromSamples(opt.file, opt.path, (opt.verbose>1),opt.isData)
     else: print "!!!WARNING!!! both -f and -S options are present! The latter will override the former, be sure this is what you intended!"
     
 if not opt.singleSample=='':
@@ -231,6 +243,7 @@ writeSamplesAndPaths(samplesAndPaths)
 
 
 for sample in samplesAndPaths:
+#    continue
     path = samplesAndPaths[sample]
 
 #    outputList = []
