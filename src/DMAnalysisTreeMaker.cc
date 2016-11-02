@@ -3155,7 +3155,7 @@ void DMAnalysisTreeMaker::initTreeWeightHistory(bool useLHEW){
   //  size_t wgtsize=  lhes->weights().size();
   //  std::cout << "weight size "<< wgtsize<<endl;
   if(useLHEW){
-    for (size_t w = 1; w <=  (size_t)maxWeights; ++w)  {
+    for (size_t w = 0; w <  (size_t)maxWeights; ++w)  {
       stringstream w_n;
       w_n << w;
       string name = "Event_LHEWeight"+w_n.str();

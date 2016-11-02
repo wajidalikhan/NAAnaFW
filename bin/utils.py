@@ -7,6 +7,8 @@ import sys
 import glob
 import utils
 import commands
+import shutil
+import errno
 
 def formSamples(proclist):
     samp=[]
@@ -31,9 +33,32 @@ def formSamples(proclist):
         if proc=="QCDEle" or isAllProcesses:
             from samplesQCDEle import samples as stemp
             samp.extend(stemp)
+        if proc=="SingleMuon" or isAllProcesses:
+            from samplesSingleMuon import samples as stemp
+            samp.extend(stemp)
         if proc.startswith("_"):
             samp.append(proc[1:])
     return samp
+
+def remove_folder(path):
+    # check if folder exists
+    if os.path.exists(path):
+         # remove if exists
+         print '*** Removing the folder : ',path
+         shutil.rmtree(path)
+         
+def copyfiles(src, dest):
+    os.system("cp "+src+"/*.txt "+dest)
+
+def copytree(src, dest):
+    try:
+        shutil.copytree(src, dest)
+    except OSError as e:
+        # If the error was caused because the src wasn't a directory
+        if e.errno == errno.ENOTDIR:
+            shutil.copytree(src, dest)
+        else:
+            print('Directory not copied. Error: %s' % e)
 
 def mymkdir(path):
     if commands.getstatusoutput("ls "+path)[0]!=0:

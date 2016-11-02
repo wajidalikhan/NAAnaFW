@@ -18,10 +18,11 @@ parser.add_option('-d', '--dest',        dest='dest',  type='string',     defaul
 src = opt.src
 dest= opt.dest
 mymkdir(dest)
-
+#remove_folder(dest)
 
 print '*** Copying the list of files from : ',src, 'to : ', dest 
-copy(src,dest)
+#copytree(src,dest)
+copyfiles(src,dest)
 os.chdir(dest)
 print "Current directory is: %s" %os.getcwd()
 
@@ -84,5 +85,9 @@ for i in list:
   if 'listQCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8.txt' in i:
     print '*** Renaming file', i 
     os.renames(i,"QCDMuEPt20toInf.txt")
+
+  if 'listSingleMuon' in i:
+    print '*** Renaming file', i 
+    os.renames(i,i.replace("listSingleMuon","SingleMuon"))
 
 print '*** Renaming Done ***'

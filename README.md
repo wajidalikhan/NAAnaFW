@@ -1,4 +1,7 @@
-## part 1: Environment setup and compilation  ##
+## Full description of the current package. Point 1 is the info for compilation, points 2 through 4 are the detailed info for the analysis. A shortened version of the analysis steps is reported at the end in part 5.
+
+
+## Part 1: Environment setup and compilation  ##
 
 setenv SCRAM_ARCH slc6_amd64_gcc530
 
@@ -52,7 +55,18 @@ cmsenv
   #python treesFinder.py --help 
 
 
-## part 3: Running the detailed selection and analysis  
+In practice you create a folder for example with
+
+cd ../../../../
+cmsrel CMSSW_8_1_0_pre12
+
+and launch with the script in:
+
+cd Analysis/NAAnaFWtest/macros/
+voms-proxy-init --voms cms
+source launchtreesfinder.csh
+
+## Part 3: Running the detailed selection and analysis  
 
 #Everything is stored in the NAAnaFW/bin folder
 
@@ -64,7 +78,6 @@ script_rename.py -s trees/mc/ -l trees/mc/renamed/
 
 The SingleTopAnalysis.cpp contains the event selection and then it can be used with the following python script:
 python new_singletop.py --t3batch -f trees/mc/renamed/ -P ST,TT,VJ,VV -S 10
-
 
 # this launches the analysis on batch queues at Cern by splitting it in groups of 10 root files.
 # other options for launching the analysis are are: 
@@ -87,16 +100,43 @@ merge_res.py -l ./res -P ST,TT,VJ,VV --rm True
 
 #which will merge them together for ALL systematics available and, if with the --rm True option is specified, will remove all the separate *_partN_* files.
 
+## Part 4: making the plots
+
+#To add 
+
+## Part 5: Statistical inference
 
 #Summary of the analyis steps:
-3.1 Retrieve the files location with
+- 0 Compile following the instructions in Part 1.
 
-3.2 Rename the files location according to the convention we follow
+- 1 Retrieve the files location with:
+cd test/macros/
+python treesFinder.py -g gfal -F txt -f samples_HLTv1_muons.txt -o ../../bin/trees/today/ -p /pnfs/lcg.cscs.ch/cms/trivcat/store/user/oiorio/ttDM/trees/2016/Oct/31Oct/ -d 161031 -V 2 > & mcfinder.log &
+python treesFinder.py -g gfal -F txt -f samples_data_mu_edmndtuple.txt -D True -o ../../bin/trees/today/ -p /pnfs/lcg.cscs.ch/cms/trivcat/store/ser/oiorio/ttDM/trees/2016/Oct/12Oct/SingleMuon/ -V 2 > & datafinder.log &
 
-3.3 Launch the batch queues, splitting it wherever needed
+following instructions here:
 
-3.4 merge the batch queue result
+test/macros/launchtreesfinder.csh
 
-3.5 make the plots with the makePlot
+- 2 Rename the files location according to the convention we follow:
 
-## part 4: Statistical inference  ##
+cd ../../bin
+
+python script_rename.py  -s trees/today/ -d trees/today/renamed/
+
+- 3 Launch the batch queues, splitting it wherever needed:
+
+if need be change the xrd to one of your liking (it can improve drastically the speed of your access to the file via xrootd):
+
+python script_replacexrd.py -f trees/oct31/renamed/ -o trees/oct31/final/ -x xrootd.ba.infn.it -P ST,VV,VJ,TT,SingleMuon
+
+python new_singletop.py --t3batch -f trees/oct31/final/ -P ST,TT,VJ,VV -S 10
+python new_singletop.py --t3batch -f trees/oct31/final/ -P SingleMuon -d True -S 10
+
+- 4 merge the batch queue result
+
+merge_res.py -l ./res -P ST,TT,VJ,VV --rm True
+
+- 5 make the plots with the makePlot
+
+- 6 Statistical inference with necromantic magic.

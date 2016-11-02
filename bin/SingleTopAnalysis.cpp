@@ -224,7 +224,8 @@ int main(int argc, char **argv) {
   //addWZNLO=false;
   //if(isData=="DATA"){addPDF=false, addQ2=false;addVHF=false;addTTSplit=false;} 
 
-  if(isData=="MC"){chain.SetBranchAddress("Event_LHEWeight0", &w_zero); LHEWeightSign[0]=w_zero/fabs(w_zero);}
+  if(isData=="MC"){chain.SetBranchAddress("Event_LHEWeight0", &w_zero); 
+  }
   
   if(addQ2){
     chain.SetBranchAddress("Event_LHEWeight4", &w_q2up);
@@ -343,6 +344,8 @@ int main(int argc, char **argv) {
   /**************                    Histogram booking              ***************/
   /********************************************************************************/
   TH1F *h_cutFlow = new TH1F("h_cutFlow","cutflow",10,-0.5,9.5);
+  TH1F *h_weight_sign = new TH1F("h_weight_sign","weight correction factor before all selections, gives the effective number of events",2,-2.0,2.0);
+  TH1F *h_weightZero[maxSysts];      systZero.initHistogramsSysts(h_weightZero,"h_weightZero","weight before all selections, normalized by the total number of events",2000,0,10.0);
   TH1F *h_nPV[maxSysts];      systZero.initHistogramsSysts(h_nPV,"h_nPV","nPV",102,0,51);
   TH1F *h_nGoodPV[maxSysts];  systZero.initHistogramsSysts(h_nGoodPV,"h_nGoodPV","nGoodPV",92,0,46);
   TH1F *h_nTruePV[maxSysts];  systZero.initHistogramsSysts(h_nTruePV,"h_nTruePV","nTruePV",80,0,40);
@@ -402,7 +405,9 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
 
 
   if(isData=="MC"){
+    LHEWeightSign[0]=w_zero/fabs(w_zero);
     w = LHEWeightSign[0];
+    
     //       w=1.;
     //    w_pu = LumiWeights_.weight(numTrueInt);
     
@@ -435,6 +440,7 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   systZero.setWeight("puUp",1.);
   systZero.setWeight("lepDown",1.);
   systZero.setWeight("lepUp",1.);
+
   
   if(addPDF)systZero.setPDFWeights(w_pdfs,nPDF,w_zero,true);
   if(addQ2)systZero.setQ2Weights(w_q2up,w_q2down,w_zero,true);
@@ -569,8 +575,8 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   if((jets.size() == 2 && bjets.size() == 0 && nMu == 1 && nEl==0)){
   for(size_t i= 0; i< (size_t)jets.size();++i ){
     //cout <<runNumber<<"   "<<evtNumber<<"   "<<"jet["<<i<< "] "<<jets[i].Pt()<<"   bjetsize "<< bjets.size() <<"   Mu["<<i<< "] "<<tightMu[i].Pt()<< std::endl;
-    if(i==0)syst0BM.fillHistogramsSysts(h_2j0t_jetpt40_1st,jets[i].Pt(),1);  
-    if(i==1)syst0BM.fillHistogramsSysts(h_2j0t_jetpt40_2nd,jets[i].Pt(),1);  
+    if(i==0)syst0BM.fillHistogramsSysts(h_2j0t_jetpt40_1st,jets[i].Pt(),w);  
+    if(i==1)syst0BM.fillHistogramsSysts(h_2j0t_jetpt40_2nd,jets[i].Pt(),w);  
    }
     
   for(size_t i = 0; i < (size_t)tightMu.size();++i ){
@@ -601,16 +607,16 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   
   for(size_t i = 0; i < (size_t)tightMu.size();++i ){
    if(tightMu[i].Pt()>20){
-   syst1BM.fillHistogramsSysts(h_2j1t_MuPt,tightMu[i].Pt(),1.0);
-   syst1BM.fillHistogramsSysts(h_2j1t_MuEta,tightMu[i].Eta(),1.0);
-   syst1BM.fillHistogramsSysts(h_2j1t_MuPhi,tightMu[i].Phi(),1.0);
-   syst1BM.fillHistogramsSysts(h_2j1t_MuE,tightMu[i].E(),1.0);
+   syst1BM.fillHistogramsSysts(h_2j1t_MuPt,tightMu[i].Pt(),w);
+   syst1BM.fillHistogramsSysts(h_2j1t_MuEta,tightMu[i].Eta(),w);
+   syst1BM.fillHistogramsSysts(h_2j1t_MuPhi,tightMu[i].Phi(),w);
+   syst1BM.fillHistogramsSysts(h_2j1t_MuE,tightMu[i].E(),w);
    
    if((tightMu.size())<2 ){
         TVector2 met_( met*cos(metPhi[0]), met*sin(metPhi[0]));
         float phi_lmet = fabs(deltaPhi(tightMu[i].Phi(), metPhi[0]) );
         mt = sqrt(2* tightMu[i].Pt() * met* ( 1- cos(phi_lmet)));
-        syst1BM.fillHistogramsSysts(h_2j1t_mtw,mt,1.0);
+        syst1BM.fillHistogramsSysts(h_2j1t_mtw,mt,w);
         }
       }
     }    
@@ -620,8 +626,8 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   if(tops.size()!=0){
     double mass = tops.at(0).M();
     double pt = tops.at(0).Pt();
-    syst1BM.fillHistogramsSysts(h_2j1t_topMass,mass,1.0);
-    syst1BM.fillHistogramsSysts(h_2j1t_topPt,pt,1.0);
+    syst1BM.fillHistogramsSysts(h_2j1t_topMass,mass,w);
+    syst1BM.fillHistogramsSysts(h_2j1t_topPt,pt,w);
     }
   }
   
@@ -632,15 +638,15 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
    } 
   
   for(size_t i = 0; i < (size_t)tightMu.size();++i ){
-        syst1BM.fillHistogramsSysts(h_3j1t_MuPt,tightMu[i].Pt(),1.0);
-        syst1BM.fillHistogramsSysts(h_3j1t_MuEta,tightMu[i].Eta(),1.0);
-        syst1BM.fillHistogramsSysts(h_3j1t_MuPhi,tightMu[i].Phi(),1.0);
-        syst1BM.fillHistogramsSysts(h_3j1t_MuE,tightMu[i].E(),1.0);
+        syst1BM.fillHistogramsSysts(h_3j1t_MuPt,tightMu[i].Pt(),w);
+        syst1BM.fillHistogramsSysts(h_3j1t_MuEta,tightMu[i].Eta(),w);
+        syst1BM.fillHistogramsSysts(h_3j1t_MuPhi,tightMu[i].Phi(),w);
+        syst1BM.fillHistogramsSysts(h_3j1t_MuE,tightMu[i].E(),w);
         if((tightMu.size())<2 ){
           TVector2 met_( met*cos(metPhi[0]), met*sin(metPhi[0]));
           float phi_lmet = fabs(deltaPhi(tightMu[i].Phi(), metPhi[0]) );
           mt = sqrt(2* tightMu[i].Pt() * met* ( 1- cos(phi_lmet)));
-          systZero.fillHistogramsSysts(h_3j1t_mtw,mt,1.0);
+          systZero.fillHistogramsSysts(h_3j1t_mtw,mt,w);
           }
       }
   }
@@ -650,30 +656,30 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
     for(size_t i=0; i< (size_t)bjets.size();++i ){
       //      cout << " ,bWeight2CSVM "<< <<",bWeight2CSVMBTagUp "<<bWeight2CSVMBTagUp<<endl;
 
-      if(i==0)syst2BM.fillHistogramsSysts(h_3j2t_bjetpt,bjets[i].Pt(),1,NULL,true);
-      if(i==1)syst2BM.fillHistogramsSysts(h_3j2t_2ndbjetpt,bjets[i].Pt(),1);
+      if(i==0)syst2BM.fillHistogramsSysts(h_3j2t_bjetpt,bjets[i].Pt(),w,NULL,true);
+      if(i==1)syst2BM.fillHistogramsSysts(h_3j2t_2ndbjetpt,bjets[i].Pt(),w);
       }
       for(size_t i = 0; i < (size_t)tightMu.size();++i ){
         if(tightMu[i].Pt()>20){
-        syst2BM.fillHistogramsSysts(h_3j2t_MuPt,tightMu[i].Pt(),1.0);
-        syst2BM.fillHistogramsSysts(h_3j2t_MuEta,tightMu[i].Eta(),1.0);
-        syst2BM.fillHistogramsSysts(h_3j2t_MuPhi,tightMu[i].Phi(),1.0);
-        syst2BM.fillHistogramsSysts(h_3j2t_MuE,tightMu[i].E(),1.0);
+        syst2BM.fillHistogramsSysts(h_3j2t_MuPt,tightMu[i].Pt(),w);
+        syst2BM.fillHistogramsSysts(h_3j2t_MuEta,tightMu[i].Eta(),w);
+        syst2BM.fillHistogramsSysts(h_3j2t_MuPhi,tightMu[i].Phi(),w);
+        syst2BM.fillHistogramsSysts(h_3j2t_MuE,tightMu[i].E(),w);
         if((tightMu.size())<2 ){
           TVector2 met_( met*cos(metPhi[0]), met*sin(metPhi[0]));
           float phi_lmet = fabs(deltaPhi(tightMu[i].Phi(), metPhi[0]) );
           mt = sqrt(2* tightMu[i].Pt() * met* ( 1- cos(phi_lmet)));
-          systZero.fillHistogramsSysts(h_3j2t_mtw,mt,1.0);
+          systZero.fillHistogramsSysts(h_3j2t_mtw,mt,w);
           }
         }
       }
     } 
   
-  systZero.fillHistogramsSysts(h_nJets,nJets,1); 
-  systZero.fillHistogramsSysts(h_nbJets,nCSVJets,1); 
-  systZero.fillHistogramsSysts(h_nPV,nPV,1.0);
-  systZero.fillHistogramsSysts(h_nGoodPV,nPV,1.0);
-  systZero.fillHistogramsSysts(h_nTruePV,numTrueInt,1.0);
+  systZero.fillHistogramsSysts(h_nJets,nJets,w); 
+  systZero.fillHistogramsSysts(h_nbJets,nCSVJets,w); 
+  systZero.fillHistogramsSysts(h_nPV,nPV,w);
+  systZero.fillHistogramsSysts(h_nGoodPV,nPV,w);
+  systZero.fillHistogramsSysts(h_nTruePV,numTrueInt,w);
   
   if(nTightElectrons != nEl)cout << "warning! problem with tight el"<<endl;
   if(nTightMuons != nMu)cout << "warning! problem with tight mu"<<endl;
@@ -687,9 +693,18 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   }//end of loop over events 
   
  if(doSynch)fileout.close();  //return h
+
+ //Step 0:get only the negative weights version, 
+ chainNEvents.Project("h_weight_sign","Event_LHEWeight10/abs(Event_LHEWeight10)"); // I messed up and weight zero is not  saved in the full chain... but this one should do the trick as well! Just do h_weight_sign->GetMean() and multiply this to get the correct number :)
+
+ // TO FIX! ADD PROJECTION OF ALL PDFS TO THE EVENT!
+ // systZero.projectAllPDF(h_weightZero,chainNEvents);
+
   
   // Cut Flow
- h_cutFlow->SetBinContent(0,nEventsTot);//Underflow: number of events pre-preselection.
+ 
+   
+ h_cutFlow->SetBinContent(0,nEventsTot*h_weight_sign->GetMean());//Underflow: number of events pre-preselection.
  h_cutFlow->SetBinContent(1,nEvents);
   h_cutFlow->GetXaxis()->SetBinLabel(1,"no selection");
   h_cutFlow->SetBinContent(2, 0);
@@ -697,6 +712,7 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   
   //Write the Histogramms here  
   systZero.writeSingleHistogramSysts(h_cutFlow, allMyFiles); 
+  systZero.writeSingleHistogramSysts(h_weight_sign, allMyFiles); 
   systZero.writeHistogramsSysts(h_nPV, allMyFiles); 
   systZero.writeHistogramsSysts(h_nGoodPV, allMyFiles); 
   systZero.writeHistogramsSysts(h_nTruePV, allMyFiles); 
