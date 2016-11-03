@@ -584,7 +584,7 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
           TVector2 met_( met*cos(metPhi[0]), met*sin(metPhi[0]));
           float phi_lmet = fabs(deltaPhi(tightMu[i].Phi(), metPhi[0]) );
           mt = sqrt(2* tightMu[i].Pt() * met* ( 1- cos(phi_lmet)));
-          syst0BM.fillHistogramsSysts(h_2j0t_mtw,mt,1.0);
+          syst0BM.fillHistogramsSysts(h_2j0t_mtw,mt,w);
           }
       }
   }
@@ -600,8 +600,8 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   
   for (size_t j= 0; j< (size_t)jets.size();++j ){
     if(!(jetIsCSVM[j]) && jetPt[j]>40.0 && abs(jetEta[j])<2.4){
-      syst1BM.fillHistogramsSysts(h_2j1t_jetpt,jets[j].Pt(),1);
-      syst1BM.fillHistogramsSysts(h_2j1t_jeteta,jets[j].Eta(),1);
+      syst1BM.fillHistogramsSysts(h_2j1t_jetpt,jets[j].Pt(),w);
+      syst1BM.fillHistogramsSysts(h_2j1t_jeteta,jets[j].Eta(),w);
     }  
   }
   
@@ -634,7 +634,7 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   //3j1t   
   if((jets.size() == 3 && bjets.size() ==1 && nMu==1 && nEl==0)) {
   for(size_t i= 0; i< (size_t)bjets.size();++i ){
-   if(i==0)systZero.fillHistogramsSysts(h_3j1t_bjetpt,bjets[i].Pt(),1);
+   if(i==0)systZero.fillHistogramsSysts(h_3j1t_bjetpt,bjets[i].Pt(),w);
    } 
   
   for(size_t i = 0; i < (size_t)tightMu.size();++i ){
