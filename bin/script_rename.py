@@ -6,7 +6,7 @@ import optparse
 from utils import *
 #usage: python script_rename.py -s ~oiorio/public/xWajid/files/trees/oct31/ -d files/renamed 
 
-usage = 'usage: %prog '
+usage = 'usage: python script_rename.py -s ~oiorio/public/xWajid/files/trees/oct31/ -d files/renamed '
 parser = optparse.OptionParser(usage)
 parser.add_option('-s', '--src',        dest='src',  type='string',     default = './', help="directory to rename files")
 parser.add_option('-d', '--dest',       dest='dest',  type='string',    default = './renamed/', help="directory to rename files")

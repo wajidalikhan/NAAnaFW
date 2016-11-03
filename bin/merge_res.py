@@ -5,18 +5,15 @@ import optparse
 import subprocess
 import sys
 import glob
-import utils
 import commands
+from utils import *
 #import colorama
 #from colorama import Fore, Back, Style
 #text = "The quick brown fox jumps over the lazy dog"
 #print(Fore.RED + text)
-#Usage: python new_singletop.py -c muon -s noSys --t3batch 
-#Usage: python new_singletop.py -c muon -s noSys -m t3se 
-#Usage: python new_singletop.py -c muon -s noSys -m local 
 
 #More complex working example: this will run only the ST_T_tch and the V+Jets samples and split them into batches of 10 files, taking them from the remote folder on Orso's public:
-#Usage: python new_singletop.py -c muon -s noSys -m local -S 10 -P _ST_T_tch,VJ --t3batch
+#Usage: python merge_res.py -l ./res -P ST,TT,VJ,VV --rm True
 
 from os.path import join,exists
 print 'Python version', sys.version_info
@@ -27,7 +24,7 @@ if sys.version_info < (2, 7):
 workdir = 'work'
 fileListDir = join(workdir,'files')
 
-usage = 'usage: %prog '
+usage = 'usage: python merge_res.py -l ./res -P ST,TT,VJ,VV --rm True'
 parser = optparse.OptionParser(usage)
 #Input files:
 parser.add_option('-P', '--process',        dest='process',  type='string',     default = 'all', help="samples to add, according to the convention in 'script_rename.py'. Options are: 'All','ST','VJ','VV','QCDMu','QCDEle', or '_'+specific process, e.g. _ST_T_tch to add only the _ST_T_tch. Accepts also multiple processes, separated by comma, e.g. -P ST,_TT,VJ will select the V+jets samples and single top sample sets, as well as the one sample named TT.")
@@ -46,32 +43,6 @@ parser.add_option('--rmf',   dest='doforceremove',  action='store_true', default
 
 #define samples, one folder for each mass value
 samples = []
-def formSamples(proclist):
-    samp=[]
-    procs= proclist.split(",")
-    for proc in procs:
-        isAllProcesses = proc=="All"
-        if proc=="ST" or isAllProcesses:
-            from samplesST import samples as stemp
-            samp.extend(stemp)
-        if proc=="TT" or isAllProcesses:
-            from samplesTT import samples as stemp
-            samp.extend(stemp)
-        if proc=="VJ" or isAllProcesses:
-            from samplesVJ import samples as stemp
-            samp.extend(stemp)
-        if proc=="VV" or isAllProcesses:
-            from samplesVV import samples as stemp
-            samp.extend(stemp)
-        if proc=="QCDMu" or isAllProcesses:
-            from samplesQCDMu import samples as stemp
-            samp.extend(stemp)
-        if proc=="QCDEle" or isAllProcesses:
-            from samplesQCDEle import samples as stemp
-            samp.extend(stemp)
-        if proc.startswith("_"):
-            samp.append(proc[1:])
-    return samp
 
 samples = formSamples(opt.process)
 
@@ -79,6 +50,7 @@ print "samples are:",samples
 
 
 path = opt.localpath
+if not path.endswith("/"): path = path+"/"
 channels=["muon","electron"]
 channels=["muon"]
 systs = ["noSyst"]
@@ -112,7 +84,7 @@ for s in samples:
                     print "merging with the command: ",cmdmerge
                     mergeoutput=True
                     mergeoutput=(commands.getstatusoutput(cmdmerge)[0]==0)
-                    if (mergeoutput) print "merge successful!"
+                    if (mergeoutput): print "merge successful!"
                     
                 if (mergeoutput and opt.doremove):
                     cmdrm = "rm "+path+s+"*_part*"+c+"_"+sys+".root"

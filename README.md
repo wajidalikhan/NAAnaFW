@@ -34,7 +34,7 @@ nohup cmsRun topplusdmTrees_skim_cfg.py isData=True
 ##Finding files for trees:
 cd macros
 
-python treesFinder.py -g gfal -f samples_HLTv1_muons.txt -s storage01.lcg.cscs.ch:8443/srm/managerv2 -o samples/mc/ -p /pnfs/lcg.cscs.ch/cms/trivcat/store/user/oiorio/ttDM/trees/2016/Oct/ -o trees/mc/
+python treesFinder.py -g gfal -f samples_HLTv1_muons.txt -s storage01.lcg.cscs.ch:8443/srm/managerv2 -o samples/mc/ -p /pnfs/lcg.cscs.ch/cms/trivcat/store/user/oiorio/ttDM/trees/2016/Oct/ -o files/
 
 NOTA BENE: CURRENTLY THIS DOES NOT WORK ON LXPLUS AND CMSSW_8_0_X BECAUSE OF MISSING lcg-ls COMMANDS! WILL NEED TO USE gfal!!!
 NOTA EVEN MORE BENE: Unfortunately, gfal does not work on CMSSW_8_0_X, so you'll have to migrate to 81X to make this script work:
@@ -78,7 +78,7 @@ Everything is stored in the NAAnaFW/bin folder: cd bin
 
 To rename the output to the standard naming of the analysis please follow the convention found at: 
 
-script_rename.py -s trees/mc/ -l trees/mc/renamed/
+script_rename.py -s files/ -l files/renamed/
 
 The SingleTopAnalysis.cpp contains the event selection and then it can be used with the following python script:
 
@@ -117,11 +117,11 @@ Work in Progress ...
 
 #Summary of the analyis steps:
 - 0 Compile following the instructions in Part 1.
-
+*
 - 1 Retrieve the files location with:
 cd test/macros/
-python treesFinder.py -g gfal -F txt -f samples_HLTv1_muons.txt -o ../../bin/trees/today/ -p /pnfs/lcg.cscs.ch/cms/trivcat/store/user/oiorio/ttDM/trees/2016/Oct/31Oct/ -d 161031 -V 2 > & mcfinder.log &
-python treesFinder.py -g gfal -F txt -f samples_data_mu_edmndtuple.txt -D True -o ../../bin/trees/today/ -p /pnfs/lcg.cscs.ch/cms/trivcat/store/ser/oiorio/ttDM/trees/2016/Oct/12Oct/SingleMuon/ -V 2 > & datafinder.log &
+python treesFinder.py -g gfal -F txt -f samples_HLTv1_muons.txt -o ../../bin/files/ -p /pnfs/lcg.cscs.ch/cms/trivcat/store/user/oiorio/ttDM/trees/2016/Oct/31Oct/ -d 161031 -V 2 > & mcfinder.log &
+python treesFinder.py -g gfal -F txt -f samples_data_mu_edmndtuple.txt -D True -o ../../bin/files/ -p /pnfs/lcg.cscs.ch/cms/trivcat/store/ser/oiorio/ttDM/trees/2016/Oct/12Oct/SingleMuon/ -V 2 > & datafinder.log &
 
 following instructions here:
 
@@ -131,17 +131,17 @@ test/macros/launchtreesfinder.csh
 
 cd ../../bin
 
-python script_rename.py  -s trees/today/ -d trees/today/renamed/
+python script_rename.py  -s files/ -d files/renamed/
 
 - 3 Launch the batch queues, splitting it wherever needed:
 
 if need be change the xrd to one of your liking (it can improve drastically the speed of your access to the file via xrootd):
 
-python script_replacexrd.py -f trees/oct31/renamed/ -o trees/oct31/final/ -x xrootd.ba.infn.it -P ST,VV,VJ,TT,SingleMuon
+python script_replacexrd.py -f files/renamed/ -o files/final/ -x xrootd.ba.infn.it -P ST,VV,VJ,TT,SingleMuon
 
-python new_singletop.py --t3batch -f trees/oct31/final/ -P ST,TT,VJ,VV -S 10
+python new_singletop.py --t3batch -f files/final/ -P ST,TT,VJ,VV -S 10
 
-python new_singletop.py --t3batch -f trees/oct31/final/ -P SingleMuon -d True -S 10
+python new_singletop.py --t3batch -f files/final/ -P SingleMuon -d True -S 10
 
 - 4 merge the batch queue result
 
