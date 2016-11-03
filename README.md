@@ -84,7 +84,7 @@ The SingleTopAnalysis.cpp contains the event selection and then it can be used w
 
 python new_singletop.py --t3batch -f trees/mc/renamed/ -P ST,TT,VJ,VV -S 10
 
-# this launches the analysis on batch queues at Cern by splitting it in groups of 10 root files. Other options for launching the analysis are are: 
+This launches the analysis on batch queues at Cern by splitting it in groups of 10 root files. Other options for launching the analysis are are: 
 
 -- The "t3se" option will run it interactively on t3 Storage Element
 
