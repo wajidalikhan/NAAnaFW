@@ -656,7 +656,7 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
     for(size_t i=0; i< (size_t)bjets.size();++i ){
       //      cout << " ,bWeight2CSVM "<< <<",bWeight2CSVMBTagUp "<<bWeight2CSVMBTagUp<<endl;
 
-      if(i==0)syst2BM.fillHistogramsSysts(h_3j2t_bjetpt,bjets[i].Pt(),w,NULL,true);
+      if(i==0)syst2BM.fillHistogramsSysts(h_3j2t_bjetpt,bjets[i].Pt(),w,NULL,false);
       if(i==1)syst2BM.fillHistogramsSysts(h_3j2t_2ndbjetpt,bjets[i].Pt(),w);
       }
       for(size_t i = 0; i < (size_t)tightMu.size();++i ){
