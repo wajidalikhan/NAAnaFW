@@ -300,8 +300,8 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
             #    filename_nEvt = opt.resdir+'/res/'+s.label+"_" + opt.channel +".root" 
 
             infile_nEvt = ROOT.TFile.Open(filename_nEvt)
-            #nEntries =  infile_nEvt.Get("cutFlow").GetBinContent(0)
-            nEntries = infile_nEvt.Get("h_nGoodPV").GetEntries()
+            nEntries =  infile_nEvt.Get("h_cutFlow").GetBinContent(0)
+            #nEntries = infile_nEvt.Get("h_nGoodPV").GetEntries()
 
             infile = ROOT.TFile.Open(filename)
             hin = infile.Get(var)
