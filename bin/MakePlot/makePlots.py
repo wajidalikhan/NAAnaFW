@@ -223,12 +223,12 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
                 #if((opt.sys=="topPtWeightUp" or opt.sys=="topPtWeightDown") and not(s.label.startswith("TT"))):
                 #    filename_nEvt = opt.resdir+'/res/'+c.label+"_" + opt.channel +".root"
 
-                #print "nfile evt ", filename_nEvt
+                print "nfile evt ", filename_nEvt
                 infile_nEvt = ROOT.TFile.Open(filename_nEvt)
-                #                nEntries = infile_nEvt.Get("cutFlow").GetBinContent(0)
-                nEntries = infile_nEvt.Get("h_nGoodPV").GetEntries()
-                #print "nentries ", nEntries, " xsec ", c.sigma
-
+                nEntries = infile_nEvt.Get("h_cutFlow").GetBinContent(0)
+                #print "nentries is ", nEntries
+#nEntries = infile_nEvt.Get("h_nGoodPV").GetEntries()
+                print "nentries ", nEntries, " xsec ", c.sigma
                 infile = ROOT.TFile.Open(filename)
                 # htmp = infile.Get(var)
                 hin = infile.Get(var)

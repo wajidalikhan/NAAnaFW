@@ -8,8 +8,9 @@ settings = {
     #    'h_nPV' : ('number of primary vertices' , )
 #    'h_nMu': ('Number of tight Muons', 13, 1, (-0.5,12.5) ),
     'h_nJets': ('Number of tight jets', 13, 1, (-0.5,12.5) ),
-
-#    'h_MuPt': ''
+    'h_nbJets': ('Number of tight b-jets', 11, 1, (-0.5,10.5) ),
+    'h_2j1t_topMass': ('Top mass in the 2-jets 1-tag', 200, 1, (100,500) ),
+#    'h_MuPt': ''200,100,500
 #    'h_2j1t_bjetpt' 'Leading jet b jet Pt distribution'
 
 #    h_MuEta;1Leading Muon Eta distribution
@@ -265,6 +266,7 @@ settings = {
 
 
 store = [
-    "h_nMu", #SR shape
     "h_nJets", #SR shape
+    "h_2j1t_topMass",
+    "h_nbJets", #SR shape
     ]
