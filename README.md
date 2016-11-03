@@ -3,27 +3,26 @@
 
 ## Part 1: Environment setup and compilation  ##
 
-setenv SCRAM_ARCH slc6_amd64_gcc530
+-- setenv SCRAM_ARCH slc6_amd64_gcc530
 
-cd CMSSW_8_0_20/src
+-- cd CMSSW_8_0_20/src
 
-cmsenv
+-- cmsenv
 
-source /cvmfs/cms.cern.ch/crab3/crab.csh
+-- source /cvmfs/cms.cern.ch/crab3/crab.csh
 
-cmsenv
+-- cmsenv
 
-mkdir Analysis/NAAnaFW
+-- mkdir Analysis/NAAnaFW
 
-git clone https://github.com/oiorio/NAAnaFW.git Analysis/NAAnaFW
+-- git clone https://github.com/oiorio/NAAnaFW.git Analysis/NAAnaFW
 
-scram b -j 10 > & compilation.log &
+-- scram b -j 10 > & compilation.log &
 
 ## Part 2: Tree running  ##
+Everything is in the NAAnaFW/test folder:
 
-#Everything is in the NAAnaFW/test folder:
-
-cd test 
+-- cd test 
 
 ##MC:
 nohup cmsRun topplusdmTrees_skim_cfg.py
@@ -37,9 +36,7 @@ cd macros
 
 python treesFinder.py -g gfal -f samples_HLTv1_muons.txt -s storage01.lcg.cscs.ch:8443/srm/managerv2 -o samples/mc/ -p /pnfs/lcg.cscs.ch/cms/trivcat/store/user/oiorio/ttDM/trees/2016/Oct/ -o trees/mc/
 
-NOTA BENE 1) 
-
-CURRENTLY THIS DOES NOT WORK ON LXPLUS AND CMSSW_8_0_X BECAUSE OF MISSING lcg-ls COMMANDS! WILL NEED TO USE gfal!!!
+NOTA BENE: CURRENTLY THIS DOES NOT WORK ON LXPLUS AND CMSSW_8_0_X BECAUSE OF MISSING lcg-ls COMMANDS! WILL NEED TO USE gfal!!!
 NOTA EVEN MORE BENE: Unfortunately, gfal does not work on CMSSW_8_0_X, so you'll have to migrate to 81X to make this script work:
 TO MAKE IT WORK PLEASE DO 
 
@@ -50,8 +47,6 @@ TO MAKE IT WORK PLEASE DO
 -- cd CMSSW_8_1_0_pre12/src
 
 -- cmsenv
-
-END NOTA BENE
 
 This one fetches recursively all directories in a path [option -p] in the storage element [option -s] looking for samples indicated in 
 a txt file [option -f], with some parsing options (veto  a word, look for a particular date etc. ). 
@@ -110,15 +105,15 @@ If the -S NJobs option is specified, the output will be split in parts ST_T_part
 
 The parts can be merged with the
 
-merge_res.py -l ./res -P ST,TT,VJ,VV --rm True
+-- merge_res.py -l ./res -P ST,TT,VJ,VV --rm True
 
-#which will merge them together for ALL systematics available and, if with the --rm True option is specified, will remove all the separate *_partN_* files.
+- which will merge them together for ALL systematics available and, if with the --rm True option is specified, will remove all the separate *_partN_* files.
 
 ## Part 4: Making the plots
-
-#To add 
+Work in Progress ... 
 
 ## Part 5: Statistical inference
+Work in Progress ... 
 
 #Summary of the analyis steps:
 - 0 Compile following the instructions in Part 1.
