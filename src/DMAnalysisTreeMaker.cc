@@ -287,7 +287,7 @@ private:
   edm::Handle<int> ntrpu;
 
   //JEC info
-  bool changeJECs;
+  bool changeJECs,doT1MET;
   bool isData, applyRes;
   bool isV2;
   edm::Handle<double> rho;
@@ -295,10 +295,11 @@ private:
   
   //edm::Handle<double> Rho;
   std::vector<double> jetScanCuts;
-  std::vector<JetCorrectorParameters> jecPars;
+  std::vector<JetCorrectorParameters> jecPars, jecParsL1_vect
+;
   JetCorrectorParameters *jecParsL1, *jecParsL1RC, *jecParsL2, *jecParsL3, *jecParsL2L3Residuals;
   JetCorrectionUncertainty *jecUnc;
-  FactorizedJetCorrector *jecCorr;
+  FactorizedJetCorrector *jecCorr,*jecCorr_L1;
 
   bool isFirstEvent;
   //Do preselection
@@ -536,6 +537,7 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
   
   addPV = iConfig.getUntrackedParameter<bool>("addPV",true);
   changeJECs = iConfig.getUntrackedParameter<bool>("changeJECs",false);
+  doT1MET = iConfig.getUntrackedParameter<bool>("doT1MET",true);
   recalculateEA = iConfig.getUntrackedParameter<bool>("recalculateEA",true);
 
   isData = iConfig.getUntrackedParameter<bool>("isData",false);
@@ -825,24 +827,24 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
   
   initTreeWeightHistory(useLHEWeights);
 
-  string L1Name = "Fall15_25nsV2_MC_L1FastJet_AK4PFchs.txt"; //
-  string L1RCName = "Fall15_25nsV2_MC_L1RC_AK4PFchs.txt"; 
-  string L2Name = "Fall15_25nsV2_MC_L2Relative_AK4PFchs.txt";
-  string L3Name = "Fall15_25nsV2_MC_L3Absolute_AK4PFchs.txt";
-  string L2L3ResName = "Fall15_25nsV2_MC_L2L3Residual_AK4PFchs.txt";
+  string L1Name = "Spring16_25nsV6_MC_L1FastJet_AK4PFchs.txt"; //
+  string L1RCName = "Spring16_25nsV6_MC_L1RC_AK4PFchs.txt"; 
+  string L2Name = "Spring16_25nsV6_MC_L2Relative_AK4PFchs.txt";
+  string L3Name = "Spring16_25nsV6_MC_L3Absolute_AK4PFchs.txt";
+  string L2L3ResName = "Spring16_25nsV6_MC_L2L3Residual_AK4PFchs.txt";
   if(isData){
-    L1Name   = "Fall15_25nsV2_DATA_L1FastJet_AK4PFchs.txt";
-    L1RCName = "Fall15_25nsV2_DATA_L1RC_AK4PFchs.txt";  
-    L2Name   = "Fall15_25nsV2_DATA_L2Relative_AK4PFchs.txt";
-    L3Name   = "Fall15_25nsV2_DATA_L3Absolute_AK4PFchs.txt";
-    L2L3ResName = "Fall15_25nsV2_DATA_L2L3Residual_AK4PFchs.txt";
+    L1Name   = "Spring16_25nsV6_DATA_L1FastJet_AK4PFchs.txt";
+    L1RCName = "Spring16_25nsV6_DATA_L1RC_AK4PFchs.txt";  
+    L2Name   = "Spring16_25nsV6_DATA_L2Relative_AK4PFchs.txt";
+    L3Name   = "Spring16_25nsV6_DATA_L3Absolute_AK4PFchs.txt";
+    L2L3ResName = "Spring16_25nsV6_DATA_L2L3Residual_AK4PFchs.txt";
   }
 
   if(isV2){
-      L1Name = "Fall15_25nsV2_MC_L1FastJet_AK4PFchs.txt";
-      L2Name = "Fall15_25nsV2_MC_L2Relative_AK4PFchs.txt";
-      L3Name = "Fall15_25nsV2_MC_L3Absolute_AK4PFchs.txt";
-      L2L3ResName = "Fall15_25nsV2_MC_L2L3Residual_AK4PFchs.txt"; 
+      L1Name = "Spring16_25nsV6_MC_L1FastJet_AK4PFchs.txt";
+      L2Name = "Spring16_25nsV6_MC_L2Relative_AK4PFchs.txt";
+      L3Name = "Spring16_25nsV6_MC_L3Absolute_AK4PFchs.txt";
+      L2L3ResName = "Spring16_25nsV6_MC_L2L3Residual_AK4PFchs.txt"; 
   }
 
   //  string jecDir="JEC/";
@@ -857,8 +859,11 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
   jecPars.push_back(*jecParsL3);
   if(isData)jecPars.push_back(*jecParsL2L3Residuals);
 
+  jecParsL1_vect.push_back(*jecParsL1);
+
   jecCorr = new FactorizedJetCorrector(jecPars);
-  jecUnc  = new JetCorrectionUncertainty(*(new JetCorrectorParameters(jecDir+"Fall15_25nsV2_DATA_UncertaintySources_AK4PFchs.txt", "Total")));
+  jecCorr_L1 = new FactorizedJetCorrector(jecParsL1_vect);
+  jecUnc  = new JetCorrectionUncertainty(*(new JetCorrectorParameters(jecDir+"Spring16_25nsV6_DATA_UncertaintySources_AK4PFchs.txt", "Total")));
 
    
   isFirstEvent = true;
@@ -1617,8 +1622,14 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     }
     //Jets:
     double Ht=0;
+    double corrBaseMetPx =0;
+    double corrBaseMetPy =0;
     double corrMetPx =0;
     double corrMetPy =0;
+    double corrMetT1Px =0;
+    double corrMetT1Py =0;
+    //    double corrMetPxNoHF =0;
+    //    double corrMetPyNoHF =0;
     double DUnclusteredMETPx=0.0;
     double DUnclusteredMETPy=0.0;
 
@@ -1639,7 +1650,12 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       float eta = vfloats_values[makeName(jets_label,pref,"Eta")][j];
       float phi = vfloats_values[makeName(jets_label,pref,"Phi")][j];
       float energy = vfloats_values[makeName(jets_label,pref,"E")][j];
+      float ptnomu = pt;
+
       float ptCorr = -9999;
+      float ptCorrSmearZero = -9999;
+      float ptCorrSmearZeroNoMu = -9999;
+
       float energyCorr = -9999;
       float smearfact = -9999;
 
@@ -1648,48 +1664,144 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       
       float juncpt=0.;
       float junce=0.;
+      float ptCorr_mL1 = 0;
+
       //cout << " jet "<<j << " pt "<< pt << " jecfactor0 "<< jecscale <<endl;
+      float chEmEnFrac = vfloats_values[makeName(jets_label,pref,"chargedEmEnergyFrac")][j];
+      float neuEmEnFrac = vfloats_values[makeName(jets_label,pref,"neutralEmEnergyFrac")][j];
+      
       if(pt>0){
-	  TLorentzVector jetUncorr;
 
-	  jetUncorr.SetPtEtaPhiE(pt,eta,phi,energy);
+
+	TLorentzVector jetUncorr_, jetCorr, jetUncorrNoMu_,jetCorrNoMu, jetL1Corr;
+	TLorentzVector T1Corr;
+	T1Corr.SetPtEtaPhiE(0,0,0,0);	
+	
+	jetUncorr_.SetPtEtaPhiE(pt,eta,phi,energy);
+	jetUncorrNoMu_.SetPtEtaPhiE(pt,eta,phi,energy);
+	
+	jetUncorr_= jetUncorr_*jecscale;
+	jetUncorrNoMu_= jetUncorrNoMu_*jecscale;
+	
+	DUnclusteredMETPx+=jetUncorr_.Pt()*cos(phi);
+	DUnclusteredMETPy+=jetUncorr_.Pt()*sin(phi);
+	
+	juncpt=jetUncorr_.Perp();
+	junce=jetUncorr_.E();
+	
+	if(changeJECs){
+	
+	  jecCorr->setJetPhi(jetUncorr_.Phi());
+	  jecCorr->setJetEta(jetUncorr_.Eta());
+	  jecCorr->setJetE(jetUncorr_.E());
+	  jecCorr->setJetPt(jetUncorr_.Perp());
+	  jecCorr->setJetA(area);
+	  jecCorr->setRho(Rho);
+	  jecCorr->setNPV(nPV);
 	  
-	  jetUncorr= jetUncorr*jecscale;
-	  DUnclusteredMETPx+=jetUncorr.Pt()*cos(phi);
-	  DUnclusteredMETPy+=jetUncorr.Pt()*sin(phi);
-	  
-	  juncpt=jetUncorr.Perp();
-	  junce=jetUncorr.E();
+	  double recorr =  jecCorr->getCorrection();
+	  jetCorr = jetUncorr_ *recorr;
 
-	  if(changeJECs){
-
-	    jecCorr->setJetPhi(jetUncorr.Phi());
-	    jecCorr->setJetEta(jetUncorr.Eta());
-	    jecCorr->setJetE(jetUncorr.E());
-	    jecCorr->setJetPt(jetUncorr.Perp());
+	  pt = jetCorr.Pt();
+	  eta = jetCorr.Eta();
+	  energy = jetCorr.Energy();
+	  phi = jetCorr.Phi();
+	  if(doT1MET){
+	    //bool doMuons=true;
+	    /*
+	    if(doMuons){
+	      if(changeJECs && doMuons){
+		for( size_t c=0;c<jetKeys->at(j).size();++c){
+		  for( size_t mk=0;mk<muKeys->size();++mk){
+		    if(muKeys->at(mk).size()>0){
+		      if(muKeys->at(mk).at(0)  == jetKeys->at(j).at(c)){
+			
+			string prefmu = obj_to_pref[mu_label];
+			float mupt = vfloats_values[makeName(mu_label,prefmu,"Pt")][mk];
+			float mueta = vfloats_values[makeName(mu_label,prefmu,"Eta")][mk];
+			float muphi = vfloats_values[makeName(mu_label,prefmu,"Phi")][mk];
+			float mue = vfloats_values[makeName(mu_label,prefmu,"E")][mk];
+			float muIsGlobal = vfloats_values[makeName(mu_label,prefmu,"IsGlobalMuon")][mk];
+			float muIsTK = vfloats_values[makeName(mu_label,prefmu,"IsTrackerMuon")][mk];
+			float muISSAOnly = ((!muIsGlobal && !muIsTK));
+			
+			if(muIsGlobal || muISSAOnly){
+			  TLorentzVector muP4_;
+			  muP4_.SetPtEtaPhiE(mupt,mueta,muphi,mue);
+			  jetUncorrNoMu_ -=muP4_;
+			  
+			} 
+		      }
+		    }
+		  }	    
+		}
+	      }
+	    }*/
+	      
+	    jecCorr->setJetPhi(jetUncorrNoMu_.Phi());
+	    jecCorr->setJetEta(jetUncorrNoMu_.Eta());
+	    jecCorr->setJetE(jetUncorrNoMu_.E());
+	    jecCorr->setJetPt(jetUncorrNoMu_.Perp());
 	    jecCorr->setJetA(area);
 	    jecCorr->setRho(Rho);
 	    jecCorr->setNPV(nPV);
-	    double recorr =  jecCorr->getCorrection();
-	    jetUncorr = jetUncorr *recorr;
-
-	    pt = jetUncorr.Pt();
-	    eta = jetUncorr.Eta();
-	    energy = jetUncorr.Energy();
-	    phi = jetUncorr.Phi();
+	    
+	    double recorrMu =  jecCorr->getCorrection();
+	    jetCorrNoMu = jetUncorrNoMu_ *recorrMu;
+	      
+	    //// Jet corrections for level 1
+	    jecCorr_L1->setJetPhi(jetUncorrNoMu_.Phi()); /// deve essere raw
+	    jecCorr_L1->setJetEta(jetUncorrNoMu_.Eta());
+	    jecCorr_L1->setJetE(jetUncorrNoMu_.E());
+	    jecCorr_L1->setJetPt(jetUncorrNoMu_.Perp());
+	    jecCorr_L1->setJetA(area);
+	    jecCorr_L1->setRho(Rho);
+	    jecCorr_L1->setNPV(nPV);
+	    
+	    double recorr_L1 =  jecCorr_L1->getCorrection();
+	    jetL1Corr = jetUncorrNoMu_ *recorr_L1;
+	      
+	    ptnomu = jetCorrNoMu.Pt();
+	    if(pt>15.0 && ( chEmEnFrac+  neuEmEnFrac <0.9)){ T1Corr += jetCorrNoMu - jetL1Corr;
+	      ptCorr_mL1 = T1Corr.Pt();
+	    }
 	  }
-
+	  else ptnomu=pt;
+	}
+	
 	smearfact = smear(pt, genpt, eta, syst);
-
+	//smearfact =1.0;
 	ptCorr = pt * smearfact;
 	energyCorr = energy * smearfact;
-	float unc = jetUncertainty(ptCorr,eta,syst);
 
+	float unc = jetUncertainty(ptCorr,eta,syst);
+	float unc_nosmear = jetUncertainty(pt,eta,syst);
+	
 	ptCorr = ptCorr * (1 + unc);
 	energyCorr = energyCorr * (1 + unc);
+
+	ptCorrSmearZero = pt * (1 + unc);//For full correction, including new JECs and MET
+	ptCorrSmearZeroNoMu = ptnomu * (1 + unc);//For full correction, including new JECs and MET
+	ptCorr_mL1 = ptCorr_mL1 * (1 + unc);//For T1 correction
 	
 	corrMetPx -=(cos(phi)*(ptCorr-ptzero));
         corrMetPy -=(sin(phi)*(ptCorr-ptzero));
+
+	if(ptCorrSmearZeroNoMu>15.0 && ( chEmEnFrac+  neuEmEnFrac <0.9)){ // should be == T1 corrections minus the L1 difference.
+	  corrBaseMetPx -=(cos(phi)*(ptCorrSmearZero-ptzero));
+	  corrBaseMetPy -=(sin(phi)*(ptCorrSmearZero-ptzero));
+	}
+	
+      	if( ptCorrSmearZeroNoMu>15.0 && jetCorrNoMu.Pt()>0.0 &&doT1MET){ 
+	  //Adding in T1 corrections
+	  corrMetT1Px -=(T1Corr.Px());
+	  corrMetT1Py -=(T1Corr.Py());
+	  
+	  //Correcting by jes uncertainty if available
+	  corrMetT1Px -=(cos(phi)*(pt*unc_nosmear));
+	  corrMetT1Py -=(sin(phi)*(pt*unc_nosmear));
+	}
+
       }
           
       float csv = vfloats_values[makeName(jets_label,pref,"CSVv2")][j];
@@ -1734,8 +1846,6 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
         float neuMulti = vfloats_values[makeName(jets_label,pref,"neutralMultiplicity")][j];
         float chMulti = vfloats_values[makeName(jets_label,pref,"chargedMultiplicity")][j];
         float chHadEnFrac = vfloats_values[makeName(jets_label,pref,"chargedHadronEnergyFrac")][j];
-        float chEmEnFrac = vfloats_values[makeName(jets_label,pref,"chargedEmEnergyFrac")][j];
-        float neuEmEnFrac = vfloats_values[makeName(jets_label,pref,"neutralEmEnergyFrac")][j];
         float neuHadEnFrac = vfloats_values[makeName(jets_label,pref,"neutralHadronEnergyFrac")][j];
         float numConst = chMulti+neuMulti;//vfloats_values[makeName(jets_label,pref,"NumConstituents")][j];
         //passesID =  (nDau >1.0 && fabs(eta) < 4.7 && (fabs(eta)>=2.4 ||(chHadEnFrac>0.0 && chMulti>0 && chEmEnFrac<0.99)) && neuEmEnFrac<0.99 && neuHadEnFrac <0.99 && muEnFrac<0.8) ;
@@ -1870,16 +1980,37 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     string pref = obj_to_pref[met_label];
     float metpt = vfloats_values[makeName(met_label,pref,"Pt")][0];
     float metphi = vfloats_values[makeName(met_label,pref,"Phi")][0];
+    
+    float metPyCorrBase = metpt*sin(metphi);
+    float metPxCorrBase = metpt*cos(metphi);
+    metPxCorrBase+=corrBaseMetPx; metPyCorrBase+=corrBaseMetPy; // add JEC/JER contribution
 
+    float metPyCorr = metpt*sin(metphi);
+    float metPxCorr = metpt*cos(metphi);
+    metPxCorr+=corrMetPx; metPyCorr+=corrMetPy; // add JEC/JER contribution
+
+    float metPx = metPxCorr;
+    float metPy = metPyCorr;
+
+    float metptunc = vfloats_values[makeName(met_label,pref,"uncorPt")][0];
+    float metphiunc = vfloats_values[makeName(met_label,pref,"uncorPhi")][0];
+
+    float metT1Py = metptunc*sin(metphiunc);
+    float metT1Px = metptunc*cos(metphiunc);
+
+    if( doT1MET){
+      //Correcting the pt
+      metT1Px+=corrMetT1Px; metT1Py+=corrMetT1Py; // add JEC/JER contribution
+    }
+    float metptT1Corr = sqrt(metT1Px*metT1Px + metT1Py*metT1Py);
+    vfloats_values[met_label+"_CorrT1Pt"][0]=metptT1Corr;
     
-    float metPy = metpt*sin(metphi);
-    float metPx = metpt*cos(metphi);
-    metPx+=corrMetPx; metPy+=corrMetPy; // add JEC/JER contribution
-    
-    //Correcting the pt
-    float metptCorr = sqrt(metPx*metPx + metPy*metPy);
+    float metptCorr = sqrt(metPxCorr*metPxCorr + metPyCorr*metPyCorr);
     vfloats_values[met_label+"_CorrPt"][0]=metptCorr;
 
+    float metptCorrBase = sqrt(metPxCorrBase*metPxCorrBase + metPyCorrBase*metPyCorrBase);
+    vfloats_values[met_label+"_CorrBasePt"][0]=metptCorrBase;
+    
     //Correcting the phi
     float metphiCorr = metphi;
     if(metPx<0){
@@ -1888,7 +2019,23 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     }
     else  metphiCorr = (atan(metPy/metPx));
 
+    float metphiCorrBase = metphi;
+    if(metPxCorrBase<0){
+      if(metPyCorrBase>0)metphiCorrBase = atan(metPyCorrBase/metPxCorrBase)+3.141592;
+      if(metPyCorrBase<0)metphiCorrBase = atan(metPyCorrBase/metPxCorrBase)-3.141592;
+    }
+    else  metphiCorrBase = (atan(metPyCorrBase/metPxCorrBase));
+
+    float metphiCorrT1 = metphi;
+    if(metT1Px<0){
+      if(metT1Py>0)metphiCorrT1 = atan(metT1Py/metT1Px)+3.141592;
+      if(metT1Py<0)metphiCorrT1 = atan(metT1Py/metT1Px)-3.141592;
+    }
+    else  metphiCorr = (atan(metPyCorr/metPxCorr));
+
     vfloats_values[met_label+"_CorrPhi"][0]=metphiCorr;
+    vfloats_values[met_label+"_CorrBasePhi"][0]=metphiCorrBase;
+    vfloats_values[met_label+"_CorrT1Phi"][0]=metphiCorrT1;
 
     //Preselection part
 
@@ -2197,12 +2344,12 @@ vector<string> DMAnalysisTreeMaker::additionalVariables(string object){
     addvar.push_back("PassesDRmu");
   }
   if(ismet){
-    //    addvar.push_back("Pt");
-    //    addvar.push_back("Eta");
-    //    addvar.push_back("Phi");
-    //    addvar.push_back("E");
     addvar.push_back("CorrPt");
     addvar.push_back("CorrPhi");
+    addvar.push_back("CorrBasePt");
+    addvar.push_back("CorrBasePhi");
+    addvar.push_back("CorrT1Pt");
+    addvar.push_back("CorrT1Phi");
     //    addvar.push_back("CorrPtNoHF");
     // addvar.push_back("CorrPhiNoHF");
   }
