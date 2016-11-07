@@ -60,7 +60,7 @@ def main():
     config.Data.inputDataset = None
     config.Data.ignoreLocality = True
     #    config.Data.outLFNDirBase = '/store/user/oiorio/ttDM/samples/2016/Oct/'
-    config.Data.outLFNDirBase = '/store/user/oiorio/ttDM/trees/2016/Oct/12Oct/'
+    config.Data.outLFNDirBase = '/store/user/oiorio/ttDM/trees/2016/Oct/31Oct/'
     config.Data.inputDBS = 'phys03'
     config.Data.splitting = 'FileBased'
     #    config.Data.totalUnits = -1
@@ -80,8 +80,10 @@ def main():
         try:
             crabCommand('submit', config = config)
         except HTTPException, hte:
-            print 'Cannot execute commend'
+            print 'Cannot execute command'
             print hte.headers
+            print hte
+            print HTTPException
 
     #############################################################################################
     ## From now on that's what users should modify: this is the a-la-CRAB2 configuration part. ##
@@ -99,7 +101,10 @@ def main():
         #   print ' single top\n   => add lhesource=source'
         config.JobType.pyCfgParams = ["isData=False", "changeJECs=False"]
         #        config.JobType.pyCfgParams = ["isData=False", "changeJECs=False","lhesource=source"]
-        
+        print s.split('/')[1]
+        if "QCD_Pt" in s.split('/')[1]:
+            config.JobType.pyCfgParams= ["isData=False", "changeJECs=False","channel=qcd"]
+
     for ijob, job in enumerate(jobs) :
 
         ptbin = job.split('/')[1]
@@ -110,7 +115,7 @@ def main():
         config.Data.outputDatasetTag = '80xV2_' + ptbin #+ cond[10:]
         print 'Submitting ' + config.General.requestName + ', dataset = ' + job
         print 'Configuration :'
-        #print config
+        print config
         try :
             from multiprocessing import Process
             p = Process(target=submit, args=(config,))

@@ -49,16 +49,16 @@ def main():
     config.JobType.psetName = options.config
     config.JobType.allowUndistributedCMSSW = True
     config.JobType.pyCfgParams = ["isData=True", "changeJECs=False"]
-    config.JobType.inputFiles = ["Fall15_25nsV2_MC_L2L3Residual_AK4PFchs.txt",
-                                 "Fall15_25nsV2_MC_L3Absolute_AK4PFchs.txt",
-                                 "Fall15_25nsV2_MC_L1FastJet_AK4PFchs.txt",
-                                 "Fall15_25nsV2_MC_L2Relative_AK4PFchs.txt",
-                                 "Fall15_25nsV2_DATA_UncertaintySources_AK4PFchs.txt",
-                                 "Fall15_25nsV2_DATA_L1FastJet_AK4PFchs.txt",
-                                 "Fall15_25nsV2_DATA_L1RC_AK4PFchs.txt",
-                                 "Fall15_25nsV2_DATA_L2Relative_AK4PFchs.txt",
-                                 "Fall15_25nsV2_DATA_L3Absolute_AK4PFchs.txt",
-                                 "Fall15_25nsV2_DATA_L2L3Residual_AK4PFchs.txt",
+    config.JobType.inputFiles = ["Spring16_25nsV6_MC_L2L3Residual_AK4PFchs.txt",
+                                 "Spring16_25nsV6_MC_L3Absolute_AK4PFchs.txt",
+                                 "Spring16_25nsV6_MC_L1FastJet_AK4PFchs.txt",
+                                 "Spring16_25nsV6_MC_L2Relative_AK4PFchs.txt",
+                                 "Spring16_25nsV6_DATA_UncertaintySources_AK4PFchs.txt",
+                                 "Spring16_25nsV6_DATA_L1FastJet_AK4PFchs.txt",
+                                 "Spring16_25nsV6_DATA_L1RC_AK4PFchs.txt",
+                                 "Spring16_25nsV6_DATA_L2Relative_AK4PFchs.txt",
+                                 "Spring16_25nsV6_DATA_L3Absolute_AK4PFchs.txt",
+                                 "Spring16_25nsV6_DATA_L2L3Residual_AK4PFchs.txt",
                                  ]
 
 
