@@ -91,7 +91,16 @@ struct by_pt{
     }
   };
 
-bool pt_ordered (double i,double j) { return (j<i); }
+bool pt_ordered (double i,double j){ 
+  return (j<i);
+  }
+
+float calculate_mtw(float met[0], float metphi[0], vector<TLorentzVector> & mu) {
+  TVector2 met_(met[0]*cos(metphi[0]),met[0]*sin(metphi[0]));
+  float phi_lmet = fabs(deltaPhi(mu.at(0).Phi(),metphi[0])); 
+  float mtw=sqrt(2*mu.at(0).Pt()*met[0]*(1-cos(phi_lmet)));
+  return mtw;
+  }
 
 void callme(){
   std::cout<<" NaN value"<<std::endl;
@@ -177,7 +186,8 @@ int main(int argc, char **argv) {
   float  nGoodPV, nPV, numTrueInt;
   float metPt[1],metPhi[1],metPx[1],metPy[1];
   
-  double met,metpx,metpy;
+  //double met,metpx,metpy;
+  float met,metpx,metpy;
   float muE[sizeMax], muPt[sizeMax], muEta[sizeMax], muIso[sizeMax], muIsTight[sizeMax],muIsLoose[sizeMax], muPhi[sizeMax],elPt[sizeMax];
   float muCharge[sizeMax], elCharge[sizeMax];
 
@@ -185,9 +195,13 @@ int main(int argc, char **argv) {
   float lep1Pt(0), lep1Eta(0), lep1Phi(0), lep1E(0), lep2Pt(0), lep2Eta(0), lep2Phi(0),  lep2E(0), lep1Flavour(0), lep1Charge(0), lep2Flavour(0), lep2Charge(0);
   int nPDF=102;
 
+  float slTrigIsoMu_v1(0.), slTrigIsoMu_v2(0.), slTrigIsoMu_v3(0.),slTrigEle_v1(0.), slTrigEle_v2(0.);
+
   float LHEWeightSign[1] = {1.};
   float w(1.),w_q2up(1.),w_q2down(1.),w_zero(1.),w_top(1.);
   float w_pdfs[nPDF];
+  float passElTrig(0.), passMuTrig(0.);
+  float passHadTrig(0.) ;
 
   float bWeight0CSVM, bWeight0CSVMBTagUp,bWeight0CSVMBTagDown,bWeight0CSVMMisTagUp,bWeight0CSVMMisTagDown;
   float bWeight1CSVM, bWeight1CSVMBTagUp,bWeight1CSVMBTagDown,bWeight1CSVMMisTagUp,bWeight1CSVMMisTagDown;
@@ -339,7 +353,37 @@ int main(int argc, char **argv) {
 
   chain.SetBranchAddress("metFull_Px",metPx);
   chain.SetBranchAddress("metFull_Py",metPy);
+  
+  //Muon trigger
+  if(isData=="MC"){
+    chain.SetBranchAddress("Event_passesHLT_IsoMu22_v1", &slTrigIsoMu_v1);
+    chain.SetBranchAddress("Event_passesHLT_IsoMu22_v2", &slTrigIsoMu_v2);
+    chain.SetBranchAddress("Event_passesHLT_IsoMu22_v3", &slTrigIsoMu_v3);
+    }
+  else {
+    chain.SetBranchAddress("Event_passesHLT_IsoMu22_v1", &slTrigIsoMu_v1);
+    chain.SetBranchAddress("Event_passesHLT_IsoMu22_v2", &slTrigIsoMu_v2);
+    chain.SetBranchAddress("Event_passesHLT_IsoMu22_v3", &slTrigIsoMu_v3);
+    }
 
+  
+  //Electron Triger
+  if(isData=="MC"){
+    chain.SetBranchAddress("Event_passesHLT_Ele27_eta2p1_WP75_Gsf_v1", &slTrigEle_v1);
+    chain.SetBranchAddress("Event_passesHLT_Ele27_eta2p1_WP75_Gsf_v2", &slTrigEle_v2);
+    }
+  
+  else{
+    chain.SetBranchAddress("Event_passesHLT_Ele27_eta2p1_WPLoose_Gsf_v1", &slTrigEle_v1);
+    chain.SetBranchAddress("Event_passesHLT_Ele27_eta2p1_WPLoose_Gsf_v2", &slTrigEle_v2);
+    }
+
+  chain.SetBranchAddress("Event_passesSingleElTriggers", &passElTrig);
+  chain.SetBranchAddress("Event_passesSingleMuTriggers", &passMuTrig);
+  chain.SetBranchAddress("Event_passesHadronicTriggers", &passHadTrig);
+
+  
+  
   /********************************************************************************/
   /**************                    Histogram booking              ***************/
   /********************************************************************************/
@@ -368,8 +412,10 @@ int main(int argc, char **argv) {
   TH1F *h_2j1t_MuPhi[maxSysts];    systZero.initHistogramsSysts(h_2j1t_MuPhi,   "h_2j1t_MuPhi",   "2j1t muon phi ",16, -3.2, 3.2);
   TH1F *h_2j1t_MuE[maxSysts];      systZero.initHistogramsSysts(h_2j1t_MuE,     "h_2j1t_MuE",     "2j1t muon e ",100,0,500);
   TH1F *h_2j1t_MuCharge[maxSysts]; systZero.initHistogramsSysts(h_2j1t_MuCharge,"h_2j1t_MuCharge","2j1t muon charge ",2,-1,1);
-  TH1F *h_2j1t_mtw[maxSysts];      systZero.initHistogramsSysts(h_2j1t_mtw,     "h_2j1t_mtw",     "2j1t mtw ",100,0,500);
+  TH1F *h_2j1t_mtwcut_mtw[maxSysts];      systZero.initHistogramsSysts(h_2j1t_mtwcut_mtw,     "h_2j1t_mtwcut_mtw",     "2j1t mtw ",100,0,500);
+  TH1F *h_2j1t_mtw[maxSysts];systZero.initHistogramsSysts(h_2j1t_mtw,     "h_2j1t_mtw",     "2j1t mtw ",100,0,500);
   TH1F *h_2j1t_topMass[maxSysts];  systZero.initHistogramsSysts(h_2j1t_topMass, "h_2j1t_topMass", "2j1t top mass",200,100,500);
+  TH1F *h_2j1t_mtwcut_topMass[maxSysts];  systZero.initHistogramsSysts(h_2j1t_mtwcut_topMass, "h_2j1t_mtwcut_topMass", "2j1t top mass",200,100,500);
   TH1F *h_2j1t_topPt[maxSysts];    systZero.initHistogramsSysts(h_2j1t_topPt,   "h_2j1t_topPt",   "2j1t top pt",200,0,500);
   
   //3j1t 
@@ -419,18 +465,26 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
       w*=w_top/topWeight;
     }
 
-    //    cout << "     after top pt " << w << endl; 
-       //w*= ((METturnon13TeV(metPt[0],1,true))/(METturnon13TeV(metPt[0],1,false)));
-       //       cout << "vhf "<<vhf << " eventFlavour "<<eventFlavour << endl;
+    //cout << "     after top pt " << w << endl; 
+    //w*= ((METturnon13TeV(metPt[0],1,true))/(METturnon13TeV(metPt[0],1,false)));
+    // cout << "vhf "<<vhf << " eventFlavour "<<eventFlavour << endl;
     //vhf=(int)eventFlavour;
-       //FIXXX
-       //       w_top=1.0;
-       //       topWeight=1.0;
-       //std::cout<<"K-factor: "<<k_fact<<std::endl;
+    //FIXXX
+    //       w_top=1.0;
+    //       topWeight=1.0;
+    //std::cout<<"K-factor: "<<k_fact<<std::endl;
      }
      
      //added for sync
+  passElTrig = slTrigEle_v1>0. || slTrigEle_v2>0.;
+  passMuTrig = slTrigIsoMu_v1>0. || slTrigIsoMu_v2>0. || slTrigIsoMu_v3>0.0;
 
+  if (isData=="DATA"){
+    bool dataTriggerMuon = (passMuTrig);
+    if (!dataTriggerMuon) continue;
+    cout <<"Running over Data: Trigger Passed "<<endl;
+    }
+  
   systZero.setWeight(0,1.);
   systZero.setWeight("btagUp",1.);
   systZero.setWeight("btagDown",1.);
@@ -481,7 +535,7 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   vector<TLorentzVector> tightEl, tightMu;
   int nMu(0.), nEl(0.);//, nVetoEl(0.), nLooseMu(0.);
   for(int e= 0; e<maxElLoop;++e ){
-      if(elPt[e]>0){
+      if(elPt[e]>20){
       el.SetPtEtaPhiE(elPt[e], elEta[e], elPhi[e],elE[e]);
       tightEl.push_back(el);
     
@@ -489,7 +543,7 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   }//end loop on electrons     
  
   for(int m= 0; m<maxMuLoop;++m ){
-      if(muPt[m]>0){
+      if(muPt[m]>20){
       mu.SetPtEtaPhiE(muPt[m], muEta[m], muPhi[m],muE[m]);
       tightMu.push_back(mu);
 
@@ -580,7 +634,7 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
    }
     
   for(size_t i = 0; i < (size_t)tightMu.size();++i ){
-        if((tightMu.size())< 2 && tightMu[i].Pt()>20 ){
+        if((tightMu.size())< 2){
           TVector2 met_( met*cos(metPhi[0]), met*sin(metPhi[0]));
           float phi_lmet = fabs(deltaPhi(tightMu[i].Phi(), metPhi[0]) );
           mt = sqrt(2* tightMu[i].Pt() * met* ( 1- cos(phi_lmet)));
@@ -593,8 +647,8 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
     for(size_t i= 0; i< (size_t)bjets.size();++i ){
       //      cout << " w "<< w <<" b weight 1 "<< bWeight1CSVM << endl;
       if(i==0){
-	syst1BM.fillHistogramsSysts(h_2j1t_bjetpt,bjets[i].Pt(),w,NULL,false);
-	//	cout << bjets[i].Pt()<< endl;
+	    syst1BM.fillHistogramsSysts(h_2j1t_bjetpt,bjets[i].Pt(),w,NULL,false);
+	    //cout << bjets[i].Pt()<< endl;
       }
     }
   
@@ -606,7 +660,6 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   }
   
   for(size_t i = 0; i < (size_t)tightMu.size();++i ){
-   if(tightMu[i].Pt()>20){
    syst1BM.fillHistogramsSysts(h_2j1t_MuPt,tightMu[i].Pt(),w);
    syst1BM.fillHistogramsSysts(h_2j1t_MuEta,tightMu[i].Eta(),w);
    syst1BM.fillHistogramsSysts(h_2j1t_MuPhi,tightMu[i].Phi(),w);
@@ -616,18 +669,25 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
         TVector2 met_( met*cos(metPhi[0]), met*sin(metPhi[0]));
         float phi_lmet = fabs(deltaPhi(tightMu[i].Phi(), metPhi[0]) );
         mt = sqrt(2* tightMu[i].Pt() * met* ( 1- cos(phi_lmet)));
-        syst1BM.fillHistogramsSysts(h_2j1t_mtw,mt,w);
-        }
-      }
+        //cout <<" mt = "<<mt<<endl;
+        //cout <<" calculate_mtw() = "<<calculate_mtw(metPt, metPhi,tightMu)<<endl;     
+        syst1BM.fillHistogramsSysts(h_2j1t_mtw,mt,w); 
+        if (calculate_mtw(metPt, metPhi,tightMu) > 50.0){
+          syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_mtw,mt,w);
+          } 
+       }
     }    
-  
+ 
   //Adding top related variables
   vector<TLorentzVector> tops= topUtils.top4Momenta(tightMu, bjets ,metpx, metpy);
   if(tops.size()!=0){
-    double mass = tops.at(0).M();
-    double pt = tops.at(0).Pt();
-    syst1BM.fillHistogramsSysts(h_2j1t_topMass,mass,w);
-    syst1BM.fillHistogramsSysts(h_2j1t_topPt,pt,w);
+      double mass = tops.at(0).M();
+      double pt = tops.at(0).Pt();
+      syst1BM.fillHistogramsSysts(h_2j1t_topMass,mass,w);
+      if(calculate_mtw(metPt, metPhi,tightMu) > 50.0) {
+        syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_topMass,mass,w);
+        syst1BM.fillHistogramsSysts(h_2j1t_topPt,pt,w);
+      }
     }
   }
   
@@ -695,17 +755,15 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
  if(doSynch)fileout.close();  //return h
 
  //Step 0:get only the negative weights version, 
- chainNEvents.Project("h_weight_sign","Event_LHEWeight10/abs(Event_LHEWeight10)"); // I messed up and weight zero is not  saved in the full chain... but this one should do the trick as well! Just do h_weight_sign->GetMean() and multiply this to get the correct number :)
+ if(isData=="MC")chainNEvents.Project("h_weight_sign","Event_LHEWeight10/abs(Event_LHEWeight10)"); // I messed up and weight zero is not  saved in the full chain... but this one should do the trick as well! Just do h_weight_sign->GetMean() and multiply this to get the correct number :)
 
  // TO FIX! ADD PROJECTION OF ALL PDFS TO THE EVENT!
  // systZero.projectAllPDF(h_weightZero,chainNEvents);
 
   
   // Cut Flow
- 
-   
- h_cutFlow->SetBinContent(0,nEventsTot*h_weight_sign->GetMean());//Underflow: number of events pre-preselection.
- h_cutFlow->SetBinContent(1,nEvents);
+  h_cutFlow->SetBinContent(0,nEventsTot*h_weight_sign->GetMean());//Underflow: number of events pre-preselection.
+  h_cutFlow->SetBinContent(1,nEvents);
   h_cutFlow->GetXaxis()->SetBinLabel(1,"no selection");
   h_cutFlow->SetBinContent(2, 0);
   h_cutFlow->GetXaxis()->SetBinLabel(2, "trigger");
@@ -729,8 +787,10 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   systZero.writeHistogramsSysts(h_2j1t_MuPhi,   allMyFiles); 
   systZero.writeHistogramsSysts(h_2j1t_MuE,     allMyFiles); 
   systZero.writeHistogramsSysts(h_2j1t_MuCharge,allMyFiles); 
+  systZero.writeHistogramsSysts(h_2j1t_mtwcut_mtw,     allMyFiles); 
   systZero.writeHistogramsSysts(h_2j1t_mtw,     allMyFiles); 
   systZero.writeHistogramsSysts(h_2j1t_topMass, allMyFiles); 
+  systZero.writeHistogramsSysts(h_2j1t_mtwcut_topMass, allMyFiles); 
   systZero.writeHistogramsSysts(h_2j1t_topPt,   allMyFiles); 
   
   systZero.writeHistogramsSysts(h_3j1t_bjetpt,  allMyFiles); 

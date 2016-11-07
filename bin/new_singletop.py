@@ -13,6 +13,7 @@ from utils import *
 #Usage: python new_singletop.py -c muon -s noSys --t3batch 
 #Usage: python new_singletop.py -c muon -s noSys -m t3se 
 #Usage: python new_singletop.py -c muon -s noSys -m local -P _test
+#Usage: python new_singletop.py -c muon -s noSys -m local -P _test -d DATA
 
 #More complex working example: this will run only the ST_T_tch and the V+Jets samples and split them into batches of 10 files, taking them from the remote folder on Orso's public:
 #Usage: python new_singletop.py -c muon -s noSys -m local -S 10 -P _ST_T_tch,VJ --t3batch
@@ -118,7 +119,8 @@ if opt.split!=0:#Modify the samples and txt list!
 
 for s in samples:
 #    if opt.dry: continue
-    if (s.startswith("JetHT") or s.startswith("SingleMu") or s.startswith("SingleEl") or  s.startswith("MET")): isData="DATA"
+    #f (s.startswith("JetHT") or s.startswith("SingleMu") or s.startswith("SingleEl") or  s.startswith("MET") or opt.isData): isData="DATA"
+    isData=opt.isData
 
     if opt.mode == 'local':
         print 'Info: Running in local mode ...'
