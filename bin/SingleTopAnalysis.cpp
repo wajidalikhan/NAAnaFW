@@ -707,7 +707,7 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
     }
   
   for (size_t j= 0; j< (size_t)jets.size();++j ){
-    if(!(jetIsCSVM[j]) && jetPt[j]>40.0 && abs(jetEta[j])<2.4){
+    if(!(jetIsCSVM[j])){
       syst1BM.fillHistogramsSysts(h_2j1t_jetpt,jets[j].Pt(),w);
       syst1BM.fillHistogramsSysts(h_2j1t_ljeteta,jets[j].Eta(),w);
     }  
