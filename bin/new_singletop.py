@@ -37,7 +37,7 @@ usage = ''
 parser = optparse.OptionParser(usage)
 
 #Input files:
-parser.add_option('-f', '--filepath',        dest='filepath',  type='string',     default = '/afs/cern.ch/work/o/oiorio/public/xNAAnaFW2016/files/trees/',      help='files with the trees location, default to the afs area where the latest version is always located')
+parser.add_option('-f', '--filepath',        dest='filepath',  type='string',     default = './files/final/',      help='files with the trees location, default to the afs area where the latest version is always located')
 parser.add_option('-l', '--localpath',        dest='localpath',  type='string',     default = '/afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_20/src/Analysis/NAAnaFW/bin/ST/')
 #Target process
 parser.add_option('-P', '--process',        dest='process',  type='string',     default = 'all', help="samples to add, according to the convention in 'script_rename.py'. Options are: 'All','ST','VJ','VV','QCDMu','QCDEle', or '_'+specific process, e.g. _ST_T_tch to add only the _ST_T_tch. Accepts also multiple processes, separated by comma, e.g. -P ST,_TT,VJ will select the V+jets samples and single top sample sets, as well as the one sample named TT.")
