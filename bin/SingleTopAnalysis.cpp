@@ -642,10 +642,8 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   for (int j = 0; j <maxJetLoop;++j){	
       TLorentzVector jet, all_jets;
       
-      if(jetPt[j]>40.0 && abs(jetEta[j])<2.4){ 
       all_jets.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
       jets.push_back(all_jets);
-      }   
 
   if(jetIsCSVM[j]<=0.){
       jet.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
