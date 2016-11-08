@@ -141,7 +141,7 @@ python script_replacexrd.py -f files/renamed/ -o files/final/ -x xrootd.ba.infn.
 
 python new_singletop.py --t3batch -f files/final/ -P ST,TT,VJ,VV -S 10
 
-python new_singletop.py --t3batch -f files/final/ -P SingleMuon -d True -S 10
+python new_singletop.py --t3batch -f files/final/ -P SingleMuon -d DATA -S 10
 
 - 4 merge the batch queue result
 
