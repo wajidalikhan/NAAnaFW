@@ -473,10 +473,17 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   int maxElLoop = min(6, elSize);
   
   //step 1 Trigger
+  if(isData=="DATA"){
   TrigIsoMu20= (runNumber>=272023 && runNumber<=274443 && (slTrigIsoMu20_v1 || slTrigIsoMu20_v2 || slTrigIsoMu20_v3));
   TrigIsoMu22= (runNumber>=274954 && runNumber<=276811 && (slTrigIsoMu22_v1 || slTrigIsoMu22_v2 || slTrigIsoMu22_v3));  
   TrigIsoMu24= (runNumber>=276824 && runNumber<=999999 && (slTrigIsoMu24_v1 || slTrigIsoMu24_v2 || slTrigIsoMu24_v3));  
-  
+  }
+  if(isData=="MC"){
+    TrigIsoMu20=false;
+    TrigIsoMu24=false;
+    TrigIsoMu22= (slTrigIsoMu22_v1 || slTrigIsoMu22_v2 || slTrigIsoMu22_v3);  
+  }
+
   // if (TrigIsoMu20) cout << "TrigIsoMu20 fired in Event = "<<evt<<" Run Number = "<<runNumber<<endl;
   //if (TrigIsoMu22) cout << "TrigIsoMu22 fired in Event = "<<evt<<" Run Number = "<<runNumber<<endl;
   //if (TrigIsoMu24) cout << "TrigIsoMu24 fired in Event = "<<evt<<" Run Number = "<<runNumber<<endl;
@@ -661,17 +668,20 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
  
   nJets = jetsPhi.size();
   nCSVJets=bjets.size();
-
+  //  cout <<"passes trig "<<endl; 
+  
   std::sort(bvects.begin(), bvects.end(), by_pt_jet()); 
   bool passmuon = muonTrigger && nMu == 1 && nEl==0;
   bool passelectron = false;
   bool passsinglelepton = passmuon || passelectron;
 
 
-  if(cat=="muon" && !passmuon)continue; 
-  if(cat=="electron" && !passelectron)continue;
-  if(cat=="singlelepton" && !passsinglelepton)continue;
+  if(channel=="muon" && !passmuon)continue; 
+  if(channel=="electron" && !passelectron)continue;
+  if(channel=="singlelepton" && !passsinglelepton)continue;
   //2j
+  //  if(cat=="muon" && !passmuon) cout <<"passes trig and is muon "<<endl; 
+  
   if((jets.size() == 2 && bjets.size() == 0)){
   for(size_t i= 0; i< (size_t)jets.size();++i ){
     //cout <<runNumber<<"   "<<evtNumber<<"   "<<"jet["<<i<< "] "<<jets[i].Pt()<<"   bjetsize "<< bjets.size() <<"   Mu["<<i<< "] "<<tightMu[i].Pt()<< std::endl;
