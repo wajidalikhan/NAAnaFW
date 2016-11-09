@@ -36,4 +36,6 @@ __init__.py*
 bin/SelectedEvents*
 bin/backup
 test/CRAB
+python/MakePlot/output/muon
+bin/work/qexe
 .__afs*
