@@ -73,6 +73,7 @@ ROOT.gStyle.SetOptStat(0)
 ROOT.gROOT.SetBatch()        # don't pop up canvases
 ROOT.TH1.SetDefaultSumw2()
 ROOT.TH1.AddDirectory(False)
+ROOT.TGaxis.SetMaxDigits(3)
 
 tdrstyle.setTDRStyle();
 
@@ -104,6 +105,11 @@ else:
 outhistos = 'output/'+opt.channel+'/histos_lin'
 outpdfs = 'output/'+opt.channel+'/pdfs_lin'
 outtxt = 'output/'+opt.channel+'/txt_lin'
+
+if opt.normData > 0: 
+  outhistos = 'output/'+opt.channel+'/normhistos_lin'
+  outpdfs = 'output/'+opt.channel+'/normpdf_lin'
+  outtxt = 'output/'+opt.channel+'/normtxt_lin'
 
 
 
@@ -162,12 +168,11 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
     
     histos_bkg = []
     histos_data = []
-    
-    leg = Legend()
-    leg_sh = Legend()
-    #
-    #    leg_sign = ROOT.TLegend(0.7,0.7,0.9,0.9)
-    leg_sign = ROOT.TLegend(0.38,0.42,0.91,0.83)
+   
+    #Update the legend postion 
+    leg = Legend((.51, .58, .92, .86),0.055)
+    leg_sh = Legend((.51, .58, .92, .86),0.055)    
+    leg_sign = ROOT.TLegend(0.7,0.7,0.9,0.9)
 
     h1 = None
     #print " prepare for trouble "
@@ -245,7 +250,7 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
                 if(htmp.Integral()!=0):
                     htmp.SetMarkerStyle(20)
                     #htmp.SetMarkerSize(1.2)
-                    htmp.SetMarkerSize(1.3)
+                    htmp.SetMarkerSize(.9)
                     htmp.SetLineWidth(2)
                     htmp.SetLineColor(ROOT.kBlack)
                 histos.append(htmp)
@@ -306,7 +311,7 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
 
             htmp.SetMarkerStyle(20)
             #htmp.SetMarkerSize(1.2)
-            htmp.SetMarkerSize(1.3)
+            htmp.SetMarkerSize(0.9)
 
             if(s.label.startswith("DM")):
                htmp.SetLineWidth(4)
@@ -392,6 +397,7 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
         # make stack plot of histos normalized to unity
         h_norm = copy.deepcopy(h)
         h_norm.Normalize()
+        
         leg_sh.AddEntry(h_norm, s.leglabel, "l")
         stack_sh.Add(h_norm)
 
@@ -414,10 +420,12 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
     tdrstyle.setTDRStyle();
 
     # Update the legend's stype
+    leg._leg.SetNColumns(2)
+    
     leg_sign.SetNColumns(2)
     leg_sign.SetFillColor(0)
     leg_sign.SetFillStyle(0)
-    leg_sign.SetTextFont(42)
+    leg_sign.SetTextFont(40)
     leg_sign.SetBorderSize(0)
     
     ### Adjust ranges and create/save plots: some settings are defined in tdrstyle.py and service_ratio.py
@@ -431,8 +439,8 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
     c1.SetRightMargin( 0.9 );
     c1.SetTopMargin( 1 );
     c1.SetBottomMargin(-1);
-    c1.SetTickx(0);
-    c1.SetTicky(0);
+    c1.SetTickx(1);
+    c1.SetTicky(1);
     c1.cd()
 
     if opt.data:
@@ -444,8 +452,8 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
         pad1.SetRightMargin(0.05)
 
         # print 'x1ndc',leg_sign.GetX1NDC(), leg_sign.GetX1()
-        #leg_sign.SetTextSize(0.055)
-        leg_sign.SetTextSize(0.04) #0.05
+        leg_sign.SetTextSize(0.055)
+        #leg_sign.SetTextSize(0.01) #0.05
         #leg_sign.SetX1(.40)
         #leg_sign.SetY1(.59)
         #leg_sign.SetX2(.91)
@@ -454,7 +462,8 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
     else:
         pad1= ROOT.TPad("pad1", "pad1", 0, 0 , 1, 1)
 
-        leg_sign.SetTextSize(0.032)
+        #leg_sign.SetTextSize(0.026)
+        #leg_sign.SetTextSize(0.01)
         leg_sign.SetX1(.40)
         leg_sign.SetY1(.69)
         leg_sign.SetX2(.94)
@@ -463,8 +472,8 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
     pad1.SetBorderMode(0);
     #if(not(var.startswith("h_topHadMass") or var.startswith("h_topSLMass") or var.startswith("mixmetFinal_CR7"))):
     #    pad1.SetLogy() # log scale, can be asked to not be applied for some variables
-    pad1.SetTickx(0);
-    pad1.SetTicky(0);
+    pad1.SetTickx(1);
+    pad1.SetTicky(1);
     pad1.Draw()
     pad1.cd()
 
@@ -562,13 +571,11 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
     if opt.data:
         # h_data.Sumw2()
         h_data.SetMarkerStyle(20)
-        #h_data.SetMarkerSize(1.2)
-        h_data.SetMarkerSize(1.3)
+        h_data.SetMarkerSize(0.9)
         print "drawing data "
         h_data.Draw("eSAMEpx0")
         stack_bkg_norm.GetHistogram().GetXaxis().SetLabelOffset(1.8)
         stack_bkg_norm.GetHistogram().GetXaxis().SetLabelOffset(0.55)
-
         stack_bkg_norm.GetHistogram().GetYaxis().SetTitleOffset(0.8)
 
     leg.Draw("SAME")
@@ -607,7 +614,7 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
             ratio.Divide(denom)
             ratio.SetMarkerStyle(20)
             #ratio.SetMarkerSize(1.2)
-            ratio.SetMarkerSize(1.3)
+            ratio.SetMarkerSize(0.9)
             ratio.Draw("epx0e0") #epx0
             ratio.SetTitle("")
 

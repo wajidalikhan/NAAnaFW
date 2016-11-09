@@ -17,12 +17,14 @@ samples = collections.OrderedDict()
 
 samples["Data"] = Data
 samples["SingleTop_tchannel"] = ST_tch
+samples["TT"] = TT
 samples["SingleTop_schannel"] = ST_sch
 #samples["SingleTop_tW"] = ST_tW
 samples["WJets"] = WJets
 samples["DYJets"] = DYJets
 samples["VV"] = VV
-samples["TT"] = TT
+
+
 
 
 

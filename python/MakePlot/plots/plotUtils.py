@@ -104,8 +104,8 @@ def plot(fitPhase, region, samps, lumi = "1.26"):
     c1.SetRightMargin( R/W )
     #c1.SetTopMargin( T/H )
     #c1.SetBottomMargin(B/H)
-    c1.SetTickx(0)
-    c1.SetTicky(0)
+    c1.SetTickx(1)
+    c1.SetTicky(1)
     c1.cd()
     unit = "fb^{-1}"
     CMS_lumi.writeExtraText = 1

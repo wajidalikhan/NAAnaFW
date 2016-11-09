@@ -73,8 +73,9 @@ class Histo(object):
         self._h.GetYaxis().SetTitleOffset(self._yTitleOffset);
         self._h.SetTitleFont(self._titleFont);
         self._h.SetTitle("");
-        if(color != ROOT.kRed and color != ROOT.kRed+1): self._h.SetLineColor(1)
-        else: self._h.SetLineColor(color)
+        #if(color != ROOT.kRed and color != ROOT.kRed+1): self._h.SetLineColor(1)
+        #else: 
+        self._h.SetLineColor(color)
         self._h.SetLineWidth(self._lineWidth)
         self._h.SetLineStyle(style)
         self._h.SetFillColor(color)
@@ -282,6 +283,7 @@ class Stack(object):
     def SetStyle(self, options = ""):
         self._hs.Draw(options)
         self._hs.GetHistogram().GetXaxis().SetLabelFont(self._labelFont);
+        self._hs.GetHistogram().GetYaxis().SetMaxDigits(4);
         self._hs.GetHistogram().GetYaxis().SetLabelFont(self._labelFont);
         self._hs.GetHistogram().GetXaxis().SetTitleFont(self._titleFont);
         self._hs.GetHistogram().GetYaxis().SetTitleFont(self._titleFont);
@@ -406,24 +408,22 @@ class Stack(object):
 
 class Legend(object):
 
-    # _coords = (0.5, 0.72, 0.89, 0.90)
-    _coords = (0.40, 0.85, 0.94, 0.95)
+    _coords = (0.5, 0.12, 0.89, 0.90)
+    _textSize = 0.045
 
-    _textSize = 0.032
-    # _textSize = 0.045
-
-    def __init__(self, coords = None):
+    def __init__(self, coords = None, textSize=None):
 
         # Take class default if coords are not specified
         coords = coords if coords is not None else Legend._coords
-
-        #print 'Legend Coords',coords
-        #self._leg = ROOT.TLegend(.61, .58, .94, .89)
+        textSize = textSize if textSize is not None else Legend._textSize
+        print '---------> Legend Coords',coords, 'Text Size ',textSize
         self._leg = ROOT.TLegend(*coords)
+
+#        self._leg = ROOT.TLegend(.51, .58, .92, .86)
         self._leg.SetNColumns(4)
         self._leg.SetFillColor(0)
         self._leg.SetFillStyle(0)
-        self._leg.SetTextSize(self._textSize)
+        self._leg.SetTextSize(textSize)
         self._leg.SetTextFont(42)
         self._leg.SetBorderSize(0)
         
@@ -473,14 +473,16 @@ class LegendRatio(Legend):
     # _coords = (0.50, 0.65, 0.94, 0.89)
     ##_coords = (0.40, 0.76, 0.94, 0.89)
     _coords = (0.38, 0.71, 0.95, 0.89)
-
+    #_coords = (.51, .58, .92, .86) 
     _textSize = 0.055 #0.04
 
-    def __init__(self, coords = None):
+    def __init__(self, coords = None,textSize=None):
         # Take class default if coords are not specified
         coords = coords if coords is not None else LegendRatio._coords
+        textSize = textSize if textSize is not None else LegendRatio._textSize
+        print "--> coords are --> ",coords, " --> textSize ", textSize
 
-        super(LegendRatio, self).__init__(coords)
+        super(LegendRatio, self).__init__(coords,textSize)
 
 
 # ====================================================
@@ -705,7 +707,7 @@ def plot(var, t1, t2, nBins = 100, xmin = 0,xmax = 100, cut = ''):
         t.Draw(var+">>"+sample, cut)
         
         if(h.Integral()!=0):h.Scale(1./h.Integral())
-#        h.SetLineColor(color)
+        h.SetLineColor(color)
         #print ROOT.gDirectory.ls()
         
         #h = t1.GetHistogram()

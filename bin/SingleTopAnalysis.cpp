@@ -413,13 +413,13 @@ int main(int argc, char **argv) {
   /********************************************************************************/
   TH1F *h_cutFlow = new TH1F("h_cutFlow","cutflow",10,-0.5,9.5);
   TH1F *h_weight_sign = new TH1F("h_weight_sign","weight correction factor before all selections, gives the effective number of events",2,-2.0,2.0);
-  TH1F *h_weightZero[maxSysts];      systZero.initHistogramsSysts(h_weightZero,"h_weightZero","weight before all selections, normalized by the total number of events",2000,0,10.0);
-  TH1F *h_nPV[maxSysts];      systZero.initHistogramsSysts(h_nPV,"h_nPV","nPV",102,0,51);
-  TH1F *h_nGoodPV[maxSysts];  systZero.initHistogramsSysts(h_nGoodPV,"h_nGoodPV","nGoodPV",92,0,46);
-  TH1F *h_nTruePV[maxSysts];  systZero.initHistogramsSysts(h_nTruePV,"h_nTruePV","nTruePV",80,0,40);
+  TH1F *h_weightZero[maxSysts]; systZero.initHistogramsSysts(h_weightZero,"h_weightZero","weight before all selections, normalized by the total number of events",2000,0,10.0);
+  TH1F *h_nPV[maxSysts];        systZero.initHistogramsSysts(h_nPV,"h_nPV","nPV",102,0,51);
+  TH1F *h_nGoodPV[maxSysts];    systZero.initHistogramsSysts(h_nGoodPV,"h_nGoodPV","nGoodPV",92,0,46);
+  TH1F *h_nTruePV[maxSysts];    systZero.initHistogramsSysts(h_nTruePV,"h_nTruePV","nTruePV",80,0,40);
   
-  TH1F *h_nJets[maxSysts];    systZero.initHistogramsSysts(h_nJets,"h_nJets","Number of tight jets",13,-0.5,12.5);
-  TH1F *h_nbJets[maxSysts];   systZero.initHistogramsSysts(h_nbJets,"h_nbJets","Number of tight b-jets",11,-0.5,10.5);
+  TH1F *h_nJets[maxSysts];      systZero.initHistogramsSysts(h_nJets,"h_nJets","Number of tight jets",13,-0.5,12.5);
+  TH1F *h_nbJets[maxSysts];     systZero.initHistogramsSysts(h_nbJets,"h_nbJets","Number of tight b-jets",11,-0.5,10.5);
 
   //2j0t 
   TH1F *h_2j0t_jetpt40_1st[maxSysts];    systZero.initHistogramsSysts(h_2j0t_jetpt40_1st,   "h_2j0t_jetpt40_leading","2j0t leading jet Pt ",250,0,500);
@@ -427,20 +427,20 @@ int main(int argc, char **argv) {
   TH1F *h_2j0t_mtw[maxSysts];            systZero.initHistogramsSysts(h_2j0t_mtw,           "h_2j0t_mtw",     "2j0t mtw ",250,0,500);
   
   //2j1t Category
-  TH1F *h_2j1t_bjetpt[maxSysts];   systZero.initHistogramsSysts(h_2j1t_bjetpt,  "h_2j1t_bjetpt",  "2j1t b jet pt",250,0,500);
-  TH1F *h_2j1t_jetpt[maxSysts];    systZero.initHistogramsSysts(h_2j1t_jetpt,   "h_2j1t_jetpt",   "2j1t light jet pt" ,250,0,500);
+  TH1F *h_2j1t_bjetpt[maxSysts];    systZero.initHistogramsSysts(h_2j1t_bjetpt,  "h_2j1t_bjetpt",  "2j1t b jet pt",250,0,500);
+  TH1F *h_2j1t_jetpt[maxSysts];     systZero.initHistogramsSysts(h_2j1t_jetpt,   "h_2j1t_jetpt",   "2j1t light jet pt" ,250,0,500);
   TH1F *h_2j1t_ljeteta[maxSysts];   systZero.initHistogramsSysts(h_2j1t_ljeteta,  "h_2j1t_ljeteta",  "2j1t light jet eta",200,-4.7,4.7);
-  TH1F *h_2j1t_nMu[maxSysts];      systZero.initHistogramsSysts(h_2j1t_nMu,     "h_2j1t_nMu",     "2j1t Number of tight Muons",13,-0.5,12.5);
-  TH1F *h_2j1t_MuPt[maxSysts];     systZero.initHistogramsSysts(h_2j1t_MuPt,    "h_2j1t_MuPt",    "2j1t muon pt ",250,0,500);
-  TH1F *h_2j1t_MuEta[maxSysts];    systZero.initHistogramsSysts(h_2j1t_MuEta,   "h_2j1t_MuEta",   "2j1t muon eta ",100,-2.1,2.1);
-  TH1F *h_2j1t_MuPhi[maxSysts];    systZero.initHistogramsSysts(h_2j1t_MuPhi,   "h_2j1t_MuPhi",   "2j1t muon phi ",100, -3.2, 3.2);
-  TH1F *h_2j1t_MuE[maxSysts];      systZero.initHistogramsSysts(h_2j1t_MuE,     "h_2j1t_MuE",     "2j1t muon e ",250,0,500);
-  TH1F *h_2j1t_MuCharge[maxSysts]; systZero.initHistogramsSysts(h_2j1t_MuCharge,"h_2j1t_MuCharge","2j1t muon charge ",2,-1,1);
-  TH1F *h_2j1t_mtwcut_mtw[maxSysts];      systZero.initHistogramsSysts(h_2j1t_mtwcut_mtw,     "h_2j1t_mtwcut_mtw",     "2j1t mtw ",250,0,500);
-  TH1F *h_2j1t_mtw[maxSysts];systZero.initHistogramsSysts(h_2j1t_mtw,     "h_2j1t_mtw",     "2j1t mtw ",250,0,500);
-  TH1F *h_2j1t_topMass[maxSysts];  systZero.initHistogramsSysts(h_2j1t_topMass, "h_2j1t_topMass", "2j1t top mass",200,100,500);
+  TH1F *h_2j1t_nMu[maxSysts];       systZero.initHistogramsSysts(h_2j1t_nMu,     "h_2j1t_nMu",     "2j1t Number of tight Muons",13,-0.5,12.5);
+  TH1F *h_2j1t_MuPt[maxSysts];      systZero.initHistogramsSysts(h_2j1t_MuPt,    "h_2j1t_MuPt",    "2j1t muon pt ",250,0,500);
+  TH1F *h_2j1t_MuEta[maxSysts];     systZero.initHistogramsSysts(h_2j1t_MuEta,   "h_2j1t_MuEta",   "2j1t muon eta ",100,-2.1,2.1);
+  TH1F *h_2j1t_MuPhi[maxSysts];     systZero.initHistogramsSysts(h_2j1t_MuPhi,   "h_2j1t_MuPhi",   "2j1t muon phi ",100, -3.2, 3.2);
+  TH1F *h_2j1t_MuE[maxSysts];       systZero.initHistogramsSysts(h_2j1t_MuE,     "h_2j1t_MuE",     "2j1t muon e ",250,0,500);
+  TH1F *h_2j1t_MuCharge[maxSysts];  systZero.initHistogramsSysts(h_2j1t_MuCharge,"h_2j1t_MuCharge","2j1t muon charge ",2,-1,1);
+  TH1F *h_2j1t_mtwcut_mtw[maxSysts];systZero.initHistogramsSysts(h_2j1t_mtwcut_mtw,     "h_2j1t_mtwcut_mtw",     "2j1t mtw ",250,0,500);
+  TH1F *h_2j1t_mtw[maxSysts];       systZero.initHistogramsSysts(h_2j1t_mtw,     "h_2j1t_mtw",     "2j1t mtw ",250,0,500);
+  TH1F *h_2j1t_topMass[maxSysts];   systZero.initHistogramsSysts(h_2j1t_topMass, "h_2j1t_topMass", "2j1t top mass",200,100,500);
   TH1F *h_2j1t_mtwcut_topMass[maxSysts];  systZero.initHistogramsSysts(h_2j1t_mtwcut_topMass, "h_2j1t_mtwcut_topMass", "2j1t top mass",200,100,500);
-  TH1F *h_2j1t_topPt[maxSysts];    systZero.initHistogramsSysts(h_2j1t_topPt,   "h_2j1t_topPt",   "2j1t top pt",250,0,500);
+  TH1F *h_2j1t_topPt[maxSysts];     systZero.initHistogramsSysts(h_2j1t_topPt,   "h_2j1t_topPt",   "2j1t top pt",250,0,500);
   
   //3j1t 
   TH1F *h_3j1t_bjetpt[maxSysts];   systZero.initHistogramsSysts(h_3j1t_bjetpt,  "h_3j1t_bjetpt",  "3j1t b jet pt ",250,0,500);
@@ -461,7 +461,6 @@ int main(int argc, char **argv) {
   TH1F *h_3j2t_mtw[maxSysts];      systZero.initHistogramsSysts(h_3j2t_mtw,       "h_3j2t_mtw",        "3j2t mtw ",250,0,500);
 
   TopUtilities topUtils;
-
     
 for(Int_t evt=0; evt<nEvents; evt++ ){
     if(evt%10000==1 ){
@@ -491,15 +490,14 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   bool muonTrigger = (TrigIsoMu20 || TrigIsoMu22 || TrigIsoMu24); 
   bool passesAnyTrigger = muonTrigger || muonTrigger;//REMINDER: ADD ALL TRIGGERS HERE 
   if(!passesAnyTrigger)continue;
-  n_trig += w;
-
   
+  n_trig += w;
 
   if(isData=="MC"){
     LHEWeightSign[0]=w_zero/fabs(w_zero);
     w = LHEWeightSign[0];
     
-    //       w=1.;
+    //    w=1.;
     //    w_pu = LumiWeights_.weight(numTrueInt);
     
     //    w = w * w_pu;
@@ -520,17 +518,6 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
     //std::cout<<"K-factor: "<<k_fact<<std::endl;
      }
      
-    ////added for sync
-    //passElTrig = slTrigEle_v1>0. || slTrigEle_v2>0.;
-    //passMuTrig = slTrigIsoMu22_v1>0. || slTrigIsoMu22_v2>0. || slTrigIsoMu22_v3>0.0;
-
-    //if(isData=="DATA"){
-    //bool dataTriggerMuon = int(passMuTrig);
-    //if (!dataTriggerMuon) continue;
-    //cout <<"Running over Data: Trigger Passed "<<endl;
-    //}
- 
-  
   systZero.setWeight(0,1.);
   systZero.setWeight("btagUp",1.);
   systZero.setWeight("btagDown",1.);
@@ -541,11 +528,9 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   systZero.setWeight("lepDown",1.);
   systZero.setWeight("lepUp",1.);
 
-  
   if(addPDF)systZero.setPDFWeights(w_pdfs,nPDF,w_zero,true);
   if(addQ2)systZero.setQ2Weights(w_q2up,w_q2down,w_zero,true);
   if(addTopPt)systZero.setTWeight(w_top,topWeight,true);
-  
 
   syst0BM.copySysts(systZero);
   syst0BM.setWeight(0,bWeight0CSVM);
@@ -672,7 +657,6 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   bool passmuon = muonTrigger && nMu == 1 && nEl==0;
   bool passelectron = false;
   bool passsinglelepton = passmuon || passelectron;
-
 
   if(channel=="muon" && !passmuon)continue; 
   if(channel=="electron" && !passelectron)continue;
