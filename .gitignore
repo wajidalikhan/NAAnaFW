@@ -38,4 +38,6 @@ bin/backup
 test/CRAB
 python/MakePlot/output/muon
 bin/work/qexe
+*.png
+*.pdf
 .__afs*
