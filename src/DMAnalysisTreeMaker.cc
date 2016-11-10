@@ -607,9 +607,10 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
 
   nInitEventsHisto = new TH1D("initialEvents","initalEvents",10,0,10);
   
+  if (useLHE){
   edm::InputTag lhes_ = iConfig.getParameter<edm::InputTag>( "lhes" );
   t_lhes_ = consumes< LHEEventProduct >( lhes_ );
-  
+  }
   for (;itPsets!=physObjects.end();++itPsets){ 
     int maxI = itPsets->getUntrackedParameter< int >("maxInstances",10);
     variablesFloat = itPsets->template getParameter<std::vector<edm::InputTag> >("variablesF"); 
@@ -955,7 +956,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     float_values["Event_T_Weight"]= 1.0;
     float_values["Event_T_Ext_Weight"]= 1.0;
     size_t nup=lhes->hepeup().NUP;
-
+  
     for( size_t i=0;i<nup;++i){
       //      cout << " particle number " << i << endl;
       int id = lhes->hepeup().IDUP[i];
@@ -1450,29 +1451,42 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       float muCharge = vfloats_values[makeName(mu_label,pref,"Charge")][mu];
       
       
-      if(isTight>0 && pt> 26 && abs(eta) < 2.1 && iso <0.15){
-	++float_values["Event_nTightMuons"];
-	TLorentzVector muon;
-	muon.SetPtEtaPhiE(pt, eta, phi, energy);
-	muons.push_back(muon);
-	leptons.push_back(muon);
-	flavors.push_back(13);
-	
-	leptonsCharge.push_back(muCharge);
-	
-	if(isInVector(obj_cats[mu_label],"Tight")){
-	  fillCategory(mu_label,"Tight",mu,float_values["Event_nTightMuons"]-1);
-	  
+      if(isTight>0 && pt> 26 && abs(eta) < 2.1 /*&& iso <0.15 Isolation added afterwards*/){
+ 	
+	if(iso<0.15){
+	  ++float_values["Event_nTightMuons"];
+	  TLorentzVector muon;
+	  muon.SetPtEtaPhiE(pt, eta, phi, energy);
+	  muons.push_back(muon);
+	  leptons.push_back(muon);
+	  flavors.push_back(13);
+	  leptonsCharge.push_back(muCharge);
+	  if(isInVector(obj_cats[mu_label],"Tight")){
+	    fillCategory(mu_label,"Tight",mu,float_values["Event_nTightMuons"]-1);
 	  if(obj_scanCuts[mu_label].size()>=1) {
 	    fillScanCuts(mu_label,"Tight",mu);
 	  }
+	  }
+	  ++lepidx;
 	}
-	++lepidx;
+	if(iso>0.15){
+	  ++float_values["Event_nTightAntiIsoMuons"];
+	  if(isInVector(obj_cats[mu_label],"TightAntiIso")){
+	    fillCategory(mu_label,"TightAntiIso",mu,float_values["Event_nTightAntiIsoMuons"]-1);
+	    if(obj_scanCuts[mu_label].size()>=1) {
+	      fillScanCuts(mu_label,"TightAntiIso",mu);
+	    }
+	  }
+	}
       }
+
       if(isInVector(obj_cats[mu_label],"Tight")){
 	sizes[mu_label+"Tight"]=(int)float_values["Event_nTightMuons"];
       }
       
+      if(isInVector(obj_cats[mu_label],"TightAntiIso")){
+	sizes[mu_label+"TightAntiIso"]=(int)float_values["Event_nTightAntiIsoMuons"];
+      }
       
       if(isLoose>0 && pt> 10 && abs(eta) < 2.4 && iso<0.25){
 	if(isInVector(obj_cats[mu_label],"Loose")){
@@ -1523,15 +1537,19 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 
       bool passesDRmu = true;
       bool passesTightCuts = false;
+      bool passesTightAntiIsoCuts = false;
+
       if(fabs(scEta)<=1.479){
 	passesTightCuts = isTight >0.0 && iso < 0.0588 ;
+      	passesTightAntiIsoCuts = isTight >0.0 && iso > 0.0588 ;
 
       } //is barrel electron
       if (fabs(scEta)>1.479 && fabs(scEta)<2.5){
 	passesTightCuts = isTight >0.0 && iso < 0.0571 ;
+	passesTightAntiIsoCuts = isTight >0.0 && iso > 0.0571 ;
       }
 
-      if(pt> 30 && fabs(eta) < 2.5 && passesTightCuts){
+      if(pt> 30 && fabs(eta) < 2.5 ){
 	TLorentzVector ele;
 	ele.SetPtEtaPhiE(pt, eta, phi, energy);	
 	double minDR=999;
@@ -1542,22 +1560,31 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	}
 	if(!loosemuons.size()) minDR=999;
 	if(minDR>0.1){ 
-	  electrons.push_back(ele); 
-	  flavors.push_back(11);
-	  leptons.push_back(ele);
-	  
-	  leptonsCharge.push_back(elCharge);
-
-	  ++float_values["Event_nTightElectrons"];
-	  ++lepidx;
-	  if(isInVector(obj_cats[ele_label],"Tight")){
-	    fillCategory(ele_label,"Tight",el,float_values["Event_nTightElectrons"]-1);
+	  if(passesTightCuts){
+	    electrons.push_back(ele); 
+	    flavors.push_back(11);
+	    leptons.push_back(ele);
+	    leptonsCharge.push_back(elCharge);
+	    ++float_values["Event_nTightElectrons"];
+	    ++lepidx;
+	    if(isInVector(obj_cats[ele_label],"Tight")){
+	      fillCategory(ele_label,"Tight",el,float_values["Event_nTightElectrons"]-1);
+	    }
+	  }
+	  if(passesTightAntiIsoCuts){
+	    ++float_values["Event_nTightAntiIsoElectrons"];
+	    if(isInVector(obj_cats[ele_label],"TightAntiIso")){
+	      fillCategory(ele_label,"TightAntiIso",el,float_values["Event_nTightAntiIsoElectrons"]-1);
+	    }
 	  }
 	}
 	else {passesDRmu = false;}
       }
       if(isInVector(obj_cats[ele_label],"Tight")){
 	sizes[ele_label+"Tight"]=(int)float_values["Event_nTightElectrons"];
+      }
+      if(isInVector(obj_cats[ele_label],"TightAntiIso")){
+	sizes[ele_label+"TightAntiIso"]=(int)float_values["Event_nTightAntiIsoElectrons"];
       }
 
       if(isLoose>0 && pt> 30 && fabs(eta) < 2.5){
@@ -1588,6 +1615,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     double maxpt=0.0;
 
     int nTightLeptons = float_values["Event_nTightMuons"]+float_values["Event_nTightElectrons"];
+    int nTightAntiIsoLeptons = float_values["Event_nTightAntiIsoMuons"]+float_values["Event_nTightAntiIsoElectrons"];
 
     for(size_t l =0; l< leptons.size();++l){
       double lpt= leptons.at(l).Pt();
@@ -2043,7 +2071,8 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       bool passes = true;
       //bool metCondition = (metptCorr >100.0);
       passes = passes && nTightJets>=1.0;
-      passes = passes && nTightLeptons>=1.0;
+      //      passes = passes && nTightLeptons>=1.0;
+      passes = passes && (nTightLeptons+nTightAntiIsoLeptons)>=1.0;
 
       if (!passes ) {
 	//Reset eventmax weights/#objects
@@ -2414,9 +2443,11 @@ vector<string> DMAnalysisTreeMaker::additionalVariables(string object){
   if(isevent){
     addvar.push_back("weight");
     addvar.push_back("nTightMuons");
+    addvar.push_back("nTightAntiIsoMuons");
     addvar.push_back("nSoftMuons");
     addvar.push_back("nLooseMuons");
     addvar.push_back("nTightElectrons");
+    addvar.push_back("nTightAntiIsoElectrons");
     addvar.push_back("nMediumElectrons");
     addvar.push_back("nLooseElectrons");
     addvar.push_back("nVetoElectrons");

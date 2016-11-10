@@ -37,8 +37,8 @@ systsToSave = ["noSyst"]
 
 metFilters = ["Flag_CSCTightHaloFilter","Flag_goodVertices", "Flag_eeBadScFilter"]
 
-catMu = ["Tight","Loose"]
-catEl = ["Tight","Veto"]
+catMu = ["Tight","TightAntiIso","Loose"]
+catEl = ["Tight","TightAntiIso","Veto"]
 catJet = ["Tight"]
 
 scanMu = []

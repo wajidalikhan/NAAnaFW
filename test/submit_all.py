@@ -49,18 +49,18 @@ def main():
     config.JobType.psetName = options.config
     config.JobType.allowUndistributedCMSSW = True
     config.JobType.pyCfgParams = ["isData=False", "changeJECs=False"]
-    config.JobType.inputFiles = ["Fall15_25nsV2_MC_L2L3Residual_AK4PFchs.txt",
-                                 "Fall15_25nsV2_MC_L3Absolute_AK4PFchs.txt",
-                                 "Fall15_25nsV2_MC_L1FastJet_AK4PFchs.txt",
-                                 "Fall15_25nsV2_MC_L2Relative_AK4PFchs.txt",
-                                 "Fall15_25nsV2_DATA_UncertaintySources_AK4PFchs.txt"]
+    config.JobType.inputFiles = ["Spring16_25nsV6_MC_L2L3Residual_AK4PFchs.txt",
+                                 "Spring16_25nsV6_MC_L3Absolute_AK4PFchs.txt",
+                                 "Spring16_25nsV6_MC_L1FastJet_AK4PFchs.txt",
+                                 "Spring16_25nsV6_MC_L2Relative_AK4PFchs.txt",
+                                 "Spring16_25nsV6_DATA_UncertaintySources_AK4PFchs.txt"]
 
 
     config.section_("Data")
     config.Data.inputDataset = None
     config.Data.ignoreLocality = True
     #    config.Data.outLFNDirBase = '/store/user/oiorio/ttDM/samples/2016/Oct/'
-    config.Data.outLFNDirBase = '/store/user/oiorio/ttDM/trees/2016/Oct/31Oct/'
+    config.Data.outLFNDirBase = '/store/user/oiorio/ttDM/trees/2016/Nov/09Nov/'
     config.Data.inputDBS = 'phys03'
     config.Data.splitting = 'FileBased'
     #    config.Data.totalUnits = -1
@@ -99,16 +99,22 @@ def main():
         
         #if s.find('ST_t-') > 0 :
         #   print ' single top\n   => add lhesource=source'
-        config.JobType.pyCfgParams = ["isData=False", "changeJECs=False"]
+        config.JobType.pyCfgParams = ["isData=False", "changeJECs=True"]
         #        config.JobType.pyCfgParams = ["isData=False", "changeJECs=False","lhesource=source"]
         print s.split('/')[1]
-        if "QCD_Pt" in s.split('/')[1]:
-            config.JobType.pyCfgParams= ["isData=False", "changeJECs=False","channel=qcd"]
 
     for ijob, job in enumerate(jobs) :
 
+
         ptbin = job.split('/')[1]
         cond = job.split('/')[2]#B2GAnaFW_80x_V2p0
+
+        print "jobsplit11 ", job.split('/')[1]
+#        print "cfgparams befor", config.JobType.pyCfgParams
+        if ("QCD_Pt" in job.split('/')[1]) or ("ST_tW" in job.split('/')[1]):
+            config.JobType.pyCfgParams= ["isData=False", "changeJECs=True","channel=qcd"]
+        else:
+            config.JobType.pyCfgParams = ["isData=False", "changeJECs=True"]
         #        ptbin
         config.General.requestName = '80xV2_' + ptbin #+ cond[10:] 
         config.Data.inputDataset = job

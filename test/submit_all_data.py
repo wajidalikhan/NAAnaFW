@@ -66,7 +66,7 @@ def main():
     config.Data.inputDataset = None
     config.Data.ignoreLocality = True
     #    config.Data.outLFNDirBase = '/store/user/oiorio/ttDM/samples/2016/Oct/'
-    config.Data.outLFNDirBase = '/store/user/oiorio/ttDM/trees/2016/Oct/12Oct/'
+    config.Data.outLFNDirBase = '/store/user/oiorio/ttDM/trees/2016/Nov/09Nov/'
     config.Data.inputDBS = 'phys03'
     config.Data.splitting = 'FileBased'
     #    config.Data.totalUnits = -1
@@ -124,7 +124,7 @@ def main():
         config.Data.outputDatasetTag = '80xV2_' + ptbin + cond
         print 'Submitting ' + config.General.requestName + ', dataset = ' + job
         print 'Configuration :'
-        #print config
+        print config
         try :
             from multiprocessing import Process
             p = Process(target=submit, args=(config,))
