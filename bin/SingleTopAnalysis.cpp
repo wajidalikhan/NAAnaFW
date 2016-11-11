@@ -175,7 +175,7 @@ int main(int argc, char **argv) {
   systWeights systZero,syst0BM,syst1BM,syst2BM; 
   int maxSysts=0; 
   int sizeMax=50;
-  int muSize, elSize, jetSize;
+  int muSize, elSize, jetSize,muLooseSize,elLooseSize;
   //float passTrigHT(0.), Ht(0.);
   float Ht(0.), mt(0.);
   float runNumber(0.), lumiSec(0.);
@@ -189,7 +189,10 @@ int main(int argc, char **argv) {
   //double met,metpx,metpy;
   float met,metpx,metpy;
   float muE[sizeMax], muPt[sizeMax], muEta[sizeMax], muIso[sizeMax], muIsTight[sizeMax],muIsLoose[sizeMax], muPhi[sizeMax],elPt[sizeMax];
+  float muAntiIsoE[sizeMax], muAntiIsoPt[sizeMax], muAntiIsoEta[sizeMax], muAntiIsoIso[sizeMax], muAntiIsoIsTight[sizeMax],muAntiIsoIsLoose[sizeMax], muAntiIsoPhi[sizeMax];
+  int   muAntiIsoSize;
   float muCharge[sizeMax], elCharge[sizeMax];
+  float muAntiIsoCharge[sizeMax];
 
   float elEta[sizeMax], elIso[sizeMax], elIsTight[sizeMax], elIsVeto[sizeMax], elE[sizeMax], elPhi[sizeMax], elPassesDRmu[sizeMax];    
   float lep1Pt(0), lep1Eta(0), lep1Phi(0), lep1E(0), lep2Pt(0), lep2Eta(0), lep2Phi(0),  lep2E(0), lep1Flavour(0), lep1Charge(0), lep2Flavour(0), lep2Charge(0);
@@ -273,6 +276,7 @@ int main(int argc, char **argv) {
   chain.SetBranchAddress("electronsTight_vidVeto", elIsVeto);
   chain.SetBranchAddress("electronsTight_PassesDRmu", elPassesDRmu);
   chain.SetBranchAddress("electronsTight_size", &elSize);
+  chain.SetBranchAddress("electronsVeto_size", &elLooseSize);
 
   chain.SetBranchAddress("muonsTight_E", muE);
   chain.SetBranchAddress("muonsTight_Phi", muPhi);
@@ -283,6 +287,17 @@ int main(int argc, char **argv) {
   chain.SetBranchAddress("muonsTight_IsTightMuon", muIsTight);
   chain.SetBranchAddress("muonsTight_IsLooseMuon", muIsLoose);
   chain.SetBranchAddress("muonsTight_size", &muSize);
+  chain.SetBranchAddress("muonsLoose_size", &muLooseSize);
+
+  chain.SetBranchAddress("muonsTightAntiIso_E", muAntiIsoE);
+  chain.SetBranchAddress("muonsTightAntiIso_Phi", muAntiIsoPhi);
+  chain.SetBranchAddress("muonsTightAntiIso_Eta", muAntiIsoEta);
+  chain.SetBranchAddress("muonsTightAntiIso_Pt", muAntiIsoPt);
+  chain.SetBranchAddress("muonsTightAntiIso_Charge", muAntiIsoCharge);
+  chain.SetBranchAddress("muonsTightAntiIso_Iso04", muAntiIsoIso);
+  chain.SetBranchAddress("muonsTightAntiIso_IsTightMuon", muAntiIsoIsTight);
+  chain.SetBranchAddress("muonsTightAntiIso_IsLooseMuon", muAntiIsoIsLoose);
+  chain.SetBranchAddress("muonsTightAntiIso_size", &muAntiIsoSize);
 
   chain.SetBranchAddress("jetsAK4CHSTight_E",      &jetE);
   chain.SetBranchAddress("jetsAK4CHSTight_Pt",     &jetPt);
@@ -580,23 +595,30 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
       if(elPt[e]>20){
       el.SetPtEtaPhiE(elPt[e], elEta[e], elPhi[e],elE[e]);
       tightEl.push_back(el);
-    
-    }
+      }
   }//end loop on electrons     
  
-  for(int m= 0; m<maxMuLoop;++m ){
+  if(channel!="muonantiiso"){
+    for(int m= 0; m<maxMuLoop;++m ){
       if(muPt[m]>20){
-      mu.SetPtEtaPhiE(muPt[m], muEta[m], muPhi[m],muE[m]);
-      tightMu.push_back(mu);
-
+	mu.SetPtEtaPhiE(muPt[m], muEta[m], muPhi[m],muE[m]);
+	tightMu.push_back(mu);
+      }
     }
-  }//end loop on muons
+  }
+  else {
+      for(int m= 0; m<maxMuLoop;++m ){
+      if(muAntiIsoPt[m]>20){
+	    mu.SetPtEtaPhiE(muAntiIsoPt[m], muAntiIsoEta[m], muAntiIsoPhi[m],muAntiIsoE[m]);
+	    tightMu.push_back(mu);
+      }
+    }
+  }
+  //end loop on muons
   
   nMu = tightMu.size();
   nEl = tightEl.size();
-  
   vector<lept> leptons;
-  
   for (size_t e = 0; e < (size_t)tightEl.size(); ++e){
     lept lepton;
     lepton.p4 = tightEl[e];
@@ -619,15 +641,14 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   struct btag{
       TLorentzVector vect;
       float csv;
-  };
+      };
   
   std::vector<btag> bvects;
-    
   struct by_csv{
       bool operator()(btag const &b1, btag const &b2){
       return b1.csv > b2.csv;
       }
-  };
+      };
 
   struct by_pt_jet{
       bool operator()(btag const &jet1, btag const &jet2){
@@ -656,25 +677,26 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
      b.vect = bjet;
      b.csv = jetak4chs_csvv2[j];
      bvects.push_back(b);
-     
-   }  
-}// End of jet loop 
+    }  
+  }// End of jet loop 
  
   nJets = jetsPhi.size();
   nCSVJets=bjets.size();
   //  cout <<"passes trig "<<endl; 
   
   std::sort(bvects.begin(), bvects.end(), by_pt_jet()); 
-  bool passmuon = muonTrigger && nMu == 1 && nEl==0;
+  bool passmuon = muonTrigger && nMu == 1 && muLooseSize==1 && nEl==0 && elLooseSize == 0;
+  bool passantiisomuon = muonTrigger && nMu == 1 && muLooseSize==0 && nEl==0 && elLooseSize == 0;
   bool passelectron = false;
   bool passsinglelepton = passmuon || passelectron;
 
+  if(channel=="muonantiiso" && ! passantiisomuon) continue;
   if(channel=="muon" && !passmuon)continue; 
   if(channel=="electron" && !passelectron)continue;
   if(channel=="singlelepton" && !passsinglelepton)continue;
+  
   //2j
   //  if(cat=="muon" && !passmuon) cout <<"passes trig and is muon "<<endl; 
-  
   if((jets.size() == 2 && bjets.size() == 0)){
   for(size_t i= 0; i< (size_t)jets.size();++i ){
     //cout <<runNumber<<"   "<<evtNumber<<"   "<<"jet["<<i<< "] "<<jets[i].Pt()<<"   bjetsize "<< bjets.size() <<"   Mu["<<i<< "] "<<tightMu[i].Pt()<< std::endl;

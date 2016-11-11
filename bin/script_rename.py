@@ -4,9 +4,9 @@ import errno
 os.seteuid(os.geteuid())
 import optparse 
 from utils import *
-#usage: python script_rename.py -s ~oiorio/public/xWajid/files/trees/oct31/ -d files/renamed 
+#usage: python script_rename.py -s ~oiorio/public/xWajid/files/trees/nov09/ -d files/renamed 
 
-usage = 'usage: python script_rename.py -s ~oiorio/public/xWajid/files/trees/oct31/ -d files/renamed '
+usage = 'usage: python script_rename.py -s ~oiorio/public/xWajid/files/trees/nov09/ -d files/renamed '
 parser = optparse.OptionParser(usage)
 parser.add_option('-s', '--src',        dest='src',  type='string',     default = './', help="directory to rename files")
 parser.add_option('-d', '--dest',       dest='dest',  type='string',    default = './renamed/', help="directory to rename files")
@@ -86,8 +86,11 @@ for i in list:
     print '*** Renaming file', i 
     os.renames(i,"QCDMuEPt20toInf.txt")
 
-  if 'listSingleMuon' in i:
+  if 'listRun2016' in i:
     print '*** Renaming file', i 
-    os.renames(i,i.replace("listSingleMuon","SingleMuon"))
+    os.renames(i,i.replace("listRun2016","SingleMuon_Run2016").replace("_B2GAnaFW_80X_V2p1",""))
+#    if '_B2GAnaFW_80X_V2p1' in i:
+#      os.renames(i,i.replace("_B2GAnaFW_80X_V2p1",""))
+
 
 print '*** Renaming Done ***'
