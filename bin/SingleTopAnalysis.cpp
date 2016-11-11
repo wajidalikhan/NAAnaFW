@@ -183,7 +183,7 @@ int main(int argc, char **argv) {
   float jetE[sizeMax], jetPt[sizeMax], jetPhi[sizeMax], jetEta[sizeMax];
   float jet_iscsvl[sizeMax], jetIsCSVM[sizeMax], jet_iscsvt[sizeMax],jetIsLoose[sizeMax],jetIsTight[sizeMax],jetak4chs_csvv2[sizeMax];
   float nTightMuons, nTightElectrons, nVetoElectrons, nLooseMuons, nJets,nCSVJets;//, nCSVLJets;
-  float nGoodPV, nPV, numTrueInt;
+  float nGoodPV, nPV, numTrueInt, w_pu;
   float metPt[1],metPhi[1],metPx[1],metPy[1];
   
   //double met,metpx,metpy;
@@ -240,8 +240,6 @@ int main(int argc, char **argv) {
   //addPDF=true;
   //addQ2=true;
   //addTopPt=true;
-
-
   //addVHF=false;
   //addWZNLO=false;
   //if(isData=="DATA"){addPDF=false, addQ2=false;addVHF=false;addTTSplit=false;} 
@@ -461,7 +459,19 @@ int main(int argc, char **argv) {
   TH1F *h_3j2t_mtw[maxSysts];      systZero.initHistogramsSysts(h_3j2t_mtw,       "h_3j2t_mtw",        "3j2t mtw ",250,0,500);
 
   TopUtilities topUtils;
+  
+  //Pileup Reweighting
+  edm::LumiReWeighting LumiWeights_, LumiWeightsUp_, LumiWeightsDown_;
+
+  if(isData=="MC"){
+    LumiWeights_ = edm::LumiReWeighting("pu/MyDataPileupHistogram.root", "pu/MyDataPileupHistogram.root","pileup","pileup");
+    LumiWeightsUp_ = edm::LumiReWeighting("pu/MyDataPileupHistogram.root", "pu/MyDataPileupHistogram.root","pileup","pileup");
+    LumiWeightsDown_ = edm::LumiReWeighting("pu/MyDataPileupHistogram.root", "pu/MyDataPileupHistogram.root","pileup","pileup");
     
+    //LumiWeightsUp_ = edm::LumiReWeighting("pu/puMC.root", "pu/MyDataPileupHistogram_up.root","MC_pu","pileup");
+    //LumiWeightsDown_ = edm::LumiReWeighting("pu/puMC.root", "pu/MyDataPileupHistogram_down.root","MC_pu","pileup");
+  }
+  
 for(Int_t evt=0; evt<nEvents; evt++ ){
     if(evt%10000==1 ){
     cout<<"Info: Running on event: "<<evt<<endl; 
@@ -496,28 +506,24 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   if(isData=="MC"){
     LHEWeightSign[0]=w_zero/fabs(w_zero);
     w = LHEWeightSign[0];
-    
     //    w=1.;
-    //    w_pu = LumiWeights_.weight(numTrueInt);
-    
-    //    w = w * w_pu;
-    //    w*=k_fact;
-    //    cout << " --> bef top pt " << w << endl;
+    w_pu = LumiWeights_.weight(numTrueInt);
+    //cout <<" pu weight = "<< w_pu<<endl; 
+    w = w * w_pu;
     
     if(sample=="TTNoTT"){
-      w*=w_top/topWeight;
-    }
+        w*=w_top/topWeight;
+        }
+    
+      double puUpFact=(LumiWeightsUp_.weight(numTrueInt))/(LumiWeights_.weight(numTrueInt));
+      double puDownFact=(LumiWeightsDown_.weight(numTrueInt))/(LumiWeights_.weight(numTrueInt));
 
-    //cout << "     after top pt " << w << endl; 
-    //w*= ((METturnon13TeV(metPt[0],1,true))/(METturnon13TeV(metPt[0],1,false)));
-    // cout << "vhf "<<vhf << " eventFlavour "<<eventFlavour << endl;
-    //vhf=(int)eventFlavour;
-    //FIXXX
-    //       w_top=1.0;
-    //       topWeight=1.0;
-    //std::cout<<"K-factor: "<<k_fact<<std::endl;
-     }
-     
+    if(numTrueInt>49){
+      cout << " --> numTrueInt very high!!" << endl;
+      puUpFact =0;
+      puDownFact=0;
+      }
+
   systZero.setWeight(0,1.);
   systZero.setWeight("btagUp",1.);
   systZero.setWeight("btagDown",1.);
@@ -538,6 +544,8 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   syst0BM.setWeight("btagDown",bWeight0CSVMBTagDown);
   syst0BM.setWeight("mistagUp",bWeight0CSVMMisTagUp);
   syst0BM.setWeight("mistagDown",bWeight0CSVMMisTagDown);
+  syst0BM.setWeight("puUp",bWeight0CSVM*puUpFact);
+  syst0BM.setWeight("puDown",bWeight0CSVM*puDownFact);
 
   syst1BM.copySysts(systZero);
   syst1BM.setWeight(0,bWeight1CSVM);
@@ -545,7 +553,8 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   syst1BM.setWeight("btagDown",bWeight1CSVMBTagDown);
   syst1BM.setWeight("mistagUp",bWeight1CSVMMisTagUp);
   syst1BM.setWeight("mistagDown",bWeight1CSVMMisTagDown);
-
+  syst1BM.setWeight("puUp",bWeight0CSVM*puUpFact);
+  syst1BM.setWeight("puDown",bWeight0CSVM*puDownFact);
 
   syst2BM.copySysts(systZero);
   syst2BM.setWeight(0,bWeight2CSVM);
@@ -553,8 +562,10 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   syst2BM.setWeight("btagDown",bWeight2CSVMBTagDown);
   syst2BM.setWeight("mistagUp",bWeight2CSVMMisTagUp);
   syst2BM.setWeight("mistagDown",bWeight2CSVMMisTagDown);
-
-  
+  syst2BM.setWeight("puUp",bWeight0CSVM*puUpFact);
+  syst2BM.setWeight("puDown",bWeight0CSVM*puDownFact);
+  }
+   
   met = metPt[0];
   metpx = metPx[0];
   metpy = metPy[0];
