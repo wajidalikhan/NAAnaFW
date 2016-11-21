@@ -299,6 +299,7 @@ int main(int argc, char **argv) {
   chain.SetBranchAddress("muonsTightAntiIso_IsLooseMuon", muAntiIsoIsLoose);
   chain.SetBranchAddress("muonsTightAntiIso_size", &muAntiIsoSize);
 
+
   chain.SetBranchAddress("jetsAK4CHSTight_E",      &jetE);
   chain.SetBranchAddress("jetsAK4CHSTight_Pt",     &jetPt);
   chain.SetBranchAddress("jetsAK4CHSTight_Phi",    &jetPhi);
@@ -494,6 +495,7 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   chain.GetEntry(evt);
   int maxJetLoop = min(15, jetSize);
   int maxMuLoop = min(6, muSize);
+  if(channel == "muonantiiso") maxMuLoop = min(6, muAntiIsoSize); 
   int maxElLoop = min(6, elSize);
   
   //step 1 Trigger
@@ -529,15 +531,15 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
     if(sample=="TTNoTT"){
         w*=w_top/topWeight;
         }
-    
-      double puUpFact=(LumiWeightsUp_.weight(numTrueInt))/(LumiWeights_.weight(numTrueInt));
-      double puDownFact=(LumiWeightsDown_.weight(numTrueInt))/(LumiWeights_.weight(numTrueInt));
+    } 
+    //double puUpFact=(LumiWeightsUp_.weight(numTrueInt))/(LumiWeights_.weight(numTrueInt));
+    //double puDownFact=(LumiWeightsDown_.weight(numTrueInt))/(LumiWeights_.weight(numTrueInt));
 
-    if(numTrueInt>49){
-      cout << " --> numTrueInt very high!!" << endl;
-      puUpFact =0;
-      puDownFact=0;
-      }
+    //if(numTrueInt>49){
+    //  cout << " --> numTrueInt very high!!" << endl;
+    //  puUpFact =0;
+    //  puDownFact=0;
+    //  }
 
   systZero.setWeight(0,1.);
   systZero.setWeight("btagUp",1.);
@@ -559,8 +561,8 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   syst0BM.setWeight("btagDown",bWeight0CSVMBTagDown);
   syst0BM.setWeight("mistagUp",bWeight0CSVMMisTagUp);
   syst0BM.setWeight("mistagDown",bWeight0CSVMMisTagDown);
-  syst0BM.setWeight("puUp",bWeight0CSVM*puUpFact);
-  syst0BM.setWeight("puDown",bWeight0CSVM*puDownFact);
+  //syst0BM.setWeight("puUp",bWeight0CSVM*puUpFact);
+  //syst0BM.setWeight("puDown",bWeight0CSVM*puDownFact);
 
   syst1BM.copySysts(systZero);
   syst1BM.setWeight(0,bWeight1CSVM);
@@ -568,8 +570,8 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   syst1BM.setWeight("btagDown",bWeight1CSVMBTagDown);
   syst1BM.setWeight("mistagUp",bWeight1CSVMMisTagUp);
   syst1BM.setWeight("mistagDown",bWeight1CSVMMisTagDown);
-  syst1BM.setWeight("puUp",bWeight0CSVM*puUpFact);
-  syst1BM.setWeight("puDown",bWeight0CSVM*puDownFact);
+  //syst1BM.setWeight("puUp",bWeight0CSVM*puUpFact);
+  //syst1BM.setWeight("puDown",bWeight0CSVM*puDownFact);
 
   syst2BM.copySysts(systZero);
   syst2BM.setWeight(0,bWeight2CSVM);
@@ -577,9 +579,8 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   syst2BM.setWeight("btagDown",bWeight2CSVMBTagDown);
   syst2BM.setWeight("mistagUp",bWeight2CSVMMisTagUp);
   syst2BM.setWeight("mistagDown",bWeight2CSVMMisTagDown);
-  syst2BM.setWeight("puUp",bWeight0CSVM*puUpFact);
-  syst2BM.setWeight("puDown",bWeight0CSVM*puDownFact);
-  }
+  //syst2BM.setWeight("puUp",bWeight0CSVM*puUpFact);
+  //syst2BM.setWeight("puDown",bWeight0CSVM*puDownFact);
    
   met = metPt[0];
   metpx = metPx[0];
@@ -597,18 +598,20 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
       tightEl.push_back(el);
       }
   }//end loop on electrons     
- 
+  vector<float> selectedIso;
   if(channel!="muonantiiso"){
     for(int m= 0; m<maxMuLoop;++m ){
       if(muPt[m]>20){
-	mu.SetPtEtaPhiE(muPt[m], muEta[m], muPhi[m],muE[m]);
-	tightMu.push_back(mu);
+
+	      mu.SetPtEtaPhiE(muPt[m], muEta[m], muPhi[m],muE[m]);
+	      tightMu.push_back(mu);
       }
     }
   }
   else {
       for(int m= 0; m<maxMuLoop;++m ){
-      if(muAntiIsoPt[m]>20){
+      if(muAntiIsoPt[m]>20 && muAntiIsoIso[m]>0.25){
+	    selectedIso.push_back(muAntiIsoIso[m]);
 	    mu.SetPtEtaPhiE(muAntiIsoPt[m], muAntiIsoEta[m], muAntiIsoPhi[m],muAntiIsoE[m]);
 	    tightMu.push_back(mu);
       }
@@ -686,18 +689,19 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   
   std::sort(bvects.begin(), bvects.end(), by_pt_jet()); 
   bool passmuon = muonTrigger && nMu == 1 && muLooseSize==1 && nEl==0 && elLooseSize == 0;
-  bool passantiisomuon = muonTrigger && nMu == 1 && muLooseSize==0 && nEl==0 && elLooseSize == 0;
+  //bool passantiisomuon = muonTrigger && nMu == 1 && muLooseSize == 0 && nEl==0 && elLooseSize == 0;
+  //bool passantiisomuon = muonTrigger && muAntiIsoSize==1 && nMu==1 && nEl==0 && elLooseSize == 0;
+  bool passantiisomuon = muonTrigger && muAntiIsoSize==1 && nEl==0 && elLooseSize == 0;
   bool passelectron = false;
   bool passsinglelepton = passmuon || passelectron;
 
-  if(channel=="muonantiiso" && ! passantiisomuon) continue;
+  if(channel=="muonantiiso" && !passantiisomuon) continue;
   if(channel=="muon" && !passmuon)continue; 
   if(channel=="electron" && !passelectron)continue;
   if(channel=="singlelepton" && !passsinglelepton)continue;
   
-  //2j
-  //  if(cat=="muon" && !passmuon) cout <<"passes trig and is muon "<<endl; 
-  if((jets.size() == 2 && bjets.size() == 0)){
+  //2j0t 
+  if((jets.size() ==2 && bjets.size() == 0)){
   for(size_t i= 0; i< (size_t)jets.size();++i ){
     //cout <<runNumber<<"   "<<evtNumber<<"   "<<"jet["<<i<< "] "<<jets[i].Pt()<<"   bjetsize "<< bjets.size() <<"   Mu["<<i<< "] "<<tightMu[i].Pt()<< std::endl;
     if(i==0)syst0BM.fillHistogramsSysts(h_2j0t_jetpt40_1st,jets[i].Pt(),w);  
@@ -709,6 +713,8 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
           TVector2 met_( met*cos(metPhi[0]), met*sin(metPhi[0]));
           float phi_lmet = fabs(deltaPhi(tightMu[i].Phi(), metPhi[0]) );
           mt = sqrt(2* tightMu[i].Pt() * met* ( 1- cos(phi_lmet)));
+	  //	  cout << "muon iso "<< selectedIso[i]<< " mtw "<< mt <<endl;
+
           syst0BM.fillHistogramsSysts(h_2j0t_mtw,mt,w);
           }
       }
@@ -718,7 +724,7 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
     for(size_t i= 0; i< (size_t)bjets.size();++i ){
       //      cout << " w "<< w <<" b weight 1 "<< bWeight1CSVM << endl;
       if(i==0){
-	    syst1BM.fillHistogramsSysts(h_2j1t_bjetpt,bjets[i].Pt(),w,NULL,false);
+	syst1BM.fillHistogramsSysts(h_2j1t_bjetpt,bjets[i].Pt(),w,NULL,false);
       //cout << bjets[i].Pt()<< endl;
       }
     }
@@ -812,8 +818,8 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   systZero.fillHistogramsSysts(h_nGoodPV,nPV,w);
   systZero.fillHistogramsSysts(h_nTruePV,numTrueInt,w);
   
-  if(nTightElectrons != nEl)cout << "warning! problem with tight el"<<endl;
-  if(nTightMuons != nMu)cout << "warning! problem with tight mu"<<endl;
+  //if(nTightElectrons != nEl)cout << "warning! problem with tight el"<<endl;
+  //if(nTightMuons != nMu)cout << "warning! problem with tight mu"<<endl;
   
   nTightElectrons = nEl;
   nTightMuons = nMu;    

@@ -14,6 +14,10 @@ from utils import *
 #Usage: python new_singletop.py -c muon -s noSys -m t3se 
 #Usage: python new_singletop.py -c muon -s noSys -m local -P _test
 #Usage: python new_singletop.py -c muon -s noSys -m local -P _test -d DATA
+#Usage: python new_singletop.py -c muonantiiso -s noSys -m local -P _test -d DATA
+#Usage: python new_singletop.py --t3batch -f files/final/ -P SingleMuon -d DATA -S 40 -c munonantiiso
+#Usage: python new_singletop.py -c muonantiiso -s noSys --t3batch -f files/final/ -P SingleMuon -d DATA -S 40
+
 
 #More complex working example: this will run only the ST_T_tch and the V+Jets samples and split them into batches of 10 files, taking them from the remote folder on Orso's public:
 #Usage: python new_singletop.py -c muon -s noSys -m local -S 10 -P _ST_T_tch,VJ --t3batch

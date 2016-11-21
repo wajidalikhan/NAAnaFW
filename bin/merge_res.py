@@ -52,8 +52,9 @@ print "samples are:",samples
 
 path = opt.localpath
 if not path.endswith("/"): path = path+"/"
-channelstorun=["muon","electron"]
-channelstorun=["muon"]
+#channelstorun=["muon","electron"]
+#channelstorun=["muon"]
+channelstorun=["muonantiiso"]
 syststorun = ["noSyst"]
 
 toretry = opt.doretry
