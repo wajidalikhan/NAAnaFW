@@ -94,12 +94,20 @@ Data.style = 1
 Data.fill = 1001
 Data.leglabel = "Data"
 Data.label = "Data"
-Data.components = [    SingleMu_Run2016B,
-                       SingleMu_Run2016C,
-                       SingleMu_Run2016D,
-                       SingleMu_Run2016E,
-                       SingleMu_Run2016F,
-                       SingleMu_Run2016G]
+#Data.components = [    SingleMu_Run2016B,
+#                       SingleMu_Run2016C,
+#                       SingleMu_Run2016D,
+#                       SingleMu_Run2016E,
+#                       SingleMu_Run2016F,
+#                       SingleMu_Run2016G]
+Data.components = [    #SingleMu_Run2016B,# 5.879141 
+#                       SingleMu_Run2016C,# 2.645968 
+                       SingleMu_Run2016D,# 4.353449 
+#                       SingleMu_Run2016E,# 4.049732
+#                       SingleMu_Run2016F,# 3.147823 
+#                       SingleMu_Run2016G,# 7.115969 
+]
+
 #Data.components = [SingleMu_05Oct, SingleEl_05Oct, MET_05Oct, MET_Promptv4, SingleMu_Promptv4, SingleEl_Promptv4]
 #Data.components = [SingleMu_05Oct, SingleEl_05Oct, MET_05Oct, MET_Promptv4]
 #Data.components = [MET]

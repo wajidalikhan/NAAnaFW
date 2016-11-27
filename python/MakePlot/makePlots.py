@@ -16,6 +16,7 @@ parser.add_option('-n', '--normData', dest='normData', type='int', default = '0'
 parser.add_option('-r', '--resdir', dest='resdir', type='string', default = './../newTTDManalysis/', help='res directory')
 parser.add_option('-d', '--add-data', dest='data', action='store_false', default = True, help='Hide data')
 parser.add_option('-S', "--signal", dest='signal', action='store_true',default = False, help='Add a signal plot')
+parser.add_option('-p', '--prefix', dest='prefix', type='string', default = '', help='prefix for img files')
 parser.add_option('', '--store', dest='store', action='store_true', default = False, help='Store')
 parser.add_option('--focusOn', dest='focus', default = None, help='Focus on a single plot')
 
@@ -708,7 +709,9 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
     #c1.GetFrame().Draw();
 
     pdfbasename = var+'_'+opt.channel
-    
+    if opt.prefix!="":
+        pdfbasename= opt.prefix+'_'+var+'_'+opt.channel
+
     syst_label = '' if opt.sys == 'noSys' else ('_'+opt.sys)
     data_label = '' if opt.data else '_nodata'
 

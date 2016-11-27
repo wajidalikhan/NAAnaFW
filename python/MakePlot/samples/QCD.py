@@ -120,3 +120,30 @@ QCD.leglabel = "QCD"
 QCD.label = "QCD"
 QCD.components = [ QCD_100_200, QCD_200_300,  QCD_300_500, QCD_500_700, QCD_700_1000, QCD_1000_1500,  QCD_1500_2000,  QCD_2000_Inf]
 #QCD.components = [ QCD_100_200, QCD_200_300,  QCD_300_500, QCD_500_700, QCD_700_1000, QCD_1000_1500]
+
+
+QCDMu = sample()
+QCDMu.files = outlist (d,"QCDMuEPt20toInf")
+QCDMu.jpref = jetLabel 
+QCDMu.jp = jetLabel 
+QCDMu.sf = 1
+QCDMu.skimEff = 1.
+QCDMu.sigma = 720648000*0.00042*0.7
+QCDMu.color = ROOT.kGray
+QCDMu.style = 1
+QCDMu.fill = 1001
+QCDMu.leglabel = "QCD"
+QCDMu.label = "QCDMuEPt20toInf"
+
+
+QCD = sample()
+#QCD.color = 4
+#QCD.color = ROOT.kBlue+2
+#QCD.color = 7
+QCD.color = ROOT.kOrange +7
+QCD.style = 1
+QCD.fill = 1001
+QCD.leglabel = "QCD"
+QCD.label = "QCD"
+QCD.components = [ QCD_100_200, QCD_200_300,  QCD_300_500, QCD_500_700, QCD_700_1000, QCD_1000_1500,  QCD_1500_2000,  QCD_2000_Inf]
+#QCD.components = [ QCD_100_200, QCD_200_300,  QCD_300_500, QCD_500_700, QCD_700_1000, QCD_1000_1500]

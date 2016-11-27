@@ -4,7 +4,9 @@ common_rebin = 5
 from common import met_range
 
 settings = {
-    #'cutFlow'                  : (None                           , 20, None, (-0.5,7.5) ),
+#  TH1F *h_cutFlow = new TH1F("h_cutFlow","cutflow",10,-0.5,9.5);
+    'h_cutFlow'    : ("cutFlow",10, 1, (-0.5,9.5) ),
+    #(None                           , 20, None, (-0.5,7.5) ),
     #    'h_nPV' : ('number of primary vertices' , )
     #    'h_nMu': ('Number of tight Muons', 13, 1, (-0.5,12.5) ),
     #'h_nJets': ('Number of tight jets', 13, 1, (-0.5,12.5) ),
