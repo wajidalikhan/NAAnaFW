@@ -33,6 +33,7 @@ parser.add_option('-P', '--process',        dest='process',  type='string',     
 parser.add_option('-n', '--dryrun',   dest='dryrun',  action='store_true', default=False)
 #Splitting options:
 parser.add_option('-l', '--localpath',        dest='localpath',  type='string',     default = 'res/', )
+parser.add_option('-o', '--outpath',        dest='outpath',  type='string',     default = '', )
 parser.add_option('--merge',   dest='domerge',  action='store_true', default=True)
 parser.add_option('--retryFailed',   dest='doretry',  action='store_true', default=True)
 parser.add_option('--rm',   dest='doremove',  action='store_true', default=False)
@@ -52,9 +53,14 @@ print "samples are:",samples
 
 path = opt.localpath
 if not path.endswith("/"): path = path+"/"
+
+pathout = path
+if not opt.outpath=='':
+    pathout = opt.outpath
+if not pathout.endswith("/"): pathout = pathout+"/"
 #channelstorun=["muon","electron"]
-#channelstorun=["muon"]
-channelstorun=["muonantiiso"]
+channelstorun=["muon"]
+#channelstorun=["muonantiiso"]
 syststorun = ["noSyst"]
 
 toretry = opt.doretry
@@ -104,9 +110,9 @@ def domerge(samples, channels, toRetry={}):
                     print halves
                     mergeoutput=False
                     if(len(halves)==2 and opt.domerge):
-                        cmdmerge="hadd -f "+halves[0]+halves[1]+" "+path+s+"*_part*"+c+"_"+sys+".root"
+                        cmdmerge="hadd -f "+halves[0].replace(path,pathout)+halves[1]+" "+path+s+"*_part*"+c+"_"+sys+".root"
                         if "noSys" in sys:
-                            cmdmerge="hadd -f "+halves[0]+halves[1]+" "+path+s+"*_part*"+c+".root"
+                            cmdmerge="hadd -f "+halves[0].replace(path,pathout)+halves[1]+" "+path+s+"*_part*"+c+".root"
                         print "merging with the command: ",cmdmerge
                         mergeoutput=True
                         statusoutput = (commands.getstatusoutput(cmdmerge))
