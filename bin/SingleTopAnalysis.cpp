@@ -22,6 +22,7 @@
 #include "DataFormats/Math/interface/deltaPhi.h"
 #include "PhysicsTools/Utilities/interface/LumiReWeighting.h"
 #include "DataFormats/Math/interface/LorentzVector.h"
+#include "Analysis/NAAnaFW/bin/Weights.h"
 //#include "Tprime/TprimeAnalysis/interface/Weights.h"
 #include "DataFormats/Math/interface/deltaR.h"
 #include "Analysis/NAAnaFW/src/DMTopVariables.h"
@@ -225,6 +226,9 @@ int main(int argc, char **argv) {
   float bWeight1CSVM(1.), bWeight1CSVMBTagUp(1.),bWeight1CSVMBTagDown(1.),bWeight1CSVMMisTagUp(1.),bWeight1CSVMMisTagDown(1.);
   float bWeight2CSVM(1.), bWeight2CSVMBTagUp(1.),bWeight2CSVMBTagDown(1.),bWeight2CSVMMisTagUp(1.),bWeight2CSVMMisTagDown(1.);
 
+  float lepWeight1Mu(1.), lepWeight1MuLepUp(1.), lepWeight1MuLepDown(1.);
+  float lepWeight1Ele(1.), lepWeight1EleLepUp(1.), lepWeight1EleLepDown(1.);
+  
   //  float bWeight0CSVT, bWeight0CSVTBTagUp,bWeight0CSVTBTagDown,bWeight0CSVTMisTagUp,bWeight0CSVTMisTagDown;
   //  float bWeight1CSVT, bWeight1CSVTBTagUp,bWeight1CSVTBTagDown,bWeight1CSVTMisTagUp,bWeight1CSVTMisTagDown;
   //  float bWeight2CSVT, bWeight2CSVTBTagUp,bWeight2CSVTBTagDown,bWeight2CSVTMisTagUp,bWeight2CSVTMisTagDown;
@@ -386,7 +390,7 @@ int main(int argc, char **argv) {
   chain.SetBranchAddress("metFull_Py",metPy);
   
   //Muon trigger
-  if(isData=="MC"){
+  if(isData=="MC" && false){
     chain.SetBranchAddress("Event_passesHLT_IsoMu22_v1", &slTrigIsoMu22_v1);
     chain.SetBranchAddress("Event_passesHLT_IsoMu22_v2", &slTrigIsoMu22_v2);
     chain.SetBranchAddress("Event_passesHLT_IsoMu22_v3", &slTrigIsoMu22_v3);
@@ -507,11 +511,22 @@ int main(int argc, char **argv) {
   //Pileup Reweighting
   edm::LumiReWeighting LumiWeights_, LumiWeightsUp_, LumiWeightsDown_;
 
+  TFile* file_eff_trig = TFile::Open("data/SingleMuonTrigger_Z_RunBCD_prompt80X_7p65.root");
+  TFile* file_sf_id = TFile::Open("data/MuonID_Z_RunBCD_prompt80X_7p65.root");
+  TFile* file_sf_iso = TFile::Open("data/MuonIso_Z_RunBCD_prompt80X_7p65.root");
+  
+  //cout << "before getting weights "<<endl;
+
+  Weights muTightTrigEff(file_eff_trig,"IsoMu22_OR_IsoTkMu22_PtEtaBins_Run273158_to_274093/efficienciesDATA/abseta_pt_DATA");
+  Weights muTightIdSF(file_sf_id,"MC_NUM_TightIDandIPCut_DEN_genTracks_PAR_pt_spliteta_bin1/abseta_pt_ratio");
+  Weights muTightIsoSF(file_sf_iso,"MC_NUM_TightRelIso_DEN_TightID_PAR_pt_spliteta_bin1/abseta_pt_ratio");
+
+  //  cout << "got weights" <<endl;
+
   if(isData=="MC"){
     LumiWeights_ = edm::LumiReWeighting("pu/MyDataPileupHistogram.root", "pu/MyDataPileupHistogram.root","pileup","pileup");
     LumiWeightsUp_ = edm::LumiReWeighting("pu/MyDataPileupHistogram.root", "pu/MyDataPileupHistogram.root","pileup","pileup");
     LumiWeightsDown_ = edm::LumiReWeighting("pu/MyDataPileupHistogram.root", "pu/MyDataPileupHistogram.root","pileup","pileup");
-    
     //LumiWeightsUp_ = edm::LumiReWeighting("pu/puMC.root", "pu/MyDataPileupHistogram_up.root","MC_pu","pileup");
     //LumiWeightsDown_ = edm::LumiReWeighting("pu/puMC.root", "pu/MyDataPileupHistogram_down.root","MC_pu","pileup");
   }
@@ -530,7 +545,7 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   if(isData=="DATA"){
     TrigIsoMu20= false;
     //TrigIsoMu20= (runNumber>=272023 && runNumber<=274443 && (slTrigIsoMu20_v1 || slTrigIsoMu20_v2 || slTrigIsoMu20_v3));
-    //    TrigIsoMu22= (runNumber>=274954 && runNumber<=276811 && (slTrigIsoMu22_v1 || slTrigIsoMu22_v2 || slTrigIsoMu22_v3));  
+    //TrigIsoMu22= (runNumber>=274954 && runNumber<=276811 && (slTrigIsoMu22_v1 || slTrigIsoMu22_v2 || slTrigIsoMu22_v3));  
     TrigIsoMu22= (runNumber>=0.0 && runNumber<=276811 && (slTrigIsoMu22_v1 || slTrigIsoMu22_v2 || slTrigIsoMu22_v3 ||
 							  slTrigIsoTkMu22_v1 || slTrigIsoTkMu22_v2 || slTrigIsoTkMu22_v3));  
     TrigIsoMu24= (runNumber>=276824 && runNumber<=999999 && (slTrigIsoMu24_v1 || slTrigIsoMu24_v2 || slTrigIsoMu24_v3  ||
@@ -540,7 +555,7 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   if(isData=="MC"){
     TrigIsoMu20=false;
     TrigIsoMu24=false;
-    TrigIsoMu22= (slTrigIsoMu22_v1 || slTrigIsoMu22_v2 || slTrigIsoMu22_v3);  
+    TrigIsoMu22= true;//Trigger efficiency:use the measured one atm --> always pass the trigger in MC// (slTrigIsoMu22_v1 || slTrigIsoMu22_v2 || slTrigIsoMu22_v3);  
   }
 
   // if (TrigIsoMu20) cout << "TrigIsoMu20 fired in Event = "<<evt<<" Run Number = "<<runNumber<<endl;
@@ -564,57 +579,19 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
     if(sample=="TTNoTT"){
       w*=w_top/topWeight;
     }
+    
+    
   } 
-  //double puUpFact=(LumiWeightsUp_.weight(numTrueInt))/(LumiWeights_.weight(numTrueInt));
-  //double puDownFact=(LumiWeightsDown_.weight(numTrueInt))/(LumiWeights_.weight(numTrueInt));
+  double puUpFact=(LumiWeightsUp_.weight(numTrueInt))/(LumiWeights_.weight(numTrueInt));
+  double puDownFact=(LumiWeightsDown_.weight(numTrueInt))/(LumiWeights_.weight(numTrueInt));
 
     //if(numTrueInt>49){
     //  cout << " --> numTrueInt very high!!" << endl;
     //  puUpFact =0;
     //  puDownFact=0;
     //  }
-  
-  systZero.setWeight(0,1.);
-  systZero.setWeight("btagUp",1.);
-  systZero.setWeight("btagDown",1.);
-  systZero.setWeight("mistagUp",1.);
-  systZero.setWeight("mistagDown",1.);
-  systZero.setWeight("puDown",1.);
-  systZero.setWeight("puUp",1.);
-  systZero.setWeight("lepDown",1.);
-  systZero.setWeight("lepUp",1.);
 
-  if(addPDF)systZero.setPDFWeights(w_pdfs,nPDF,w_zero,true);
-  if(addQ2)systZero.setQ2Weights(w_q2up,w_q2down,w_zero,true);
-  if(addTopPt)systZero.setTWeight(w_top,topWeight,true);
 
-  syst0BM.copySysts(systZero);
-  syst0BM.setWeight(0,bWeight0CSVM);
-  syst0BM.setWeight("btagUp",bWeight0CSVMBTagUp);
-  syst0BM.setWeight("btagDown",bWeight0CSVMBTagDown);
-  syst0BM.setWeight("mistagUp",bWeight0CSVMMisTagUp);
-  syst0BM.setWeight("mistagDown",bWeight0CSVMMisTagDown);
-  //syst0BM.setWeight("puUp",bWeight0CSVM*puUpFact);
-  //syst0BM.setWeight("puDown",bWeight0CSVM*puDownFact);
-
-  syst1BM.copySysts(systZero);
-  syst1BM.setWeight(0,bWeight1CSVM);
-  syst1BM.setWeight("btagUp",bWeight1CSVMBTagUp);
-  syst1BM.setWeight("btagDown",bWeight1CSVMBTagDown);
-  syst1BM.setWeight("mistagUp",bWeight1CSVMMisTagUp);
-  syst1BM.setWeight("mistagDown",bWeight1CSVMMisTagDown);
-  //syst1BM.setWeight("puUp",bWeight0CSVM*puUpFact);
-  //syst1BM.setWeight("puDown",bWeight0CSVM*puDownFact);
- 
-  syst2BM.copySysts(systZero);
-  syst2BM.setWeight(0,bWeight2CSVM);
-  syst2BM.setWeight("btagUp",bWeight2CSVMBTagUp);
-  syst2BM.setWeight("btagDown",bWeight2CSVMBTagDown);
-  syst2BM.setWeight("mistagUp",bWeight2CSVMMisTagUp);
-  syst2BM.setWeight("mistagDown",bWeight2CSVMMisTagDown);
-  //syst2BM.setWeight("puUp",bWeight0CSVM*puUpFact);
-  //syst2BM.setWeight("puDown",bWeight0CSVM*puDownFact);
-   
   met = metPt[0];
   metpx = metPx[0];
   metpy = metPy[0];
@@ -655,6 +632,31 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   nMu = tightMu.size();
   nEl = tightEl.size();
   vector<lept> leptons;
+  //  lepWeight1Mu(1.), lepWeight1MuLepUp(1.), lepWeight1MuLepDown(1.);
+  //  lepWeight1Ele(1.), lepWeight1EleLepUp(1.), lepWeight1EleLepDown(1.);
+
+  //Weights muTightTrigEff(file_eff_trig,"IsoMu22_OR_IsoTkMu22_PtEtaBins_Run273158_to_274093/efficienciesDATA/abseta_pt");
+  //Weights muTightIdSF(file_eff_trig,"MC_NUM_TightIDandIPCut_DEN_genTracks_PAR_pt_spliteta_bin1/abseta_pt_ratio");
+  //Weights muTightIsoSF(file_eff_trig,"MC_NUM_TightRelIso_DEN_TightID_PAR_pt_spliteta_bin1/abseta_pt_ratio");
+  if(isData=="MC"){
+    if(tightMu.size()==1){
+      /*      cout << "event with 1 muon, "<< evt<< " getting trigg eff" <<endl;
+      cout << muTightTrigEff.getEff(fabs(tightMu.at(0).Eta()),tightMu.at(0).Pt())<<endl;
+      cout << "getting id sf"<< endl;
+      cout << muTightIdSF.getEff(fabs(tightMu.at(0).Eta()),tightMu.at(0).Pt())<<endl;
+      cout << "getting iso sf"<< endl;
+      cout << muTightIsoSF.getEff(fabs(tightMu.at(0).Eta()),tightMu.at(0).Pt())<<endl;
+      cout << "lep sf retrieved successfully!"<<endl;*/
+      lepWeight1Mu = muTightTrigEff.getEff(fabs(tightMu.at(0).Eta()),tightMu.at(0).Pt())*
+	muTightIdSF.getEff(fabs(tightMu.at(0).Eta()),tightMu.at(0).Pt())*
+	muTightIsoSF.getEff(fabs(tightMu.at(0).Eta()),tightMu.at(0).Pt());
+      float errMu= muTightTrigEff.getErr(fabs(tightMu.at(0).Eta()),tightMu.at(0).Pt())*
+	muTightIdSF.getErr(fabs(tightMu.at(0).Eta()),tightMu.at(0).Pt())*
+	muTightIsoSF.getErr(fabs(tightMu.at(0).Eta()),tightMu.at(0).Pt());
+      lepWeight1MuLepUp=lepWeight1Mu+errMu;
+      lepWeight1MuLepDown=lepWeight1Mu-errMu;
+    }
+  }
   for (size_t e = 0; e < (size_t)tightEl.size(); ++e){
     lept lepton;
     lepton.p4 = tightEl[e];
@@ -670,7 +672,74 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
     }
 
   std::sort(leptons.begin(), leptons.end(), by_pt());
+  
+  float w_lep(1.0),sf_lepUp(1.0),sf_lepDown(1.0);
+  if(isData=="MC"){
+    if(channel=="muon"){
+      w_lep=lepWeight1Mu;
+      if(w_lep!=0){
+	sf_lepUp=lepWeight1MuLepUp/w_lep;
+	sf_lepDown=lepWeight1MuLepDown/w_lep;
+      }
+    }
+    if(channel=="electron"){
+      w_lep=lepWeight1Ele;
+      if(w_lep!=0){
+	sf_lepUp=lepWeight1EleLepUp/w_lep;
+	sf_lepDown=lepWeight1EleLepDown/w_lep;
+      }
+    }
+    
+    w*=w_lep;
+  }
+  
+  systZero.setWeight(0,1.);
+  systZero.setWeight("btagUp",1.);
+  systZero.setWeight("btagDown",1.);
+  systZero.setWeight("mistagUp",1.);
+  systZero.setWeight("mistagDown",1.);
+  systZero.setWeight("puDown",1.);
+  systZero.setWeight("puUp",1.);
+  systZero.setWeight("lepDown",1.);
+  systZero.setWeight("lepUp",1.);
 
+  if(addPDF)systZero.setPDFWeights(w_pdfs,nPDF,w_zero,true);
+  if(addQ2)systZero.setQ2Weights(w_q2up,w_q2down,w_zero,true);
+  if(addTopPt)systZero.setTWeight(w_top,topWeight,true);
+
+  
+
+  syst0BM.copySysts(systZero);
+  syst0BM.setWeight(0,bWeight0CSVM);
+  syst0BM.setWeight("btagUp",bWeight0CSVMBTagUp);
+  syst0BM.setWeight("btagDown",bWeight0CSVMBTagDown);
+  syst0BM.setWeight("mistagUp",bWeight0CSVMMisTagUp);
+  syst0BM.setWeight("mistagDown",bWeight0CSVMMisTagDown);
+  syst0BM.setWeight("puUp",bWeight0CSVM*puUpFact);
+  syst0BM.setWeight("puDown",bWeight0CSVM*puDownFact);
+  syst0BM.setWeight("lepUp",bWeight0CSVM*sf_lepUp);
+  syst0BM.setWeight("lepDown",bWeight0CSVM*sf_lepDown);
+
+  syst1BM.copySysts(systZero);
+  syst1BM.setWeight(0,bWeight1CSVM);
+  syst1BM.setWeight("btagUp",bWeight1CSVMBTagUp);
+  syst1BM.setWeight("btagDown",bWeight1CSVMBTagDown);
+  syst1BM.setWeight("mistagUp",bWeight1CSVMMisTagUp);
+  syst1BM.setWeight("mistagDown",bWeight1CSVMMisTagDown);
+  syst1BM.setWeight("lepUp",bWeight1CSVM*sf_lepUp);
+  syst1BM.setWeight("lepDown",bWeight1CSVM*sf_lepDown);
+ 
+  syst2BM.copySysts(systZero);
+  syst2BM.setWeight(0,bWeight2CSVM);
+  syst2BM.setWeight("btagUp",bWeight2CSVMBTagUp);
+  syst2BM.setWeight("btagDown",bWeight2CSVMBTagDown);
+  syst2BM.setWeight("mistagUp",bWeight2CSVMMisTagUp);
+  syst2BM.setWeight("mistagDown",bWeight2CSVMMisTagDown);
+  syst2BM.setWeight("puUp",bWeight2CSVM*puUpFact);
+  syst2BM.setWeight("puDown",bWeight2CSVM*puDownFact);
+  syst2BM.setWeight("lepUp",bWeight2CSVM*sf_lepUp);
+  syst2BM.setWeight("lepDown",bWeight2CSVM*sf_lepDown);
+  
   vector<float> jetsPhi;
   vector<TLorentzVector> bjets, jets_nob, jets;    
   
