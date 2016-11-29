@@ -241,7 +241,7 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
                 #print "integral bef", htmp.Integral()
                 # Applu lumi scale if not data
                 if( nEntries != 0 and not(c.label.startswith("SingleMu") or c.label.startswith("SingleEl") or c.label.startswith("JetHT") or c.label.startswith("MET"))):
-                    htmp.Scale((1./nEntries) * c.sigma * 1000.* float(opt.lumi) )
+                    htmp.Scale((1./nEntries) * c.sigma * 1000. * float(opt.lumi) )
 
                     #print "integral ", htmp.Integral()
                 # If a cutflow print a nice summary!
