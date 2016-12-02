@@ -55,7 +55,7 @@ parser.add_option('-P', '--process',        dest='process',  type='string',     
 
 #Details of the analysis step:
 parser.add_option('-c', '--channel',  dest='channel', type='string',     default = 'muon', help='Channel to analyze: singleH or singleZ')
-parser.add_option('-C', '--cat',      dest='cat',     type='string',     default = 'cat2',    help='Category to analyze: cat0 or cat1 or cat2')
+parser.add_option('-C', '--cat',      dest='cat',     type='string',     default = 'CSVT',    help='Category to analyze: cat0 or cat1 or cat2')
 parser.add_option('-s', '--sys',      dest='sys',     type='string',     default = 'noSys',   help='Systematics: jesUp, jesDown, jerUp, jerDown')
 parser.add_option('',   '--sync',     dest='sync',    type='string',     default = 'noSync',  help='Synchro exercise')
 parser.add_option('-d', '--isData',   dest='isData',  type='string',     default = 'MC',      help='is Data or MC?')
