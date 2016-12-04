@@ -2796,7 +2796,7 @@ void DMAnalysisTreeMaker::setEventBTagSF(string label, string category){
   jsfscsvl_mistag_down.clear();
   
   for(int j =0; j<sizes[label+category];++j){
-    //    if(fabs(vfloats_values[lc+"_Eta"][j])>2.6)continue;
+    if(fabs(vfloats_values[lc+"_Eta"][j])>2.6)continue;
     if(vfloats_values[lc+"_IsCSVT"][j])++ncsv_tmp_t_tags;
     if(vfloats_values[lc+"_IsCSVM"][j])++ncsv_tmp_m_tags;
     if(vfloats_values[lc+"_IsCSVL"][j])++ncsv_tmp_l_tags;
