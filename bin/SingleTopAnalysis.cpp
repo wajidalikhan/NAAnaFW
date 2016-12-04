@@ -225,8 +225,9 @@ int main(int argc, char **argv) {
   bool  TrigIsoMu22 = false;
   bool  TrigIsoMu24 = false;
 
-  float n_trig(0.),n_lepton(0.),n_loose_veto(0.),n_lepton_cross_veto(0),n_2j(0), n_2j1t(0);
-  int nev_trig(0),nev_lepton(0),nev_loose_veto(0),nev_lepton_cross_veto(0),nev_2j(0),nev_2j1t(0);
+  
+  float n_trig(0.),n_lepton(0.),n_loose_veto(0.),n_lepton_cross_veto(0),n_2j(0), n_2j1t(0), n_2j1tmtw(0.);
+  int nev_trig(0),nev_lepton(0),nev_loose_veto(0),nev_lepton_cross_veto(0),nev_2j(0),nev_2j1t(0), nev_2j1tmtw(0.);
 
   float LHEWeightSign[1] = {1.};
   float w(1.),w_q2up(1.),w_q2down(1.),w_zero(1.),w_top(1.);
@@ -959,7 +960,19 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   if(channel=="singlelepton" && !passsinglelepton)continue;
   
   if(jets.size() ==2){ n_2j+=w; nev_2j+=1;}
-  if(jets.size() ==2 && bjets.size()==1){ n_2j1t+=w; nev_2j1t+=1;}
+  if(jets.size() ==2 && bjets.size()==1){ n_2j1t+=w; nev_2j1t+=1;  
+    if(doSynch){
+      if((tightMu.size())==1){
+	TVector2 met_( met*cos(metPhi[0]), met*sin(metPhi[0]));
+	float phi_lmet = fabs(deltaPhi(tightMu[0].Phi(), metPhi[0]) );
+	mt = sqrt(2* tightMu[0].Pt() * met* ( 1- cos(phi_lmet)));
+      }
+      if(mt> 50){
+	n_2j1tmtw+=w;
+	nev_2j1tmtw+=1.;
+      }
+    }
+  }
   //2j0t 
   if((jets.size() ==2 && bjets.size() == 0)){
     
@@ -1206,10 +1219,10 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
  
  if(doSynch){
    //  int nev_trig(0),nev_lepton(0),nev_loose_veto(0),nev_lepton_cross_veto(0),nev_2j(0),nev_2j1t(0);
-   fileout<<" ntrig "<< " nlep "<< " nlooseveto "<< " nloosevetoele "<< " n2jets "<< " n2jets1tag "<<endl;
-   fileout<< " " << nev_trig << " " << nev_lepton << " " << nev_loose_veto << " " << nev_lepton_cross_veto << " " << nev_2j << " " << nev_2j1t <<endl;
-   fileout<<" wtrig "<< " wlep "<< " wlooseveto "<<" wloosevetoele "<< " w2jets "<< " w2jets1tag "<<endl;
-   fileout<< " " << n_trig << " " << n_lepton << " " << n_loose_veto <<n_lepton_cross_veto << " " << n_2j << " " << n_2j1t <<endl;
+   fileout<<" ntrig "<< " nlep "<< " nlooseveto "<< " nloosevetoele "<< " n2jets "<< " n2jets1tag "<< " n2jets1tagmtw "<<endl;
+   fileout<< " " << nev_trig << " " << nev_lepton << " " << nev_loose_veto << " " << nev_lepton_cross_veto << " " << nev_2j << " " << nev_2j1t <<" "<< nev_2j1tmtw <<endl;
+   fileout<<" wtrig "<< " wlep "<< " wlooseveto "<<" wloosevetoele "<< " w2jets "<< " w2jets1tag "<<" w2jets1tagmtw "<<endl;
+   fileout<< " " << n_trig << " " << n_lepton << " " << n_loose_veto <<n_lepton_cross_veto << " " << n_2j << " " << n_2j1t <<" "<< n_2j1tmtw<<endl;
 
   fileout.close();  
  }//return h
