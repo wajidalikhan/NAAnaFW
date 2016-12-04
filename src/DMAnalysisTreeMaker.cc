@@ -558,9 +558,8 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
     t_pvNdof_ = consumes< std::vector< int > >( pvNdof_ );
   }
 
-  if (doPU)
-    t_ntrpu_ = consumes< int >( edm::InputTag( "eventUserData","puNtrueInt" ) );
-
+  if (doPU){ t_ntrpu_ = consumes< int >( edm::InputTag( "eventUserData","puNtrueInt" ) );
+  }
   maxWeights = 9;
   if(useLHEWeights){
     maxWeights = channelInfo.getUntrackedParameter<int>("maxWeights",9);//Usually we do have 9 weights for the scales, might vary depending on the lhe
@@ -817,6 +816,7 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
   trees["WeightHistory"] =  new TTree("WeightHistory","WeightHistory");
   trees["EventHistory"]->Branch("initialEvents",&nInitEvents);
 
+  
   for(size_t s=0;s< systematics.size();++s){
     std::string syst  = systematics.at(s);
     if(syst=="noSyst")continue;
@@ -861,12 +861,12 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
   if(isData)jecPars.push_back(*jecParsL2L3Residuals);
 
   jecParsL1_vect.push_back(*jecParsL1);
-
+  
   jecCorr = new FactorizedJetCorrector(jecPars);
   jecCorr_L1 = new FactorizedJetCorrector(jecParsL1_vect);
   jecUnc  = new JetCorrectionUncertainty(*(new JetCorrectorParameters(jecDir+"Spring16_25nsV6_DATA_UncertaintySources_AK4PFchs.txt", "Total")));
-
-   
+  
+  
   isFirstEvent = true;
   doBTagSF= true;
   if(isData)doPU= false;
@@ -924,7 +924,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       getEventLHEWeights();
     }
   
-
+  
   if(getPartonW || getPartonTop || doWReweighting || doTopReweighting){
     if(!useLHE)return;
     genlep.clear();
@@ -1170,6 +1170,15 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 
 
   }
+  
+  if(doPU){
+    iEvent.getByToken(t_ntrpu_,ntrpu);
+    int nTruePV=*ntrpu;
+    //      cout<< "ntpv is "<< nTruePV<<endl;
+    float_values["Event_nTruePV"]=(float)(nTruePV);
+  }
+
+      
   trees["WeightHistory"]->Fill();
   
   //Part 3: filling the additional variables
@@ -1699,8 +1708,8 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       float neuEmEnFrac = vfloats_values[makeName(jets_label,pref,"neutralEmEnergyFrac")][j];
       
       if(pt>0){
-
-
+	
+	
 	TLorentzVector jetUncorr_, jetCorr, jetUncorrNoMu_,jetCorrNoMu, jetL1Corr;
 	TLorentzVector T1Corr;
 	T1Corr.SetPtEtaPhiE(0,0,0,0);	
@@ -1880,12 +1889,12 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 
         if(fabs(eta)<=2.7){
           passesID =  (neuHadEnFrac<0.99 && neuEmEnFrac<0.99 && numConst>1) && 
-	    ( (fabs(eta)<=2.4 && chHadEnFrac>0 && chMulti>0 && chEmEnFrac<0.99) || abs(eta)>2.4);
+	    ( (fabs(eta)<=2.4 && chHadEnFrac>0 && chMulti>0 && chEmEnFrac<0.99) || fabs(eta)>2.4);
         }
 	else if( (fabs(eta) >2.7) && (fabs(eta)<=3.0)) {
           passesID = neuEmEnFrac<0.90 && neuMulti>2. ;
 	}
-        else if(fabs(eta)>3){
+        else if(fabs(eta)>3.0){
           passesID = neuEmEnFrac<0.90 && neuMulti>10. ;
         }
       }
@@ -1933,41 +1942,40 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	TLorentzVector jet;
 	jet.SetPtEtaPhiE(ptCorr, eta, phi, energyCorr);
 	jets.push_back(jet);
-      
+	
 	if(!isCSVM)     jetsnob.push_back(jet);
-      
-      if(passesCut &&  passesID && passesDR){	
-	float_values["Event_nJets"]+=1;
-	nTightJets+=1;
-	if(isInVector(obj_cats[jets_label],"Tight")){
-	  //	  cout<< " tight jet precat "<<j <<endl;
-	  fillCategory(jets_label,"Tight",j,float_values["Event_nJets"]-1);
-	  //	  cout<< " tight jet poscat "<<j <<endl;
+	
+	if(passesCut &&  passesID && passesDR){	
+	  float_values["Event_nJets"]+=1;
+	  nTightJets+=1;
+	  if(isInVector(obj_cats[jets_label],"Tight")){
+	    //	  cout<< " tight jet precat "<<j <<endl;
+	    fillCategory(jets_label,"Tight",j,float_values["Event_nJets"]-1);
+	    //	  cout<< " tight jet poscat "<<j <<endl;
+	  }
+	}
+	if(passesCut &&  passesID && passesDR){
 	}
 	
-      }
-      if(passesCut &&  passesID && passesDR){
+      if(isCSVT && passesCut &&  passesID && passesDR && fabs(eta) < 2.4) {
+	float_values["Event_nCSVTJets"]+=1.0;
+	ncsvt_tags +=1;
       }
       
-    if(isCSVT && passesCut &&  passesID && passesDR && fabs(eta) < 2.4) {
-      float_values["Event_nCSVTJets"]+=1.0;
-      ncsvt_tags +=1;
-    }
-    
-    if(isCSVL && passesCut &&  passesID && passesDR && fabs(eta) < 2.4) { 
+      if(isCSVL && passesCut &&  passesID && passesDR && fabs(eta) < 2.4) { 
       ncsvl_tags +=1;
-    }
-    if(isCSVM && passesCut &&  passesID && passesDR && fabs(eta) < 2.4) { 
-      float_values["Event_nCSVMJets"]+=1.0;
-      ncsvm_tags +=1;
-      TLorentzVector bjet;
-      bjet.SetPtEtaPhiE(ptCorr, eta, phi, energyCorr);
-      bjets.push_back(bjet);
-      ++bjetidx;
+      }
+      if(isCSVM && passesCut &&  passesID && passesDR && fabs(eta) < 2.4) { 
+	float_values["Event_nCSVMJets"]+=1.0;
+	ncsvm_tags +=1;
+	TLorentzVector bjet;
+	bjet.SetPtEtaPhiE(ptCorr, eta, phi, energyCorr);
+	bjets.push_back(bjet);
+	++bjetidx;
       
-    }
+      }
       
-    if(isCSVL && passesCut &&  passesID && passesDR && abs(eta) < 2.4) float_values["Event_nCSVLJets"]+=1;
+      if(isCSVL && passesCut &&  passesID && passesDR && abs(eta) < 2.4) float_values["Event_nCSVLJets"]+=1;
       }
       bool passesBaseCut = ( ptCorr > jetbaseval && fabs(eta) < 4.);
       
@@ -2161,12 +2169,6 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       getEventPdf();
     }
     
-    if(doPU){
-      iEvent.getByToken(t_ntrpu_,ntrpu);
-      int nTruePV=*ntrpu;
-      float_values["Event_nTruePV"]=(float)(nTruePV);
-    }
-
     if(addPV){
       float nGoodPV = 0.0;
       for (size_t v = 0; v < pvZ->size();++v){
@@ -2270,7 +2272,7 @@ void DMAnalysisTreeMaker::setCategorySize(string label, string category, size_t 
 void DMAnalysisTreeMaker::fillCategory(string label, string category, int pos_nocat, int pos_cat){
   //  cout << " filling cat  " << category << " for label "<< label<<endl;
   sizes[label+category]=pos_cat+1;//Update the size with the latest position filled
-
+ 
   for (size_t obj =0; obj< obj_to_floats[label].size(); ++obj){
     
     string var = obj_to_floats[label].at(obj);
@@ -2794,7 +2796,7 @@ void DMAnalysisTreeMaker::setEventBTagSF(string label, string category){
   jsfscsvl_mistag_down.clear();
   
   for(int j =0; j<sizes[label+category];++j){
-    
+    //    if(fabs(vfloats_values[lc+"_Eta"][j])>2.6)continue;
     if(vfloats_values[lc+"_IsCSVT"][j])++ncsv_tmp_t_tags;
     if(vfloats_values[lc+"_IsCSVM"][j])++ncsv_tmp_m_tags;
     if(vfloats_values[lc+"_IsCSVL"][j])++ncsv_tmp_l_tags;
@@ -3327,7 +3329,8 @@ void DMAnalysisTreeMaker::initTreeWeightHistory(bool useLHEW){
 
   trees["WeightHistory"]->Branch("Event_W_Pt",&float_values["Event_W_Pt"]);
   trees["WeightHistory"]->Branch("Event_Z_Pt",&float_values["Event_Z_Pt"]);
-  
+  trees["WeightHistory"]->Branch("Event_nTruePV",&float_values["Event_nTruePV"]);
+
   //  cout << " preBranch Weight "<<endl;
 
   //  size_t wgtsize=  lhes->weights().size();
