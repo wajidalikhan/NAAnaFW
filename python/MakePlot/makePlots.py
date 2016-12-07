@@ -19,6 +19,8 @@ parser.add_option('-S', "--signal", dest='signal', action='store_true',default =
 parser.add_option('-p', '--prefix', dest='prefix', type='string', default = '', help='prefix for img files')
 parser.add_option('', '--store', dest='store', action='store_true', default = False, help='Store')
 parser.add_option('--focusOn', dest='focus', default = None, help='Focus on a single plot')
+parser.add_option('', '--getSF', dest='getSF', type='string', default = '', help='type of scale factors from the fit')
+parser.add_option('', '--fileSF', dest='fileSF', type='string', default = './mlfit.root', help='file for the scale factors')
 
 (opt, args) = parser.parse_args()
 
@@ -28,6 +30,7 @@ import ROOT
 import copy
 import commands, os.path
 import numpy as n
+import array 
 
 # from plots.services import Histo, Stack, Legend, deltaPhi, Histo1
 from plots.services import deltaPhi
@@ -35,7 +38,9 @@ from samples.toPlot import samples
 import plots.common, plots.electron, plots.muon
 
 
+
 import tdrstyle, CMS_lumi
+
 
 def sumerrors(h):
     return sum([h.GetBinError(ib) for ib in xrange(0,h.GetNbinsX()+2)])
@@ -148,6 +153,39 @@ else:
 
 
 # for var, title in vars.iteritems():
+print "variables are"
+for var in settings.iteritems():
+    print var
+    #varnames.append(var.name)
+print "var keys"
+for v in list(settings.keys()):
+    print v
+importedSFs={}
+if not opt.getSF =="":
+    from postFitUtilsC import postFitUtilities as PFUtils
+    regions = ["2j0t","2j1t","3j2t","3j1t"]
+#    regions = ["2j0t"]
+    rf = opt.fileSF
+#    rf="./mlfit.root"
+    print "rootfile is " , rf
+    postFit = PFUtils(rootfile=rf,regions=regions,channel=opt.channel,sys=opt.sys,format=opt.getSF)
+    #    print postFit._rootfile
+    #regions = 
+    #    import postFitUtils as postFitSF
+    keylist = list(settings.keys())
+    
+    sampleslist = []
+    for s in samples.itervalues():
+        sampleslist.append(s.label)
+        #    list(samples.keys())
+    sampleslist.remove('Data')
+    print sampleslist
+    importedSFs=postFit.importScaleFactors(variables=keylist, samples=sampleslist,defaultSF="no_region")
+    print importedSFs
+
+#parser.add_option('', '--getSF', dest='getSF', type='string', default = '', help='type of scale factors from the fit')
+#parser.add_option('', '--fileSF', dest='fileSF', type='string', default = './mlfit.root', help='file for the scale factors')
+
 for var,(title,scale,rebin, usrrng) in settings.iteritems():
 
     if(opt.store and not var.startswith("metFinal")): continue
@@ -225,7 +263,7 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
                 nEntries = infile_nEvt.Get("h_cutFlow").GetBinContent(0)
                 #print "nentries is ", nEntries
 #nEntries = infile_nEvt.Get("h_nGoodPV").GetEntries()
-                print "nentries ", nEntries, " xsec ", c.sigma
+                print "nentries ", nEntries, " xsec ", c.sigma 
                 infile = ROOT.TFile.Open(filename)
                 # htmp = infile.Get(var)
                 hin = infile.Get(var)
@@ -242,7 +280,9 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
                 # Applu lumi scale if not data
                 if( nEntries != 0 and not(c.label.startswith("SingleMu") or c.label.startswith("SingleEl") or c.label.startswith("JetHT") or c.label.startswith("MET"))):
                     htmp.Scale((1./nEntries) * c.sigma * 1000. * float(opt.lumi) )
-
+                    if not opt.getSF =="" and not s.label.startswith("Data"):
+                        print "sf is ", importedSFs[s.label][var]
+                        htmp.Scale(importedSFs[s.label][var])
                     #print "integral ", htmp.Integral()
                 # If a cutflow print a nice summary!
                 if(var == "h_cutFlow"): writeSummary(c.label, opt.channel, opt.sys, htmp, opt.lumi)
@@ -255,7 +295,7 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
                     htmp.SetLineWidth(2)
                     htmp.SetLineColor(ROOT.kBlack)
                 histos.append(htmp)
-
+                
             if notFound:
                 raise RuntimeError('Failed to retrieve %s' % notFound)
             print c.label
@@ -324,6 +364,9 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
 
             if (nEntries != 0  and not(s.label.startswith("SingleMu") or s.label.startswith("SingleEl") or s.label.startswith("JetHT") or s.label.startswith("MET"))):
                 scaleFactor = 1./nEntries * s.skimEff * s.sigma * 1000.* float(opt.lumi)
+                if not opt.getSF =="" and not s.label.startswith("Data"):
+                    print "sf is ", importedSFs[s.label][var]
+                    scaleFactor*= (importedSFs[s.label][var])
                 htmp.Scale(scaleFactor)
                 #if(s.label.startswith("TT")):print "====>SF: ", scaleFactor
 
@@ -367,7 +410,7 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
             outfilename = "%s/%s_%s_%s.root" % (outhistos,s.label,opt.channel, opt.sys)
 
         outfile = ROOT.TFile(outfilename, "UPDATE")
-
+        
         outfile.cd()
         
         if var in store:
@@ -693,9 +736,9 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
         lumi = lumi*1000
         unit = " pb^{-1}"
     else: unit = " fb^{-1}"
-
     CMS_lumi.lumi_sqrtS = str(lumi)+ unit +" (13 TeV)" # used with iPeriod = 0, e.g. for simulation-only plots (default is an empty string)
-
+    if opt.normData==1:
+        CMS_lumi.lumi_sqrtS = str(lumi)+ unit +" (13 TeV), norm. to data" # used with iPeriod = 0, e.g. for simulation-only plots (default is an empty string)
     iPeriod = 0
     iPos = 11
 
@@ -715,6 +758,8 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
     syst_label = '' if opt.sys == 'noSys' else ('_'+opt.sys)
     data_label = '' if opt.data else '_nodata'
 
+    if not opt.getSF =="":
+        pdfbasename = "postfit_"+pdfbasename
     pdfname = outpdfs+'/'+pdfbasename+syst_label+data_label+'.pdf'
     rootname = outpdfs+'/'+pdfbasename+syst_label+data_label+'.root'
     pngname = outpdfs+'/'+pdfbasename+syst_label+data_label+'.png'
