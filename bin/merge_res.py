@@ -33,6 +33,7 @@ parser.add_option('-P', '--process',        dest='process',  type='string',     
 parser.add_option('-n', '--dryrun',   dest='dryrun',  action='store_true', default=False)
 #Splitting options:
 parser.add_option('-l', '--localpath',        dest='localpath',  type='string',     default = 'res/', )
+parser.add_option('-c', '--channel',        dest='channel',  type='string',     default = 'muon', )
 parser.add_option('-o', '--outpath',        dest='outpath',  type='string',     default = '', )
 parser.add_option('--merge',   dest='domerge',  action='store_true', default=True)
 parser.add_option('--retryFailed',   dest='doretry',  action='store_true', default=True)
@@ -59,7 +60,11 @@ if not opt.outpath=='':
     pathout = opt.outpath
 if not pathout.endswith("/"): pathout = pathout+"/"
 #channelstorun=["muon","electron"]
-channelstorun=["muon"]
+channelstorun=[]
+#pogchamp = []
+for f in (opt.channel).split(","): channelstorun.append(f) 
+#print " pogchamp ", pogchamp
+#channelstorun.append(opt.channel)
 #channelstorun=["muonantiiso"]
 syststorun = ["noSyst"]
 
