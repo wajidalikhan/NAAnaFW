@@ -234,6 +234,16 @@ if not options.isData:
     process.DMTreesDumper.channelInfo.useLHE = cms.untracked.bool(True)
     process.DMTreesDumper.channelInfo.useLHEWeights = cms.untracked.bool(True)
 
+
+if not option.isData:
+    process.DMTreesDumper.JECVersion="Spring16_25nsV10"
+
+if option.isData:
+    process.DMTreesDumper.JECVersion="Spring16_25nsV10BCD"
+    if options.channel == "DATA2016E": process.DMTreesDumper.JECVersion="Spring16_25nsV10E"
+    if options.channel == "DATA2016F": process.DMTreesDumper.JECVersion="Spring16_25nsV10F"
+    if options.channel == "DATA2016p2": process.DMTreesDumper.JECVersion="Spring16_25nsV10p2"
+
 if options.channel == "ttbar":
     process.DMTreesDumper.getPartonTop  = cms.untracked.bool(True)
 

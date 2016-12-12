@@ -289,9 +289,9 @@ private:
   //JEC info
   bool changeJECs,doT1MET;
   bool isData, applyRes;
-  bool isV2;
   edm::Handle<double> rho;
   double Rho;
+  string JECVersion;
   
   //edm::Handle<double> Rho;
   std::vector<double> jetScanCuts;
@@ -537,12 +537,12 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
   
   addPV = iConfig.getUntrackedParameter<bool>("addPV",true);
   changeJECs = iConfig.getUntrackedParameter<bool>("changeJECs",false);
+  JECVersion = iConfig.getParameter<std::string >("JECVersion");
   doT1MET = iConfig.getUntrackedParameter<bool>("doT1MET",true);
   recalculateEA = iConfig.getUntrackedParameter<bool>("recalculateEA",true);
 
   isData = iConfig.getUntrackedParameter<bool>("isData",false);
   applyRes = iConfig.getUntrackedParameter<bool>("applyRes",false);
-  isV2= iConfig.getUntrackedParameter<bool>("isV2",false);
   
   t_Rho_ = consumes<double>( edm::InputTag( "fixedGridRhoFastjetAll" ) ) ;
   
@@ -827,27 +827,21 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
   }
   
   initTreeWeightHistory(useLHEWeights);
-
-  string L1Name = "Spring16_25nsV6_MC_L1FastJet_AK4PFchs.txt"; //
-  string L1RCName = "Spring16_25nsV6_MC_L1RC_AK4PFchs.txt"; 
-  string L2Name = "Spring16_25nsV6_MC_L2Relative_AK4PFchs.txt";
-  string L3Name = "Spring16_25nsV6_MC_L3Absolute_AK4PFchs.txt";
-  string L2L3ResName = "Spring16_25nsV6_MC_L2L3Residual_AK4PFchs.txt";
+  
+  
+  if(JECVersion == "")JECVersion = "Spring16_25nsV6";
+  string L1Name = JECVersion+"_MC_L1FastJet_AK4PFchs.txt"; //
+  string L1RCName = JECVersion+"_MC_L1RC_AK4PFchs.txt"; 
+  string L2Name = JECVersion+"_MC_L2Relative_AK4PFchs.txt";
+  string L3Name = JECVersion+"_MC_L3Absolute_AK4PFchs.txt";
+  string L2L3ResName = JECVersion+"_MC_L2L3Residual_AK4PFchs.txt";
   if(isData){
-    L1Name   = "Spring16_25nsV6_DATA_L1FastJet_AK4PFchs.txt";
-    L1RCName = "Spring16_25nsV6_DATA_L1RC_AK4PFchs.txt";  
-    L2Name   = "Spring16_25nsV6_DATA_L2Relative_AK4PFchs.txt";
-    L3Name   = "Spring16_25nsV6_DATA_L3Absolute_AK4PFchs.txt";
-    L2L3ResName = "Spring16_25nsV6_DATA_L2L3Residual_AK4PFchs.txt";
+    L1Name   = JECVersion+"_DATA_L1FastJet_AK4PFchs.txt";
+    L1RCName = JECVersion+"_DATA_L1RC_AK4PFchs.txt";  
+    L2Name   = JECVersion+"_DATA_L2Relative_AK4PFchs.txt";
+    L3Name   = JECVersion+"_DATA_L3Absolute_AK4PFchs.txt";
+    L2L3ResName = JECVersion+"_DATA_L2L3Residual_AK4PFchs.txt";
   }
-
-  if(isV2){
-      L1Name = "Spring16_25nsV6_MC_L1FastJet_AK4PFchs.txt";
-      L2Name = "Spring16_25nsV6_MC_L2Relative_AK4PFchs.txt";
-      L3Name = "Spring16_25nsV6_MC_L3Absolute_AK4PFchs.txt";
-      L2L3ResName = "Spring16_25nsV6_MC_L2L3Residual_AK4PFchs.txt"; 
-  }
-
   //  string jecDir="JEC/";
   string jecDir="./";
   jecParsL1  = new JetCorrectorParameters(jecDir+L1Name);
@@ -1191,7 +1185,11 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
   iEvent.getByToken(jetAK8topSubjetIndex2, ak8jetSubjetIndex2);
   iEvent.getByToken(jetAK8topSubjetIndex3, ak8jetSubjetIndex3);
 
+  //  if(isFirstEvent)
+  //cout << "jec version is "<<JECVersion<<" Change JECs? " << changeJECs<<endl;
   //Part 0: trigger preselection
+  
+      
   if(useTriggers){
     //Trigger names are retrieved from the run tree
     iEvent.getByToken(t_triggerBits_,triggerBits );
@@ -1199,6 +1197,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     bool triggerOr = getEventTriggers();
     
     if(isFirstEvent){
+
       for(size_t bt = 0; bt < triggerNamesR->size();++bt){
 	std::string tname = triggerNamesR->at(bt);
 	// cout << "trigger test tname "<< tname << " passes "<< triggerBits->at(bt)<< endl;
@@ -1460,9 +1459,12 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       float muCharge = vfloats_values[makeName(mu_label,pref,"Charge")][mu];
       
       
-      if(isTight>0 && pt> 26 && abs(eta) < 2.1 /*&& iso <0.15 Isolation added afterwards*/){
+      if(isTight>0 && pt> 24 && abs(eta) < 2.4 /*&& iso <0.15 Isolation added afterwards*/){//UCL Selection
+	//      if(isTight>0 && pt> 26 && abs(eta) < 2.1 /*&& iso <0.15 Isolation added afterwards*/){//NA Selection
  	
-	if(iso<0.15){
+
+	if(iso<0.06){//UCL - 2015 Selection
+	  if(iso<0.15){//NA Selection
 	  ++float_values["Event_nTightMuons"];
 	  TLorentzVector muon;
 	  muon.SetPtEtaPhiE(pt, eta, phi, energy);
@@ -1497,7 +1499,8 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	sizes[mu_label+"TightAntiIso"]=(int)float_values["Event_nTightAntiIsoMuons"];
       }
       
-      if(isLoose>0 && pt> 10 && abs(eta) < 2.4 && iso<0.25){
+      //if(isLoose>0 && pt> 10 && abs(eta) < 2.4 && iso<0.25){//NA Selection
+      if( isLoose>0 && pt> 10 && abs(eta) < 2.5 && iso<0.2){//UCL Selection
 	if(isInVector(obj_cats[mu_label],"Loose")){
 	  ++float_values["Event_nLooseMuons"];
 	  if(isInVector(obj_cats[mu_label],"Loose")){
@@ -1807,7 +1810,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	}
 	
 	smearfact = smear(pt, genpt, eta, syst);
-	//smearfact =1.0;
+	//	smearfact =1.0;
 	ptCorr = pt * smearfact;
 	energyCorr = energy * smearfact;
 
@@ -1903,7 +1906,8 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       //Remove overlap with tight electrons/muons
       double minDR=9999;
       double minDRThrEl=0.3;
-      double minDRThrMu=0.4;
+      double minDRThrMu=0.3;
+      //double minDRThrMu=0.4;
       bool passesDR=true;
  
 
@@ -1934,7 +1938,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       double jetval = 40.0;
       double jetbaseval = 20.0;
       
-      bool passesCut = ( ptCorr > jetval && fabs(eta) < 4.);
+      bool passesCut = ( ptCorr > jetval && fabs(eta) < 4.7);
       
       if(passesID && passesCut && passesDR){
 	
@@ -1977,7 +1981,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       
       if(isCSVL && passesCut &&  passesID && passesDR && abs(eta) < 2.4) float_values["Event_nCSVLJets"]+=1;
       }
-      bool passesBaseCut = ( ptCorr > jetbaseval && fabs(eta) < 4.);
+      bool passesBaseCut = ( ptCorr > jetbaseval && fabs(eta) < 4.7);
       
       if(passesID && passesDR && passesBaseCut) if(obj_scanCuts[jets_label].size()>=1) {
 	  //	cout << "now testing scan jets "<<endl;
@@ -3369,13 +3373,19 @@ double DMAnalysisTreeMaker::resolSF(double eta, string syst)
   double fac = 0.;
   if (syst == "jer__up")fac = 1.;
   if (syst == "jer__down")fac = -1.;
-  if (eta <= 0.8)                       return 0.061 + (0.023 * fac);
-  else if ( eta > 0.8 && eta <= 1.3 )   return 0.088 + (0.029 * fac);
-  else if ( eta > 1.3 && eta <= 1.9 )   return 0.106 + (0.030 * fac);
-  else if ( eta > 1.9 && eta <= 2.5 )   return 0.126 + (0.094 * fac);
-  else if ( eta > 2.5 && eta <= 3.0 )   return 0.343 + (0.123 * fac);
-  else if ( eta > 3.0 && eta <= 3.2 )   return 0.303 + (0.111 * fac);
-  else if ( eta > 3.2 && eta <= 5.0 )   return 0.320 + (0.286 * fac);
+  if (eta <= 0.5)                       return 0.122 + (0.026 * fac);
+  else if ( eta > 0.5 && eta <= 0.8 )   return 0.167 + (0.048 * fac);
+  else if ( eta > 0.8 && eta <= 1.1 )   return 0.168 + (0.046 * fac);
+  else if ( eta > 1.1 && eta <= 1.3 )   return 0.029 + (0.066 * fac);
+  else if ( eta > 1.3 && eta <= 1.7 )   return 0.115 + (0.030 * fac);
+  else if ( eta > 1.7 && eta <= 1.9 )   return 0.141 + (0.062 * fac);
+  else if ( eta > 1.9 && eta <= 2.1 )   return 0.167 + (0.086 * fac);
+  else if ( eta > 2.1 && eta <= 2.3 )   return 0.094 + (0.093 * fac);
+  else if ( eta > 2.3 && eta <= 2.5 )   return 0.168 + (0.120 * fac);
+  else if ( eta > 2.5 && eta <= 2.8 )   return 0.266 + (0.132 * fac);
+  else if ( eta > 2.8 && eta <= 3.0 )   return 0.595 + (0.175 * fac);
+  else if ( eta > 3.0 && eta <= 3.2 )   return -0.002 + (0.066 * fac);
+  else if ( eta > 3.2 && eta <= 5.0 )   return 0.226 + (0.145 * fac);
   return 0.1;
  }
 

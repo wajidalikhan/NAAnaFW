@@ -82,6 +82,8 @@ sjpref = "subjetAK8CHS"
 #sjpref = "subjetsCmsTopTag"
 subjetak8label = cms.string(sj)
 
+jecVersion = cms.string("Spring16_25nsV10")
+
 #Initializing the analyzer
 DMTreesDumper = cms.EDAnalyzer(
     'DMAnalysisTreeMaker',
@@ -96,6 +98,7 @@ DMTreesDumper = cms.EDAnalyzer(
     metLabel = metlabel,
 #    metNoHFLabel = metNoHFlabel,
     eventLabel = eventlabel,
+    JECVersion = jecVersion,
     physicsObjects = cms.VPSet(
         cms.PSet(
             label = metlabel,

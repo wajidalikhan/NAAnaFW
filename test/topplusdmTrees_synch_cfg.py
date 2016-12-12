@@ -48,8 +48,8 @@ options.register('sample',
                  #root://xrootd.unl.edu
                  #or
                  #root://xrootd.cern.ch
-#                 "file:/afs/cern.ch/work/o/oiorio/public/xWajid/synch/B2GEDMNtupleDataSynch.root",
-                 "file:/afs/cern.ch/work/o/oiorio/public/xWajid/synch/B2GEDMNtupleMCSynch.root",
+                 "file:/afs/cern.ch/work/o/oiorio/public/xWajid/synch/B2GEDMNtupleDataSynch.root",
+#                 "file:/afs/cern.ch/work/o/oiorio/public/xWajid/synch/B2GEDMNtupleMCSynch.root",
 
                  #"file:/afs/cern.ch/work/o/oiorio/public/xWajid/synch/B2GEDMNtupleMCSynch.root",
 #                 "file:/afs/cern.ch/work/o/oiorio/public/xWajid/synch/"
@@ -225,7 +225,7 @@ process.DMTreesDumper.lhes =cms.InputTag(options.lhesource)
 process.DMTreesDumper.changeJECs = cms.untracked.bool(options.changeJECs)
 process.DMTreesDumper.isData = cms.untracked.bool(options.isData)#This adds the L2L3Residuals
 process.DMTreesDumper.applyRes = cms.untracked.bool(options.applyRes)#This adds the L2L3Residuals
-
+process.DMTreesDumper.JECVersion=cms.string("")
 #G
 process.DMTreesDumper.channelInfo.useLHE = cms.untracked.bool(True)
 #G
@@ -238,6 +238,15 @@ if options.isData:
 if not options.isData:
     process.DMTreesDumper.channelInfo.useLHE = cms.untracked.bool(True)
     process.DMTreesDumper.channelInfo.useLHEWeights = cms.untracked.bool(True)
+
+if not options.isData:
+    process.DMTreesDumper.JECVersion=cms.string("Spring16_25nsV10")
+
+if options.isData:
+    process.DMTreesDumper.JECVersion=cms.string("Spring16_25nsV10BCD")
+    if options.channel == "DATA2016E": process.DMTreesDumper.JECVersion=cms.string("Spring16_25nsV10E")
+    if options.channel == "DATA2016F": process.DMTreesDumper.JECVersion=cms.string("Spring16_25nsV10F")
+    if options.channel == "DATA2016p2": process.DMTreesDumper.JECVersion=cms.string("Spring16_25nsV10p2")
 
 if options.channel == "ttbar":
     process.DMTreesDumper.getPartonTop  = cms.untracked.bool(True)

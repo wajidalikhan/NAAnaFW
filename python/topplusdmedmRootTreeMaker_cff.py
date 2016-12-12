@@ -76,6 +76,7 @@ j8pref= "jetAK4CHS"
 sj = "subjetsAK8CHS"
 sjpref = "subjetAK8CHS"
 
+jecVersion = "Spring16_25nsV10"
 
 #sj = "subjetsCmsTopTag"
 #sjpref = "subjetsCmsTopTag"
@@ -95,6 +96,7 @@ DMTreesDumper = cms.EDAnalyzer(
     metLabel = metlabel,
 #    metNoHFLabel = metNoHFlabel,
     eventLabel = eventlabel,
+    JECVersion = jecVersion,
     physicsObjects = cms.VPSet(
         cms.PSet(
             label = metlabel,
