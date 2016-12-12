@@ -48,19 +48,53 @@ def main():
     config.JobType.pluginName = 'Analysis'
     config.JobType.psetName = options.config
     config.JobType.allowUndistributedCMSSW = True
-    config.JobType.pyCfgParams = ["isData=False", "changeJECs=False"]
-    config.JobType.inputFiles = ["Spring16_25nsV6_MC_L2L3Residual_AK4PFchs.txt",
+    config.JobType.pyCfgParams = ["isData=False", "changeJECs=True"]
+    config.JobType.inputFiles = ["Spring16_25nsV6_MC_L2L3Residual_AK4PFchs.txt",#Old MC
                                  "Spring16_25nsV6_MC_L3Absolute_AK4PFchs.txt",
                                  "Spring16_25nsV6_MC_L1FastJet_AK4PFchs.txt",
                                  "Spring16_25nsV6_MC_L2Relative_AK4PFchs.txt",
-                                 "Spring16_25nsV6_DATA_UncertaintySources_AK4PFchs.txt"]
+                                 "Spring16_25nsV10_MC_L2L3Residual_AK4PFchs.txt",#New MC
+                                 "Spring16_25nsV10_MC_L3Absolute_AK4PFchs.txt",
+                                 "Spring16_25nsV10_MC_L1FastJet_AK4PFchs.txt",
+                                 "Spring16_25nsV10_MC_L2Relative_AK4PFchs.txt",
+                                 "Spring16_25nsV6_DATA_UncertaintySources_AK4PFchs.txt",#Old Data
+                                 "Spring16_25nsV6_DATA_L1FastJet_AK4PFchs.txt",
+                                 "Spring16_25nsV6_DATA_L1RC_AK4PFchs.txt",
+                                 "Spring16_25nsV6_DATA_L2Relative_AK4PFchs.txt",
+                                 "Spring16_25nsV6_DATA_L3Absolute_AK4PFchs.txt",
+                                 "Spring16_25nsV6_DATA_L2L3Residual_AK4PFchs.txt",
+                                 "Spring16_25nsV10BCD_DATA_UncertaintySources_AK4PFchs.txt",#RunBCD
+                                 "Spring16_25nsV10BCD_DATA_L1FastJet_AK4PFchs.txt",
+                                 "Spring16_25nsV10BCD_DATA_L1RC_AK4PFchs.txt",
+                                 "Spring16_25nsV10BCD_DATA_L2Relative_AK4PFchs.txt",
+                                 "Spring16_25nsV10BCD_DATA_L3Absolute_AK4PFchs.txt",
+                                 "Spring16_25nsV10BCD_DATA_L2L3Residual_AK4PFchs.txt",
+                                 "Spring16_25nsV10E_DATA_UncertaintySources_AK4PFchs.txt",#RunE
+                                 "Spring16_25nsV10E_DATA_L1FastJet_AK4PFchs.txt",
+                                 "Spring16_25nsV10E_DATA_L1RC_AK4PFchs.txt",
+                                 "Spring16_25nsV10E_DATA_L2Relative_AK4PFchs.txt",
+                                 "Spring16_25nsV10E_DATA_L3Absolute_AK4PFchs.txt",
+                                 "Spring16_25nsV10E_DATA_L2L3Residual_AK4PFchs.txt",
+                                 "Spring16_25nsV10F_DATA_UncertaintySources_AK4PFchs.txt",#RunF
+                                 "Spring16_25nsV10F_DATA_L1FastJet_AK4PFchs.txt",
+                                 "Spring16_25nsV10F_DATA_L1RC_AK4PFchs.txt",
+                                 "Spring16_25nsV10F_DATA_L2Relative_AK4PFchs.txt",
+                                 "Spring16_25nsV10F_DATA_L3Absolute_AK4PFchs.txt",
+                                 "Spring16_25nsV10F_DATA_L2L3Residual_AK4PFchs.txt",
+                                 "Spring16_25nsV10p2_DATA_UncertaintySources_AK4PFchs.txt",#RunGH
+                                 "Spring16_25nsV10p2_DATA_L1FastJet_AK4PFchs.txt",
+                                 "Spring16_25nsV10p2_DATA_L1RC_AK4PFchs.txt",
+                                 "Spring16_25nsV10p2_DATA_L2Relative_AK4PFchs.txt",
+                                 "Spring16_25nsV10p2_DATA_L3Absolute_AK4PFchs.txt",
+                                 "Spring16_25nsV10p2_DATA_L2L3Residual_AK4PFchs.txt",
+                                 ]
 
 
     config.section_("Data")
     config.Data.inputDataset = None
     config.Data.ignoreLocality = True
     #    config.Data.outLFNDirBase = '/store/user/oiorio/ttDM/samples/2016/Oct/'
-    config.Data.outLFNDirBase = '/store/user/oiorio/ttDM/trees/2016/Nov/09Nov/'
+    config.Data.outLFNDirBase = '/store/user/oiorio/ttDM/trees/2016/Dec/12Dec/'
     config.Data.inputDBS = 'phys03'
     config.Data.splitting = 'FileBased'
     #    config.Data.totalUnits = -1
@@ -104,7 +138,6 @@ def main():
         print s.split('/')[1]
 
     for ijob, job in enumerate(jobs) :
-
 
         ptbin = job.split('/')[1]
         cond = job.split('/')[2]#B2GAnaFW_80x_V2p0
