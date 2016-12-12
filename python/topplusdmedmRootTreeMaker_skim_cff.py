@@ -82,7 +82,7 @@ sjpref = "subjetAK8CHS"
 #sjpref = "subjetsCmsTopTag"
 subjetak8label = cms.string(sj)
 
-jecVersion = "Spring16_25nsV10"
+jecVersion = cms.string("Spring16_25nsV10")
 
 #Initializing the analyzer
 DMTreesDumper = cms.EDAnalyzer(

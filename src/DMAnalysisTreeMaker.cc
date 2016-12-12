@@ -205,7 +205,7 @@ private:
   map< string , bool > got_label; 
   map< string , int > max_instances; 
   map< int, int > subj_jet_map;
-
+  
   map<string, edm::Handle<std::vector<float> > > h_floats;
   map<string, edm::Handle<std::vector<int> > > h_ints;
   map<string, edm::Handle<float> > h_float;
@@ -829,7 +829,7 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
   initTreeWeightHistory(useLHEWeights);
   
   
-  if(JECVersion == "")JECVersion = "Spring16_25nsV6";
+  if(JECVersion == "")JECVersion = "Spring16_25nsV10";
   string L1Name = JECVersion+"_MC_L1FastJet_AK4PFchs.txt"; //
   string L1RCName = JECVersion+"_MC_L1RC_AK4PFchs.txt"; 
   string L2Name = JECVersion+"_MC_L2Relative_AK4PFchs.txt";
@@ -1459,12 +1459,12 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       float muCharge = vfloats_values[makeName(mu_label,pref,"Charge")][mu];
       
       
-      if(isTight>0 && pt> 24 && abs(eta) < 2.4 /*&& iso <0.15 Isolation added afterwards*/){//UCL Selection
-	//      if(isTight>0 && pt> 26 && abs(eta) < 2.1 /*&& iso <0.15 Isolation added afterwards*/){//NA Selection
+      //if(isTight>0 && pt> 24 && abs(eta) < 2.4 /*&& iso <0.15 Isolation added afterwards*/){//UCL Selection
+      if(isTight>0 && pt> 26 && abs(eta) < 2.1 /*&& iso <0.15 Isolation added afterwards*/){//NA Selection
  	
 
-	if(iso<0.06){//UCL - 2015 Selection
-	  if(iso<0.15){//NA Selection
+	//	if(iso<0.06){//UCL - 2015 Selection
+	if(iso<0.15){//NA Selection
 	  ++float_values["Event_nTightMuons"];
 	  TLorentzVector muon;
 	  muon.SetPtEtaPhiE(pt, eta, phi, energy);
@@ -1499,8 +1499,8 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	sizes[mu_label+"TightAntiIso"]=(int)float_values["Event_nTightAntiIsoMuons"];
       }
       
-      //if(isLoose>0 && pt> 10 && abs(eta) < 2.4 && iso<0.25){//NA Selection
-      if( isLoose>0 && pt> 10 && abs(eta) < 2.5 && iso<0.2){//UCL Selection
+      if(isLoose>0 && pt> 10 && abs(eta) < 2.4 && iso<0.25){//NA Selection
+      //if( isLoose>0 && pt> 10 && abs(eta) < 2.5 && iso<0.2){//UCL Selection
 	if(isInVector(obj_cats[mu_label],"Loose")){
 	  ++float_values["Event_nLooseMuons"];
 	  if(isInVector(obj_cats[mu_label],"Loose")){
@@ -1906,8 +1906,8 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       //Remove overlap with tight electrons/muons
       double minDR=9999;
       double minDRThrEl=0.3;
-      double minDRThrMu=0.3;
-      //double minDRThrMu=0.4;
+      //double minDRThrMu=0.3;
+      double minDRThrMu=0.4;
       bool passesDR=true;
  
 

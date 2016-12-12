@@ -76,7 +76,7 @@ j8pref= "jetAK4CHS"
 sj = "subjetsAK8CHS"
 sjpref = "subjetAK8CHS"
 
-jecVersion = "Spring16_25nsV10"
+jecVersion = cms.string("Spring16_25nsV10")
 
 #sj = "subjetsCmsTopTag"
 #sjpref = "subjetsCmsTopTag"
