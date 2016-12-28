@@ -9,18 +9,19 @@ import optparse
 usage = 'usage: %prog -l lumi'
 parser = optparse.OptionParser(usage)
 
-parser.add_option('-l', '--lumi', dest='lumi', type='float', default = '1.26', help='Luminosity')
-parser.add_option('-c', '--channel', dest='channel', type='string', default = 'muon', help='Channel to analyze: muon or electron')
-parser.add_option('-s', '--sys', dest='sys', type='string', default = 'noSys', help='Systematics: noSys, jesUp, jesDown')
-parser.add_option('-n', '--normData', dest='normData', type='int', default = '0', help='Normalise to data?')
-parser.add_option('-r', '--resdir', dest='resdir', type='string', default = './../newTTDManalysis/', help='res directory')
-parser.add_option('-d', '--add-data', dest='data', action='store_false', default = True, help='Hide data')
-parser.add_option('-S', "--signal", dest='signal', action='store_true',default = False, help='Add a signal plot')
-parser.add_option('-p', '--prefix', dest='prefix', type='string', default = '', help='prefix for img files')
-parser.add_option('', '--store', dest='store', action='store_true', default = False, help='Store')
-parser.add_option('--focusOn', dest='focus', default = None, help='Focus on a single plot')
-parser.add_option('', '--getSF', dest='getSF', type='string', default = '', help='type of scale factors from the fit')
-parser.add_option('', '--fileSF', dest='fileSF', type='string', default = './mlfit.root', help='file for the scale factors')
+parser.add_option('-l', '--lumi',     dest='lumi',    type='float',   default = '1.26',  help='Luminosity')
+parser.add_option('-c', '--channel',  dest='channel', type='string',  default = 'muon',  help='Channel to analyze: muon or electron')
+parser.add_option('-s', '--sys',      dest='sys',     type='string',  default = 'noSys', help='Systematics: noSys, jesUp, jesDown')
+parser.add_option('-n', '--normData', dest='normData',type='int',     default = '0',     help='Normalise to data?')
+parser.add_option('-r', '--resdir',   dest='resdir',  type='string',  default = './../newTTDManalysis/', help='res directory')
+parser.add_option('-d', '--add-data', dest='data',    action='store_false', default = True,   help='Hide data')
+parser.add_option('-S', "--signal",   dest='signal',  action='store_true',  default = False,  help='Add a signal plot')
+
+parser.add_option('-p', '--prefix',   dest='prefix',  type='string',  default = '', help='prefix for img files')
+parser.add_option('', '--store',      dest='store',   action='store_true', default = False, help='Store')
+parser.add_option('--focusOn',        dest='focus',   default = None, help='Focus on a single plot')
+parser.add_option('', '--getSF',      dest='getSF',   type='string',  default = '', help='type of scale factors from the fit')
+parser.add_option('', '--fileSF',     dest='fileSF',  type='string',  default = './mlfit.root', help='file for the scale factors')
 
 (opt, args) = parser.parse_args()
 
@@ -94,6 +95,11 @@ if opt.channel == 'muon':
     settings.update(plots.muon.settings)
     store += plots.muon.store
 
+elif opt.channel == 'muonantiiso':
+    # Add muon specific settings and plots to store
+    settings.update(plots.muon.settings)
+    store += plots.muon.store
+
 elif opt.channel == 'electron':
     # Add electron specific settings and plots to store
     settings.update(plots.electron.settings)
@@ -104,7 +110,7 @@ elif opt.channel == 'electron':
     #outpdfs = 'output_newLayout/sl/pdfs'
     #outtxt = 'output_newLayout/sl/txt'
 else:
-    print 'Channel not valid! Options are elc'
+    print 'Channel not valid! Options are muon, elc, muonantiiso'
     import sys
     sys.exit(0)
 
@@ -178,6 +184,7 @@ if not opt.getSF =="":
     for s in samples.itervalues():
         sampleslist.append(s.label)
         #    list(samples.keys())
+        print "Printing samples ==== ", sampleslist
     sampleslist.remove('Data')
     print sampleslist
     importedSFs=postFit.importScaleFactors(variables=keylist, samples=sampleslist,defaultSF="no_region")
@@ -191,7 +198,7 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
     if(opt.store and not var.startswith("metFinal")): continue
     if not title:
         title = ''
-
+    
     print "Variable: ",var
     print "Title: ", title
     #print "Scale: ", scale
@@ -202,6 +209,7 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
     stack_data = Stack(var,title)
     stack_sh  = Stack(var,title)
     stack_bkg = Stack(var,title)
+    stack_qcd = Stack(var,title)
 
     stack_bkg_norm = Stack(var,title)
     
@@ -217,21 +225,26 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
     #print " prepare for trouble "
     for s in samples.itervalues():
         nEntries = 0
-        print "+ sample" , s.label
-        if(s.label.startswith("TT_")): print "+ sample" , s.label
-
+        #if(s.label.startswith("TT_")): print "+ sample" , s.label
+        #if(s.label.startswith("DD")): print "+ sample" , s.label
 
         if(hasattr(s, "components")):
             #samples with components
             histos = []
             notFound = []
+            
+            if (opt.channel=="muon"):channel= 'muonantiiso'
+            elif(opt.channel=="muonantiiso"): channel= 'muonantiiso'
+            
             for c in s.components:
-                print "comp ", c.label
-
-                if(opt.sys=="noSys"):
+                #print "comp ", c.label
+                if(opt.sys=="noSys") and (s.label=="DD-QCD"):
+                    filename = opt.resdir+'/res/'+c.label + "_" + channel +".root"
+                    filename_nEvt = opt.resdir+'/res/' + c.label + "_" + channel +".root"
+                    
+                elif(opt.sys=="noSys"):
                     filename = opt.resdir+'/res/'+c.label+"_" + opt.channel +".root"
                     filename_nEvt = opt.resdir+'/res/'+c.label+"_" + opt.channel +".root"
-
                 elif (
                     (( opt.sys=="jesUp" or opt.sys=="jesDown" or opt.sys=="jerUp" or opt.sys=="jerDown" or opt.sys=="metUnclUp" or opt.sys=="metUnclDown" or opt.sys=="pdf_totalUp" or opt.sys=="pdf_totalDown"  or opt.sys=="pdf_asUp" or opt.sys=="pdf_asDown" or opt.sys=="pdf_zmUp" or opt.sys=="pdf_zmDown" or opt.sys=="q2Up" or opt.sys=="q2Down" or opt.sys=="lepUp" or opt.sys=="lepDown" or opt.sys=="topPtWeightUp" or opt.sys=="topPtWeightDown" or opt.sys=="VHFWeightUp" or opt.sys=="VHFWeightDown" or opt.sys=="mistagUp" or opt.sys=="mistagDown" or opt.sys=="btagUp" or opt.sys=="batgDown" or opt.sys=="puUp" or opt.sys=="puDown") and ( c.label.startswith("SingleMu") or c.label.startswith("SingleEl") or c.label.startswith("MET"))) or ( (opt.sys=="q2Up" or opt.sys=="q2Down" or opt.sys=="pdf_totalUp" or opt.sys=="pdf_totalDown" or opt.sys=="pdf_asUp" or opt.sys=="pdf_asDown" or opt.sys=="pdf_zmUp" or opt.sys=="pdf_zmDown") and (c.label.startswith("SingleTop_T_tchan")  or c.label.startswith("SingleTop_Tbar_tchan")))  or  ((opt.sys=="pdf_totalUp" or opt.sys=="pdf_totalDown" or opt.sys=="pdf_asUp" or opt.sys=="pdf_asDown" or opt.sys=="pdf_zmUp" or opt.sys=="pdf_zmDown") and (s.label.startswith("VV") or c.label.startswith("SingleTop_T_tW")  or c.label.startswith("SingleTop_Tbar_tW") or s.label.startswith("otherBkg") ) )
                     ):
@@ -250,21 +263,13 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
                     filename = opt.resdir+'/res/'+c.label+"_" + opt.channel + "_"+ opt.sys +".root"
                     filename_nEvt = opt.resdir+'/res/'+c.label+"_" + opt.channel + "_"+ opt.sys +".root"
 
-                
-                  
-                #filename_nEvt = opt.resdir+'/res/'+c.label+"_" + opt.channel +".root"
-                #if(opt.sys!="noSys" and not c.label.startswith("MET") and not c.label.startswith("SingleMu") and not c.label.startswith("SingleEl")):  
-                #    filename_nEvt = opt.resdir+'/res/'+c.label+"_" + opt.channel + "_"+ opt.sys +".root"
-                #if((opt.sys=="topPtWeightUp" or opt.sys=="topPtWeightDown") and not(s.label.startswith("TT"))):
-                #    filename_nEvt = opt.resdir+'/res/'+c.label+"_" + opt.channel +".root"
-
-                print "nfile evt ", filename_nEvt
                 infile_nEvt = ROOT.TFile.Open(filename_nEvt)
                 nEntries = infile_nEvt.Get("h_cutFlow").GetBinContent(0)
-                #print "nentries is ", nEntries
-#nEntries = infile_nEvt.Get("h_nGoodPV").GetEntries()
-                print "nentries ", nEntries, " xsec ", c.sigma 
+                
+                
+                print "+ sample" , s.label, "| comp ", c.label, "| nfile evt ", filename_nEvt, "| nentries ", nEntries, " | xsec ", c.sigma
                 infile = ROOT.TFile.Open(filename)
+                
                 # htmp = infile.Get(var)
                 hin = infile.Get(var)
                 if not isinstance(hin, ROOT.TH1):
@@ -278,7 +283,11 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
                 htmp.Sumw2()
                 #print "integral bef", htmp.Integral()
                 # Applu lumi scale if not data
-                if( nEntries != 0 and not(c.label.startswith("SingleMu") or c.label.startswith("SingleEl") or c.label.startswith("JetHT") or c.label.startswith("MET"))):
+                #if( nEntries != 0 and not(c.label.startswith("SingleMu") or c.label.startswith("SingleEl") or c.label.startswith("JetHT") or c.label.startswith("MET"))):
+                scaleFactor = 1.
+                if not c.sigma<0: 
+                    #scaleFactor = 1./nEntries * s.skimEff * s.sigma * 1000.* float(opt.lumi)
+
                     htmp.Scale((1./nEntries) * c.sigma * 1000. * float(opt.lumi) )
                     if not opt.getSF =="" and not s.label.startswith("Data"):
                         print "sf is ", importedSFs[s.label][var]
@@ -298,7 +307,7 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
                 
             if notFound:
                 raise RuntimeError('Failed to retrieve %s' % notFound)
-            print c.label
+            #print c.label
             #print histos[0].Name()
             
             # Sum components histos
@@ -307,9 +316,9 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
                 [h1.Add(hi) for hi in histos[1:]]
 
             # h = Histo1(h1)
-            print 'h1 has sumw2', h1.GetSumw2().GetSize()
+            #print 'h1 has sumw2', h1.GetSumw2().GetSize()
             h = Histo.fromTH1(h1)
-        
+            
         else:
             #sample does not have components
             #print "sample label ", s.label
@@ -338,6 +347,8 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
 
             infile_nEvt = ROOT.TFile.Open(filename_nEvt)
             nEntries =  infile_nEvt.Get("h_cutFlow").GetBinContent(0)
+            print "+ sample" , s.label, "| nfile evt ", filename_nEvt, "| nentries ", nEntries, " | xsec ", s.sigma
+            
             #nEntries = infile_nEvt.Get("h_nGoodPV").GetEntries()
 
             infile = ROOT.TFile.Open(filename)
@@ -362,7 +373,9 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
             
             scaleFactor = 1.
 
-            if (nEntries != 0  and not(s.label.startswith("SingleMu") or s.label.startswith("SingleEl") or s.label.startswith("JetHT") or s.label.startswith("MET"))):
+#            if (nEntries != 0  and not(s.label.startswith("SingleMu") or s.label.startswith("SingleEl") or s.label.startswith("JetHT") or s.label.startswith("MET"))):
+            #if (sigma == -1): scaleFactor =1.
+            if not s.sigma<0: 
                 scaleFactor = 1./nEntries * s.skimEff * s.sigma * 1000.* float(opt.lumi)
                 if not opt.getSF =="" and not s.label.startswith("Data"):
                     print "sf is ", importedSFs[s.label][var]
@@ -392,16 +405,13 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
 
                 h.Shrink(uFirst, uLast)
                 
-      
         ### Set style and create stack plots
         #h.SetStyle(s.color, s.style, s.fill)
-
         h.SetStyle(s.color, s.style, s.fill)
         
         if (s.label=="DMtt_ps_Mchi1Mphi100"):
             print s.color
             h.LineWidth(4)
-
 
         # Writing outfile: only 8 bin for met  Plot, overflow bin included
         if opt.sys=="noSys":
@@ -410,14 +420,17 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
             outfilename = "%s/%s_%s_%s.root" % (outhistos,s.label,opt.channel, opt.sys)
 
         outfile = ROOT.TFile(outfilename, "UPDATE")
-        
         outfile.cd()
         
         if var in store:
             h.GetHisto().SetName(var)
             h.GetHisto().Write()
         outfile.Close()
-
+        
+        print 'Trying to Open file: ',s.label
+        file=ROOT.TFile.Open(outhistos+"/"+s.label+"_"+opt.channel+".root");
+        #file.ls() 
+        
         #adding histo in bkg, sign and data categories
         if (s.label=="DMtt_ps_Mchi1Mphi100"):
             stack_sig.Add(h)
@@ -435,6 +448,10 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
             histos_bkg.append(h)
             leg.AddEntry(h, s.leglabel, "f")
 
+        if ((opt.channel == 'muonantiiso') and (not(s.label.startswith("Data") or s.label=="DD-QCD" ))):
+          stack_qcd.Add(h)
+
+        
         ### Make a summary
         if(var == "h_cutFlow"): writeSummary(s.label, opt.channel,opt.sys, h, opt.lumi)
 
@@ -444,11 +461,10 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
         
         leg_sh.AddEntry(h_norm, s.leglabel, "l")
         stack_sh.Add(h_norm)
-
+    
     ### End of samples loop
-
+    
     #print " and make it double "
-        
     if opt.data:
         H=600
         W=700
