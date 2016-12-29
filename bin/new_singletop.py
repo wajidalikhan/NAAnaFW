@@ -15,18 +15,12 @@ from utils import *
 #Usage: python new_singletop.py -c muon -s noSys -m local -l test/ -P _test
 #Usage: python new_singletop.py -c muon -s noSys -m local -l test/data/ -P _test -d DATA
 #Usage: python new_singletop.py -c muonantiiso -s noSys -m local -P _test -d DATA
+#Usage: python new_singletop.py -c muonantiiso -s noSys -m local -P _test -l mc
 #Usage: python new_singletop.py --t3batch -f files/final/ -P SingleMuon -d DATA -S 40 -c munonantiiso
 #Usage: python new_singletop.py -c muonantiiso -s noSys --t3batch -f files/final/ -P SingleMuon -d DATA -S 40
 
 
 #More complex working example: this will run only the ST_T_tch and the V+Jets samples and split them into batches of 10 files, taking them from the remote folder on Orso's public:
-
-
-
-
-
-
-
 #Usage: python new_singletop.py -c muon -s noSys -m local -S 10 -P _ST_T_tch,VJ --t3batch
 
 from os.path import join,exists
@@ -41,7 +35,7 @@ fileListDir = join(workdir,'files')
 #define samples paths
 #pathlocal = "/afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_16/src/Analysis/NAAnaFW/test/crab_projects/crab_st_top/results/ST/" 
 pathlocal = "/afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_20/src/Analysis/NAAnaFW/bin/ST/"
-filepath='/afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_20/src/Analysis/NAAnaFW/bin/files/trees/mc/'
+filepath='/afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_20/src/Analysis/NAAnaFW/bin/mc/'
 
 
 usage = ''

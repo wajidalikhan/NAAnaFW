@@ -775,11 +775,11 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
       cout << muTightIsoSF.getEff(fabs(tightMu.at(0).Eta()),tightMu.at(0).Pt())<<endl;
       cout << "lep sf retrieved successfully!"<<endl;*/
       lepWeight1Mu = muTightTrigEff.getEff(fabs(tightMu.at(0).Eta()),tightMu.at(0).Pt())*
-	muTightIdSF.getEff(fabs(tightMu.at(0).Eta()),tightMu.at(0).Pt())*
-	muTightIsoSF.getEff(fabs(tightMu.at(0).Eta()),tightMu.at(0).Pt());
+	    muTightIdSF.getEff(fabs(tightMu.at(0).Eta()),tightMu.at(0).Pt())*
+	    muTightIsoSF.getEff(fabs(tightMu.at(0).Eta()),tightMu.at(0).Pt());
       float errMu= muTightTrigEff.getErr(fabs(tightMu.at(0).Eta()),tightMu.at(0).Pt())*
-	muTightIdSF.getErr(fabs(tightMu.at(0).Eta()),tightMu.at(0).Pt())*
-	muTightIsoSF.getErr(fabs(tightMu.at(0).Eta()),tightMu.at(0).Pt());
+	    muTightIdSF.getErr(fabs(tightMu.at(0).Eta()),tightMu.at(0).Pt())*
+	    muTightIsoSF.getErr(fabs(tightMu.at(0).Eta()),tightMu.at(0).Pt());
       lepWeight1MuLepUp=lepWeight1Mu+errMu;
       lepWeight1MuLepDown=lepWeight1Mu-errMu;
     }
@@ -805,15 +805,15 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
     if(channel=="muon"){
       w_lep=lepWeight1Mu;
       if(w_lep!=0){
-	sf_lepUp=lepWeight1MuLepUp/w_lep;
-	sf_lepDown=lepWeight1MuLepDown/w_lep;
+	      sf_lepUp=lepWeight1MuLepUp/w_lep;
+	      sf_lepDown=lepWeight1MuLepDown/w_lep;
       }
     }
     if(channel=="electron"){
       w_lep=lepWeight1Ele;
       if(w_lep!=0){
-	sf_lepUp=lepWeight1EleLepUp/w_lep;
-	sf_lepDown=lepWeight1EleLepDown/w_lep;
+	      sf_lepUp=lepWeight1EleLepUp/w_lep;
+	      sf_lepDown=lepWeight1EleLepDown/w_lep;
       }
     }
     
@@ -868,6 +868,7 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   syst2BM.setWeight("lepDown",bWeight2CSVM*sf_lepDown);
   
   vector<float> jetsPhi;
+  
   vector<TLorentzVector> bjets, jets_nob, jets, jets20;    
   
   struct btag{
@@ -901,34 +902,75 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
        extrajets.push_back(bj);
      }
    }
-   
+    
+   if(channel!="muonantiiso"){   
    for (int j = 0; j <maxJetLoop;++j){	
       TLorentzVector jet, all_jets;
-      
       all_jets.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
       jets.push_back(all_jets);
       bool btagcond = jetIsCSVM[j]>0.;
-      if(useCSVTSelection){
-	btagcond = jetIsCSVT[j]>0.;
-      }
+    
+    if(useCSVTSelection){
+	      btagcond = jetIsCSVT[j]>0.;
+        }
 
-  if(!btagcond){
-      jet.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
-      jets_nob.push_back(jet);
+    if(!btagcond){
+        jet.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
+        jets_nob.push_back(jet);
+        }
+  
+    jetsPhi.push_back(jetPhi[j]);
+    TLorentzVector bjet;
+  
+    if( btagcond && abs(jetEta[j])<2.4){
+        bjet.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
+        bjets.push_back(bjet);
+        btag b;
+        b.vect = bjet;
+        b.csv = jetak4chs_csvv2[j];
+        bvects.push_back(b);
+        }  
       }
+    }// End of if jet loop 
   
-  jetsPhi.push_back(jetPhi[j]);
-  TLorentzVector bjet;
+  else{
+   for (int j = 0; j <maxJetLoop;++j){	
+      TLorentzVector jet, all_jets;
+      all_jets.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
+      jets.push_back(all_jets);
+    
+      double dR=0; 
+      for (size_t i = 0; i<(size_t)tightMu.size();++i){ 
+        dR = deltaR(jets[j].Eta(),tightMu[i].Eta(),jets[j].Phi(),tightMu[i].Phi());   
+        }
+      
+      if (dR<0.4) continue; //throw away the event if deltaR btw jet and tightmu in less than 0.4
+      cout <<"Evt No. after "<<evt<<"   "<<"jet["<<j<< "] "<<jets[j].Pt()<<" dR(jet,mu) "<< dR <<endl;
+      
+      bool btagcond = jetIsCSVM[j]>0.;
+      if(useCSVTSelection){
+	      btagcond = jetIsCSVT[j]>0.;
+        }
+
+    if(!btagcond){
+        jet.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
+        jets_nob.push_back(jet);
+        }
   
-  if( btagcond && abs(jetEta[j])<2.4){
-     bjet.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
-     bjets.push_back(bjet);
-     btag b;
-     b.vect = bjet;
-     b.csv = jetak4chs_csvv2[j];
-     bvects.push_back(b);
-    }  
-  }// End of jet loop 
+    jetsPhi.push_back(jetPhi[j]);
+    TLorentzVector bjet;
+  
+    if( btagcond && abs(jetEta[j])<2.4){
+        bjet.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
+        bjets.push_back(bjet);
+        btag b;
+        b.vect = bjet;
+        b.csv = jetak4chs_csvv2[j];
+        bvects.push_back(b);
+        }  
+      }
+    }//End of else jet loop
+
  
   nJets = jetsPhi.size();
   nCSVJets=bjets.size();
@@ -963,13 +1005,13 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   if(jets.size() ==2 && bjets.size()==1){ n_2j1t+=w; nev_2j1t+=1;  
     if(doSynch){
       if((tightMu.size())==1){
-	TVector2 met_( met*cos(metPhi[0]), met*sin(metPhi[0]));
-	float phi_lmet = fabs(deltaPhi(tightMu[0].Phi(), metPhi[0]) );
-	mt = sqrt(2* tightMu[0].Pt() * met* ( 1- cos(phi_lmet)));
+	      TVector2 met_( met*cos(metPhi[0]), met*sin(metPhi[0]));
+	      float phi_lmet = fabs(deltaPhi(tightMu[0].Phi(), metPhi[0]) );
+	      mt = sqrt(2* tightMu[0].Pt() * met* ( 1- cos(phi_lmet)));
       }
       if(mt> 50){
-	n_2j1tmtw+=w;
-	nev_2j1tmtw+=1.;
+	      n_2j1tmtw+=w;
+	      nev_2j1tmtw+=1.;
       }
     }
   }
@@ -1018,8 +1060,8 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
       //      cout <<" lep weight = "<< w_lep<<endl; 
 
       if(b==0){
-	syst1BM.fillHistogramsSysts(h_2j1t_bjetpt,bjets[b].Pt(),w,NULL,false);
-      //cout << bjets[i].Pt()<< endl;
+	      syst1BM.fillHistogramsSysts(h_2j1t_bjetpt,bjets[b].Pt(),w,NULL,false);
+        //cout << bjets[i].Pt()<< endl;
       }
     }
     bool qcddepleted=false, signalenriched=false;
@@ -1038,10 +1080,10 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
         //cout <<" calculate_mtw() = "<<calculate_mtw(metPt, metPhi,tightMu)<<endl;     
         syst1BM.fillHistogramsSysts(h_2j1t_mtw,mt,w); 
         if (calculate_mtw(metPt, metPhi,tightMu) > 50.0){
-	  qcddepleted=true;
+	        qcddepleted=true;
           syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_mtw,mt,w);
 
-	} 
+	      } 
       }
     }
     //define signal enriching condition:
@@ -1051,15 +1093,16 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
 	btagcond = jetIsCSVT[j]>0.;
       }
       if(!(btagcond)){
-	syst1BM.fillHistogramsSysts(h_2j1t_ljetpt,jets[j].Pt(),w);
-	syst1BM.fillHistogramsSysts(h_2j1t_ljeteta,jets[j].Eta(),w);
-	syst1BM.fillHistogramsSysts(h_2j1t_etajprime,fabs(jets[j].Eta()),w);
-	signalenriched=signalenriched||fabs(jets[j].Eta())>etathreshold;
-	if(qcddepleted) {
-	  syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_ljetpt,jets[j].Pt(),w);
-	  syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_ljeteta,jets[j].Eta(),w);
-	  syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_etajprime,fabs(jets[j].Eta()),w);
-	}
+	      syst1BM.fillHistogramsSysts(h_2j1t_ljetpt,jets[j].Pt(),w);
+	      syst1BM.fillHistogramsSysts(h_2j1t_ljeteta,jets[j].Eta(),w);
+	      syst1BM.fillHistogramsSysts(h_2j1t_etajprime,fabs(jets[j].Eta()),w);
+	      signalenriched=signalenriched||fabs(jets[j].Eta())>etathreshold;
+	    
+      if(qcddepleted) {
+	      syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_ljetpt,jets[j].Pt(),w);
+	      syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_ljeteta,jets[j].Eta(),w);
+	      syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_etajprime,fabs(jets[j].Eta()),w);
+	      }
       } 
     }
     //    cout << " filling extrajets "<<endl;
