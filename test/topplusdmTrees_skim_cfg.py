@@ -50,6 +50,7 @@ options.register('sample',
                  #root://xrootd.cern.ch
                  "root://xrootd.ba.infn.it//store/user/grauco/B2GAnaFW/B2GAnaFW_80X_V2p1/TT_TuneCUETP8M1_13TeV-powheg-pythia8/B2GAnaFW_80X_V2p1/161021_085128/0000/B2GEDMNtuple_1.root"
                  'root://xrootd.ba.infn.it//store/user/oiorio/ttDM/samples/2016/Oct/ST_t-channel_top_4f_inclusiveDecays_13TeV-powhegV2-madspin-pythia8_TuneCUETP8M1/crab_STt-channeltop4finclusiveDecays13TeV-powhegV2-madspin-pythia8TuneCUETP8M1/161011_132502/0000/B2GEDMNtuple_212.root',
+
 #                 'file:../../B2GAnaFW/test/B2GEDMNtuple.root',
                  opts.VarParsing.multiplicity.singleton,
                  opts.VarParsing.varType.string,
@@ -201,7 +202,7 @@ process.DMTreesDumper.channelInfo.SingleMuTriggers=cms.vstring(SingleMuTriggers)
 process.DMTreesDumper.channelInfo.hadronicTriggers=cms.vstring(hadronTriggers)
 
 
-
+#process.DMTreesDumper.doPreselection = cms.untracked.bool(False) 
 if options.addPartonInfo:
     if options.isData: #G
         process.DMTreesDumper.channelInfo.getPartonW=cms.untracked.bool(True)
@@ -235,10 +236,10 @@ if not options.isData:
     process.DMTreesDumper.channelInfo.useLHEWeights = cms.untracked.bool(True)
 
 
-if not option.isData:
+if not options.isData:
     process.DMTreesDumper.JECVersion="Spring16_25nsV10"
 
-if option.isData:
+if options.isData:
     process.DMTreesDumper.JECVersion="Spring16_25nsV10BCD"
     if options.channel == "DATA2016E": process.DMTreesDumper.JECVersion="Spring16_25nsV10E"
     if options.channel == "DATA2016F": process.DMTreesDumper.JECVersion="Spring16_25nsV10F"
@@ -247,6 +248,10 @@ if option.isData:
 if options.channel == "ttbar":
     process.DMTreesDumper.getPartonTop  = cms.untracked.bool(True)
 
+if options.channel == "ttbar_sd" or options.channel== "tch_sd":
+    process.DMTreesDumper.channelInfo.doTopDecayReshaping = cms.untracked.bool(True)
+    process.DMTreesDumper.channelInfo.getPartonTop  = cms.untracked.bool(True)
+    
 if options.channel == "wzjets":
     print "channel is " + options.channel 
     process.DMTreesDumper.channelInfo.getPartonW  = cms.untracked.bool(True)

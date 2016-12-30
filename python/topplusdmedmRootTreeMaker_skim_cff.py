@@ -96,6 +96,8 @@ DMTreesDumper = cms.EDAnalyzer(
     boostedTopsLabel = jetak8label,
     boostedTopsSubjetsLabel = subjetak8label,
     metLabel = metlabel,
+    genParticles =cms.InputTag( "filteredPrunedGenParticles"),
+    genJets =cms.InputTag("genJetsAK4"),
 #    metNoHFLabel = metNoHFlabel,
     eventLabel = eventlabel,
     JECVersion = jecVersion,
@@ -184,6 +186,7 @@ DMTreesDumper = cms.EDAnalyzer(
         useLHEWeights = cms.untracked.bool(False),#Whether one uses the weights from the LHE in order to get scale uncertaintiesxb
         addLHAPDFWeights = cms.untracked.bool(False), #Whether to add the PDF for uncertainty evaluation (time consuming)
         maxWeights = cms.untracked.int32(111),
+        doTopDecayReshaping = cms.untracked.bool(False),
         )
     )
 
@@ -527,7 +530,7 @@ DMTreesDumper.physicsObjects.append(
         categories = cms.vstring(catJet),
 #        categories = cms.vstring("Tight"),
 #        toSave = cms.vstring(jpref+"E",jpref+"Pt",jpref+"Eta",jpref+"Phi",jpref+"GenJetPt",jpref+"GenJetEta",jpref+"CSVv2",jpref+"PartonFlavour",jpref+"QGL", jpref+"jecFactor0",jpref+"pileupJetIdRMS", jpref+"pileupJetIdbeta", jpref+"pileupJetIdbetaClassic", jpref+"pileupJetIdbetaStar", jpref+"pileupJetIdbetaStarClassic", jpref+"pileupJetIddR2Mean", jpref+"pileupJetIddRMean", jpref+"pileupJetIddZ", jpref+"pileupJetIdfrac01", jpref+"pileupJetIdfrac02", jpref+"pileupJetIdfrac03", jpref+"pileupJetIdfrac04", jpref+"pileupJetIdjetR", jpref+"pileupJetIdjetRchg", jpref+"pileupJetIdmajW", jpref+"pileupJetIdminW", jpref+"pileupJetIdnCharged", jpref+"pileupJetIdnNeutrals", jpref+"pileupJetIdnParticles", jpref+"pileupJetIdptD", jpref+"pileupJetIdpull","allExtra"),
-        toSave = cms.vstring(jpref+"E",jpref+"Pt",jpref+"Eta",jpref+"Phi",jpref+"GenJetPt",jpref+"GenJetEta",jpref+"CSVv2",jpref+"PartonFlavour",jpref+"QGL", jpref+"jecFactor0",jpref+"pileupJetIdRMS", jpref+"pileupJetIdbeta", jpref+"pileupJetIdbetaClassic", jpref+"pileupJetIdbetaStar", jpref+"pileupJetIdbetaStarClassic","allExtra"),
+        toSave = cms.vstring(jpref+"E",jpref+"Pt",jpref+"Eta",jpref+"Phi",jpref+"GenJetPt",jpref+"GenJetEta",jpref+"CSVv2",jpref+"HadronFlavour",jpref+"PartonFlavour",jpref+"QGL", jpref+"jecFactor0",jpref+"pileupJetIdRMS", jpref+"pileupJetIdbeta", jpref+"pileupJetIdbetaClassic", jpref+"pileupJetIdbetaStar", jpref+"pileupJetIdbetaStarClassic","allExtra"),
         ),
     )
 
