@@ -736,10 +736,10 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
       }
   }//end loop on electrons     
   vector<float> selectedIso;
+  
   if(channel!="muonantiiso"){
     for(int m= 0; m<maxMuLoop;++m ){
       if(muPt[m]>20){
-
 	      mu.SetPtEtaPhiE(muPt[m], muEta[m], muPhi[m],muE[m]);
 	      tightMu.push_back(mu);
       }
@@ -747,14 +747,23 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
   }
   else {
       for(int m= 0; m<maxMuLoop;++m ){
-      if(muAntiIsoPt[m]>20 && muAntiIsoIso[m]>0.25){
-	    selectedIso.push_back(muAntiIsoIso[m]);
-	    mu.SetPtEtaPhiE(muAntiIsoPt[m], muAntiIsoEta[m], muAntiIsoPhi[m],muAntiIsoE[m]);
-	    tightMu.push_back(mu);
-      }
-    }
-  }
-  //end loop on muons
+        bool passesDR=true;
+        double dR=0;
+        
+        if(muAntiIsoPt[m]>20 && muAntiIsoIso[m]>0.25){
+	        selectedIso.push_back(muAntiIsoIso[m]);
+	        mu.SetPtEtaPhiE(muAntiIsoPt[m], muAntiIsoEta[m], muAntiIsoPhi[m],muAntiIsoE[m]);
+          }
+          //--------------
+          for (int j = 0; j <maxJetLoop;++j) dR = deltaR(jetEta[j],mu.Eta(),jetPhi[j],mu.Phi());   
+          if (dR<0.4) passesDR=false; //throw away the muon if deltaR btw jet and tightmu in less than 0.4
+        
+          if(!passesDR)continue;
+          //cout <<"Evt No. after "<<evt<<"   "<<"muAntiIsoPt["<<m<< "] "<<muAntiIsoPt[m]<< " dR(jet,mu) "<< dR <<endl;  
+          //--------------
+          tightMu.push_back(mu);
+        }
+    }//end loop on muons
   
   nMu = tightMu.size();
   nEl = tightEl.size();
@@ -902,74 +911,48 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
        extrajets.push_back(bj);
      }
    }
-    
-   if(channel!="muonantiiso"){   
+   
    for (int j = 0; j <maxJetLoop;++j){	
-      TLorentzVector jet, all_jets;
-      all_jets.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
-      jets.push_back(all_jets);
-      bool btagcond = jetIsCSVM[j]>0.;
-    
-    if(useCSVTSelection){
-	      btagcond = jetIsCSVT[j]>0.;
-        }
-
-    if(!btagcond){
-        jet.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
-        jets_nob.push_back(jet);
-        }
-  
-    jetsPhi.push_back(jetPhi[j]);
-    TLorentzVector bjet;
+     TLorentzVector jet, all_jets;
+     all_jets.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
+     
+     bool passesDR=true;
+     double dR=0; 
+     if(channel=="muonantiiso"){   
+	    for (size_t i = 0; i<(size_t)tightMu.size();++i){ 
+          //dR = deltaR(jetEta[j],tightMu[i].Eta(),jetPhi[j],tightMu[i].Phi());   
+          dR= deltaR(all_jets.Eta(),tightMu[i].Eta(),all_jets.Phi(),tightMu[i].Phi());   
+          }
+	        if (dR<0.4) passesDR=false; //throw away the jet if deltaR btw jet and tightmu in less than 0.4
+     }
+     
+     if(!passesDR)continue;
+     //cout <<"Evt No. after "<<evt<<"   "<<"jet["<<j<< "] "<<jetPt[j]<< " dR(jet,mu) "<< dR <<endl;
+     
+     jets.push_back(all_jets);
+     bool btagcond = jetIsCSVM[j]>0.;
+     if(useCSVTSelection){
+       btagcond = jetIsCSVT[j]>0.;
+     }
+     
+     if(!btagcond){
+       jet.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
+       jets_nob.push_back(jet);
+     }
+     
+     jetsPhi.push_back(jetPhi[j]);
+     TLorentzVector bjet;
   
     if( btagcond && abs(jetEta[j])<2.4){
-        bjet.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
-        bjets.push_back(bjet);
-        btag b;
+      bjet.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
+      bjets.push_back(bjet);
+      btag b;
         b.vect = bjet;
         b.csv = jetak4chs_csvv2[j];
         bvects.push_back(b);
-        }  
-      }
-    }// End of if jet loop 
-  
-  else{
-   for (int j = 0; j <maxJetLoop;++j){	
-      TLorentzVector jet, all_jets;
-      all_jets.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
-      jets.push_back(all_jets);
-    
-      double dR=0; 
-      for (size_t i = 0; i<(size_t)tightMu.size();++i){ 
-        dR = deltaR(jets[j].Eta(),tightMu[i].Eta(),jets[j].Phi(),tightMu[i].Phi());   
-        }
-      
-      if (dR<0.4) continue; //throw away the event if deltaR btw jet and tightmu in less than 0.4
-      cout <<"Evt No. after "<<evt<<"   "<<"jet["<<j<< "] "<<jets[j].Pt()<<" dR(jet,mu) "<< dR <<endl;
-      
-      bool btagcond = jetIsCSVM[j]>0.;
-      if(useCSVTSelection){
-	      btagcond = jetIsCSVT[j]>0.;
-        }
-
-    if(!btagcond){
-        jet.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
-        jets_nob.push_back(jet);
-        }
-  
-    jetsPhi.push_back(jetPhi[j]);
-    TLorentzVector bjet;
-  
-    if( btagcond && abs(jetEta[j])<2.4){
-        bjet.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
-        bjets.push_back(bjet);
-        btag b;
-        b.vect = bjet;
-        b.csv = jetak4chs_csvv2[j];
-        bvects.push_back(b);
-        }  
-      }
-    }//End of else jet loop
+    }  
+   }
+   //End of jet loop
 
  
   nJets = jetsPhi.size();
@@ -1025,6 +1008,7 @@ for(Int_t evt=0; evt<nEvents; evt++ ){
           mt = sqrt(2* tightMu[i].Pt() * met* ( 1- cos(phi_lmet)));
 	  //	  cout << "muon iso "<< selectedIso[i]<< " mtw "<< mt <<endl;
 	  
+
           syst0BM.fillHistogramsSysts(h_2j0t_mtw,mt,w);
           }
       }
