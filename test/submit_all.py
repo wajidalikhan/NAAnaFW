@@ -10,7 +10,7 @@ def getOptions() :
     """
     Parse and return the arguments provided by the user.
     """
-    usage = ('usage: python submit_all.py -c CONFIG -d DIR ')
+    usage = ('usage: python submit_all.py -c CONFIG -d DIR -C CHANNEL')
 
     parser = OptionParser(usage=usage)    
     parser.add_option("-c", "--config", dest="config",
@@ -22,6 +22,13 @@ def getOptions() :
     parser.add_option("-f", "--datasets", dest="datasets",
         help=("File listing datasets to run over"),
         metavar="FILE")
+    parser.add_option("-C", "--channel", dest="channel",
+        help=("Channel for the file option"),
+        metavar="CHANNEL")
+    parser.add_option("-n", "--dryrun", dest="dryrun",
+        help=("Dry run"),
+        metavar="DRYRUN")
+
     (options, args) = parser.parse_args()
 
 
@@ -94,7 +101,8 @@ def main():
     config.Data.inputDataset = None
     config.Data.ignoreLocality = True
     #    config.Data.outLFNDirBase = '/store/user/oiorio/ttDM/samples/2016/Oct/'
-    config.Data.outLFNDirBase = '/store/user/oiorio/ttDM/trees/2016/Dec/12Dec/'
+#    config.Data.outLFNDirBase = '/store/user/oiorio/ttDM/trees/2016/Dec/12Dec/'
+    config.Data.outLFNDirBase = '/store/user/oiorio/ttDM/trees/2017/Jan/02Jan/'
     config.Data.inputDBS = 'phys03'
     config.Data.splitting = 'FileBased'
     #    config.Data.totalUnits = -1
@@ -144,10 +152,15 @@ def main():
 
         print "jobsplit11 ", job.split('/')[1]
 #        print "cfgparams befor", config.JobType.pyCfgParams
-        if ("QCD_Pt" in job.split('/')[1]) or ("ST_tW" in job.split('/')[1]):
-            config.JobType.pyCfgParams= ["isData=False", "changeJECs=True","channel=qcd"]
+        print options.channel
+        if options.channel == None:
+            if ("QCD_Pt" in job.split('/')[1]) or ("ST_tW" in job.split('/')[1]):
+                config.JobType.pyCfgParams= ["isData=False", "changeJECs=True","channel=qcd"]
+            else:
+                config.JobType.pyCfgParams = ["isData=False", "changeJECs=True"]
         else:
-            config.JobType.pyCfgParams = ["isData=False", "changeJECs=True"]
+            config.JobType.pyCfgParams = ["isData=False", "changeJECs=True","channel="+str(options.channel)]
+
         #        ptbin
         config.General.requestName = '80xV2_' + ptbin #+ cond[10:] 
         config.Data.inputDataset = job
@@ -157,9 +170,12 @@ def main():
         print config
         try :
             from multiprocessing import Process
-            p = Process(target=submit, args=(config,))
-            p.start()
-            p.join()
+            print options.dryrun
+            if options.dryrun == None:
+                p = Process(target=submit, args=(config,))
+                p.start()
+                p.join()
+            else: print 'dry run option set to True: run not submitted!'    
             #submit(config)
         except :
             print 'Not submitted.'

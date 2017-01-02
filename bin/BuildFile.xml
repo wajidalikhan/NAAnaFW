@@ -3,6 +3,8 @@
 <use  name="rootgraphics"/>
 <use  name="rootphysics"/>
 <use  name="rootminuit"/>
+<use  name="roofit"/>
+<use  name="roostats"/>
 <use  name="rootminuit2"/>
 <use  name="root"/>
 <use  name="roottmva"/>
@@ -12,5 +14,6 @@
 <flags cxxflags="-g -ggdb -O0" />
 <environment>
   <bin  file="SingleTopAnalysis.cpp" name="SingleTopAnalysis"></bin>
+  <bin  file="Fit.cpp" name="Fit"></bin>
 </environment>
 <flags  EDM_PLUGIN="1"/>

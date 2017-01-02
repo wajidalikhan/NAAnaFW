@@ -506,6 +506,7 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
   getParticleWZ = channelInfo.getUntrackedParameter<bool>("getParticleWZ",false);
   getPartonTop = channelInfo.getUntrackedParameter<bool>("getPartonTop",false);
   doWReweighting = channelInfo.getUntrackedParameter<bool>("doWReweighting",false);
+  doTopReweighting = channelInfo.getUntrackedParameter<bool>("doTopReweighting",false);
 
   getWZFlavour = channelInfo.getUntrackedParameter<bool>("getWZFlavour",false);
 
@@ -1049,7 +1050,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
   getParticleWZ=false;
   //  getPartonTop=false;
   doWReweighting=false;
-  doTopReweighting=false;
+  //doTopReweighting=false;
   //  useLHE=false;
   //  useLHEWeights=false;
   //  useLHE=false;
@@ -1157,9 +1158,11 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     topCharge=0;
     //    cout <<  " top charge"<<topCharge<<" gentop size "<<gentop.size()<<" antitop size"<< genantitop.size()<<endl;
     if(gentop.size()==1){
+      float_values["Event_T_size"]=1;
       topCharge=1;
     }
     if(gentop.size()==0&&genantitop.size()==1){
+      float_values["Event_Tbar_size"]= 1;
       topCharge=-1; 
     }
     //    cout <<  " top charge after"<<topCharge<<endl;
@@ -2950,10 +2953,14 @@ vector<string> DMAnalysisTreeMaker::additionalVariables(string object){
     addvar.push_back("T_Phi");
     addvar.push_back("T_E");
 
+    addvar.push_back("T_size");
+
     addvar.push_back("Tbar_Pt");
     addvar.push_back("Tbar_Eta");
     addvar.push_back("Tbar_Phi");
     addvar.push_back("Tbar_E");
+
+    addvar.push_back("Tbar_size");
 
     addvar.push_back("W_Pt");
     addvar.push_back("W_Eta");
@@ -3807,6 +3814,10 @@ void DMAnalysisTreeMaker::initTreeWeightHistory(bool useLHEW){
   trees["WeightHistory"]->Branch("Event_T_Ext_Weight",&float_values["Event_T_Ext_Weight"]);
   trees["WeightHistory"]->Branch("Event_T_Pt",&float_values["Event_T_Pt"]);
   trees["WeightHistory"]->Branch("Event_Tbar_Pt",&float_values["Event_Tbar_Pt"]);
+
+  trees["WeightHistory"]->Branch("Event_T_size",&float_values["Event_T_size"]);
+  trees["WeightHistory"]->Branch("Event_Tbar_size",&float_values["Event_Tbar_size"]);
+
 
   trees["WeightHistory"]->Branch("Event_W_Pt",&float_values["Event_W_Pt"]);
   trees["WeightHistory"]->Branch("Event_Z_Pt",&float_values["Event_Z_Pt"]);
