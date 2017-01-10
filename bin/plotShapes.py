@@ -35,7 +35,10 @@ for key in muon.GetListOfKeys():
 
 for var in variables:
     print "---- ", var
-    
+    lab=var
+    lab=var.split('_',1)
+    label=lab[1].replace ("_", " ")
+
     # get histograms 
     hist_muon = muon.Get(var)
     hist_muon.Rebin(5)
@@ -45,7 +48,8 @@ for var in variables:
     hist_muon.GetYaxis().SetTitle('Normalized to Unity')
     hist_muon.GetYaxis().SetTitleOffset(1.6)
     hist_muon.GetXaxis().SetTitleOffset(1.3)
-    hist_muon.GetXaxis().SetTitle(var)
+    #hist_muon.GetXaxis().SetTitle(var)
+    hist_muon.GetXaxis().SetTitle(label)
     hist_muon.SetMaximum(hist_muon.GetMaximum()*1.5);
     hist_muon.DrawNormalized("Hist")
     
