@@ -36,7 +36,7 @@ __init__.py*
 bin/SelectedEvents*
 bin/backup
 test/CRAB
-python/MakePlot/output/muon
+python/MakePlot/output
 bin/work/qexe
 *.png
 *.pdf
