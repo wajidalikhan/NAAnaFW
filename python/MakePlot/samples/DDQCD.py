@@ -5,9 +5,9 @@
 ######################################
 from utils import *
 
-#QCDMu_sigma = 720648000*0.00042*0.4
-#QCDMu_sigma*=0.025
-QCDMu_sigma=-1
+QCDMu_sigma = 720648000*0.00042*0.4
+QCDMu_sigma*=0.025
+#QCDMu_sigma=-1
 
 
 SingleMu_Run2016G = sample()
@@ -87,17 +87,11 @@ DDQCD = sample()
 DDQCD.color = ROOT.kGray
 DDQCD.style = 1
 DDQCD.fill = 1001
-DDQCD.leglabel = "DD-QCD"
-DDQCD.label = "DD-QCD"
-#Data.components = [    SingleMu_Run2016B,
-#                       SingleMu_Run2016C,
-#                       SingleMu_Run2016D,
-#                       SingleMu_Run2016E,
-#                       SingleMu_Run2016F,
-#                       SingleMu_Run2016G]
+DDQCD.leglabel = "DDQCD"
+DDQCD.label = "DDQCD"
 DDQCD.components = [    SingleMu_Run2016B,# 5.879141 
                         SingleMu_Run2016C,# 2.645968 
-                        SingleMu_Run2016D,# 4.353449 
+                        SingleMu_Run2016D# 4.353449 
 #                       SingleMu_Run2016E,# 4.049732
 #                       SingleMu_Run2016F,# 3.147823 
 #                       SingleMu_Run2016G,# 7.115969 
