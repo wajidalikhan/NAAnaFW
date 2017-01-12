@@ -66,6 +66,9 @@ int main(int argc, char **argv) {
     string isData(argv[7]);
     std::cout<<"\t isData: "<<isData<<endl;
 
+    string treesDir(argv[8]);
+    if(treesDir != "noTrees")std::cout<<"\t treesDir: "<<treesDir<<endl;
+    
     TString path_ = path ; 
     std::cout<<"\t File to open: "<<path_<<endl;
     std::cout<<"--------------------"<<endl; 
@@ -100,21 +103,22 @@ int main(int argc, char **argv) {
     TChain chainNEvents(treePathNEvents);
     chainNEvents.AddFileInfoList(fc.GetList());
     Int_t nEventsTot = (Int_t)chainNEvents.GetEntries();
-
+    
     TH1D totalWeightTop("w_top_total","Top pt reweighting: overall sample weight",2000,0,2.0);
     chainNEvents.Project("w_top_total","Event_T_Weight","Event_T_Weight!=1.00");
     double topWeight=totalWeightTop.GetMean();
     cout << "totaltopweight is "<< topWeight<<endl;
     if(topWeight==0)topWeight=1;
     
-    bool addTrees=true;
+    bool addTrees=false;
+    if (treesDir!="noTrees") addTrees=true;
     
-    TFile *outTree = new TFile;
+    TFile *outTreeFile = new TFile;
     if(addTrees){
-        outTree = TFile::Open("./trees/tree.root", "RECREATE");
-        outTree->Close();
-        }
-  
+      outTreeFile = TFile::Open((treesDir+"/trees_"+sample+"_"+channel+".root").c_str(), "RECREATE");
+    }
+    
+    
     Int_t nEvents = (Int_t)chain.GetEntries();
     std::cout<<"Info: Number of Events: "<<nEvents<< endl;
     //nEvents = std::min(nEvents, 1000);
@@ -456,16 +460,100 @@ int main(int argc, char **argv) {
         chain.SetBranchAddress("Event_passesHLT_Ele27_eta2p1_WP75_Gsf_v1", &slTrigEle_v1);
         chain.SetBranchAddress("Event_passesHLT_Ele27_eta2p1_WP75_Gsf_v2", &slTrigEle_v2);
         }
-  
     else{
         chain.SetBranchAddress("Event_passesHLT_Ele27_eta2p1_WPLoose_Gsf_v1", &slTrigEle_v1);
         chain.SetBranchAddress("Event_passesHLT_Ele27_eta2p1_WPLoose_Gsf_v2", &slTrigEle_v2);
         }
-
     chain.SetBranchAddress("Event_passesSingleElTriggers", &passElTrig);
     chain.SetBranchAddress("Event_passesSingleMuTriggers", &passMuTrig);
     chain.SetBranchAddress("Event_passesHadronicTriggers", &passHadTrig);
   
+
+
+    /********************************************************************************/
+    /**************                    MiniTree branching              ***************/
+    /********************************************************************************/
+    if(addTrees){
+    outTreeFile->cd();
+    }
+    TTree * trees1T[6];
+    TTree * trees2T[3];
+    //    float * flo = new float(1.0); 
+    //    float * mtw_2j1t = new float(-999.0); 
+    
+    //
+    //Standard selection: 2j1t + mtw cut
+    float * w_2j1t_mtwcut = new float(-999.0); 
+    float * etajprime_2j1t_mtwcut = new float(-999.0); 
+    float * topMass_2j1t_mtwcut = new float(-999.0); 
+    float * nextrajets_2j1t_mtwcut = new float(-999.0); 
+    float * leadingextrajetpt_2j1t_mtwcut = new float(-999.0); 
+    float * leadingextrajetcsv_2j1t_mtwcut = new float(-999.0); 
+    float * leadingextrajetcsvweight_2j1t_mtwcut = new float(-999.0); 
+    float * leadingextrajetcsvweight_sd_2j1t_mtwcut = new float(-999.0); 
+    float * topMassExtra_2j1t_mtwcut = new float(-999.0); 
+    //Tight t-channel selection: 2j1t + mtw cut + etajprime > 2.5
+    float * w_2j1t_mtwcut_sr = new float(-999.0); 
+    float * topMass_2j1t_mtwcut_sr = new float(-999.0); 
+    float * nextrajets_2j1t_mtwcut_sr = new float(-999.0); 
+    float * leadingextrajetpt_2j1t_mtwcut_sr = new float(-999.0); 
+    float * leadingextrajetcsv_2j1t_mtwcut_sr = new float(-999.0); 
+    float * leadingextrajetcsvweight_2j1t_mtwcut_sr = new float(-999.0); 
+    float * leadingextrajetcsvweight_sd_2j1t_mtwcut_sr = new float(-999.0); 
+    float * topMassExtra_2j1t_mtwcut_sr = new float(-999.0); 
+    //3j2t selection
+    float * w_3j2t = new float(-999.0); 
+    float * mtw_3j2t = new float(-999.0); 
+    float * etajprime_3j2t = new float(-999.0); 
+    float * topMassLeading_3j2t = new float(-999.0); 
+    float * topMassSecond_3j2t = new float(-999.0); 
+    float * nextrajets_3j2t = new float(-999.0); 
+
+    syst0BM.copySysts(systZero);
+    syst1BM.copySysts(systZero);
+    syst2BM.copySysts(systZero);
+    if(addTrees){
+      cout << "adding trees "<<endl;
+      //syst1BM.addSelection("3j1t_mtwcut");
+      syst1BM.addSelection("2j1t_mtwcut");
+      syst1BM.addSelection("2j1t_mtwcut_sr");
+      syst1BM.initTreesSysts(trees1T, outTreeFile);
+
+      syst2BM.addSelection("3j2t");
+      syst2BM.initTreesSysts(trees2T, outTreeFile);
+      cout << " bef branch trees" <<endl;
+
+      syst1BM.branchTreesSysts(trees1T,"2j1t_mtwcut","w", outTreeFile, w_2j1t_mtwcut);
+
+      syst1BM.branchTreesSysts(trees1T,"2j1t_mtwcut","etajprime", outTreeFile, etajprime_2j1t_mtwcut);
+      syst1BM.branchTreesSysts(trees1T,"2j1t_mtwcut","topMass", outTreeFile, topMass_2j1t_mtwcut);
+      syst1BM.branchTreesSysts(trees1T,"2j1t_mtwcut","topMassExtra", outTreeFile, topMassExtra_2j1t_mtwcut);
+      syst1BM.branchTreesSysts(trees1T,"2j1t_mtwcut","nextrajets", outTreeFile, nextrajets_2j1t_mtwcut);
+      syst1BM.branchTreesSysts(trees1T,"2j1t_mtwcut","leadingextrajetcsv", outTreeFile, leadingextrajetcsv_2j1t_mtwcut);
+      syst1BM.branchTreesSysts(trees1T,"2j1t_mtwcut","leadingextrajetpt", outTreeFile, leadingextrajetpt_2j1t_mtwcut);
+      syst1BM.branchTreesSysts(trees1T,"2j1t_mtwcut","leadingextrajetcsvweight", outTreeFile, leadingextrajetcsvweight_2j1t_mtwcut);
+      syst1BM.branchTreesSysts(trees1T,"2j1t_mtwcut","leadingextrajetcsvweight_sd", outTreeFile, leadingextrajetcsvweight_sd_2j1t_mtwcut);
+      
+      syst1BM.branchTreesSysts(trees1T,"2j1t_mtwcut_sr","w", outTreeFile, w_2j1t_mtwcut_sr);
+
+      syst1BM.branchTreesSysts(trees1T,"2j1t_mtwcut_sr","topMass", outTreeFile, topMass_2j1t_mtwcut_sr);
+      syst1BM.branchTreesSysts(trees1T,"2j1t_mtwcut_sr","topMassExtra", outTreeFile, topMassExtra_2j1t_mtwcut_sr);
+      syst1BM.branchTreesSysts(trees1T,"2j1t_mtwcut_sr","nextrajets", outTreeFile, nextrajets_2j1t_mtwcut_sr);
+      syst1BM.branchTreesSysts(trees1T,"2j1t_mtwcut_sr","leadingexrajetcsv", outTreeFile, leadingextrajetcsv_2j1t_mtwcut_sr);
+      syst1BM.branchTreesSysts(trees1T,"2j1t_mtwcut_sr","leadingextrajetpt", outTreeFile, leadingextrajetpt_2j1t_mtwcut_sr);
+      syst1BM.branchTreesSysts(trees1T,"2j1t_mtwcut","leadingextrajetcsvweight", outTreeFile, leadingextrajetcsvweight_2j1t_mtwcut_sr);
+      syst1BM.branchTreesSysts(trees1T,"2j1t_mtwcut","leadingextrajetcsvweight_sd", outTreeFile, leadingextrajetcsvweight_sd_2j1t_mtwcut_sr);
+
+      
+      syst2BM.branchTreesSysts(trees1T,"3j2t","w", outTreeFile, w_3j2t);
+
+      syst2BM.branchTreesSysts(trees2T,"3j2t","mtw", outTreeFile, mtw_3j2t);
+      syst2BM.branchTreesSysts(trees2T,"3j2t","etajprime", outTreeFile, etajprime_3j2t);
+      syst2BM.branchTreesSysts(trees2T,"3j2t","topMassLeading", outTreeFile, topMassLeading_3j2t);
+      syst2BM.branchTreesSysts(trees2T,"3j2t","topMassSecond", outTreeFile, topMassSecond_3j2t);
+    }
+
+    
     /********************************************************************************/
     /**************                    Histogram booking              ***************/
     /********************************************************************************/
@@ -777,7 +865,7 @@ int main(int argc, char **argv) {
             lepWeight1MuLepDown=lepWeight1Mu-errMu;
             }
         }
-
+    
     for (size_t e = 0; e < (size_t)tightEl.size(); ++e){
         lept lepton;
         lepton.p4 = tightEl[e];
@@ -1052,7 +1140,7 @@ int main(int argc, char **argv) {
       //      cout << " w "<< w <<" b weight 1 "<< bWeight1CSVM << endl;
       //      cout <<" pu weight = "<< w_pu<<endl; 
       //      cout <<" lep weight = "<< w_lep<<endl; 
-
+      
       if(b==0){
           syst1BM.fillHistogramsSysts(h_2j1t_bjetpt,bjets[b].Pt(),w,NULL,false);
           //cout << bjets[i].Pt()<< endl;
@@ -1066,8 +1154,7 @@ int main(int argc, char **argv) {
         syst1BM.fillHistogramsSysts(h_2j1t_MuEta,tightMu[i].Eta(),w);
         syst1BM.fillHistogramsSysts(h_2j1t_MuPhi,tightMu[i].Phi(),w);
         syst1BM.fillHistogramsSysts(h_2j1t_MuE,tightMu[i].E(),w);
-      
-        if((tightMu.size()) == 1 ){
+	if((tightMu.size()) == 1 ){
             TVector2 met_( met*cos(metPhi[0]), met*sin(metPhi[0]));
             float phi_lmet = fabs(deltaPhi(tightMu[i].Phi(), metPhi[0]) );
             mt = sqrt(2* tightMu[i].Pt() * met* ( 1 - cos(phi_lmet)));
@@ -1080,32 +1167,29 @@ int main(int argc, char **argv) {
                 } 
             }
         }
-    
+
     //define signal enriching condition:
     for (size_t j= 0; j< (size_t)jets.size();++j ){
       bool btagcond = jetIsCSVM[j]>0.;
       if(useCSVTSelection){
           btagcond = jetIsCSVT[j]>0.;
           }
-      
       if(!(btagcond)){
-	      syst1BM.fillHistogramsSysts(h_2j1t_ljetpt,jets[j].Pt(),w);
-	      syst1BM.fillHistogramsSysts(h_2j1t_ljeteta,jets[j].Eta(),w);
-	      syst1BM.fillHistogramsSysts(h_2j1t_etajprime,fabs(jets[j].Eta()),w);
-	      signalenriched=signalenriched||fabs(jets[j].Eta())>etathreshold;
-	    
-      if(qcddepleted) {
-	      syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_ljetpt,jets[j].Pt(),w);
-	      syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_ljeteta,jets[j].Eta(),w);
-	      syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_etajprime,fabs(jets[j].Eta()),w);
-	      }
-          } 
-          }
-    
+	syst1BM.fillHistogramsSysts(h_2j1t_ljetpt,jets[j].Pt(),w);
+	syst1BM.fillHistogramsSysts(h_2j1t_ljeteta,jets[j].Eta(),w);
+	syst1BM.fillHistogramsSysts(h_2j1t_etajprime,fabs(jets[j].Eta()),w);
+	signalenriched=signalenriched||fabs(jets[j].Eta())>etathreshold;
+	if(qcddepleted) {
+	  *etajprime_2j1t_mtwcut = fabs(jets[j].Eta());
+	  syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_ljetpt,jets[j].Pt(),w);
+	  syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_ljeteta,jets[j].Eta(),w);
+	  syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_etajprime,fabs(jets[j].Eta()),w);
+	}
+      } 
+    }
     //    cout << " filling extrajets "<<endl;
     syst1BM.fillHistogramsSysts(h_2j1t_nextrajets,extrajets.size(),w);
     //    cout << " filled nextrajets extrajets "<<endl;
-    
     if(extrajets.size()){
       
       //      syst1BM.fillHistogramsSysts(h_2j1t_leadingextrajetpt,jets20.at(0).Pt(),w);
@@ -1138,13 +1222,16 @@ int main(int argc, char **argv) {
     
     //Adding top related variables
     vector<TLorentzVector> tops= topUtils.top4Momenta(tightMu, bjets ,metpx, metpy);
+    
     if(tops.size()!=0){
       double mass = tops.at(0).M();
       double pt = tops.at(0).Pt();
+      *topMass_2j1t_mtwcut=mass;*topMass_2j1t_mtwcut_sr=mass;
       syst1BM.fillHistogramsSysts(h_2j1t_topMass,mass,w);
       syst1BM.fillHistogramsSysts(h_2j1t_topPt,pt,w);
       //      if(calculate_mtw(metPt, metPhi,tightMu) > 50.0) {
       if(qcddepleted){ 
+
 	syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_topMass,mass,w);
         syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_topPt,pt,w);
       }
@@ -1157,9 +1244,28 @@ int main(int argc, char **argv) {
     //    cout << "tops ok"<<endl;
     if(qcddepleted){
        syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_nextrajets,extrajets.size(),w);
-       if(signalenriched)syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_sr_nextrajets,extrajets.size(),w);
-       //6&       cout << "extrajet sizes ok"<<endl;
+       *nextrajets_2j1t_mtwcut=extrajets.size();
 
+       *leadingextrajetpt_2j1t_mtwcut=-99;
+       *leadingextrajetcsv_2j1t_mtwcut=-99;
+       *topMassExtra_2j1t_mtwcut=-99;
+
+       *leadingextrajetcsvweight_2j1t_mtwcut=0;
+       *leadingextrajetcsvweight_sd_2j1t_mtwcut=0;
+
+       if(signalenriched){
+	 syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_sr_nextrajets,extrajets.size(),w);
+	 *nextrajets_2j1t_mtwcut_sr=extrajets.size();
+	 
+	 *leadingextrajetpt_2j1t_mtwcut_sr=-99;
+	 *leadingextrajetcsv_2j1t_mtwcut_sr=-99;
+	 *topMassExtra_2j1t_mtwcut_sr=-99;
+
+	 *leadingextrajetcsvweight_2j1t_mtwcut_sr=0;
+	 *leadingextrajetcsvweight_sd_2j1t_mtwcut_sr=0;
+
+       }
+       
        if(extrajets.size()){
 	 vector<TLorentzVector> topsextra= topUtils.top4Momenta(tightMu, jets20 ,metpx, metpy);
 
@@ -1172,15 +1278,18 @@ int main(int argc, char **argv) {
 	 }
 	 
 	 if(topsextra.size()!=0){
+	   *leadingextrajetcsvweight_2j1t_mtwcut=extrajets.at(0).csvreweight;
 	   if(fillcond){
 	     syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_topMassExtra,topsextra[0].M(),w);
 	     syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_leadingextrajetpt,extrajets.at(0).vect.Pt(),w);
 	     syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_leadingextrajetcsv,extrajets.at(0).csv,w*weightreshape);
+	     *leadingextrajetcsvweight_sd_2j1t_mtwcut=0;
 	   }
 	   else{
 	     float weight_sd_b=extrajets.at(0).csvreweightsd;
 	     syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_leadingextrajetcsv_sd_b,extrajets.at(0).csv,w*weightreshape*weight_sd_b);
 	     syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_leadingextrajetcsv_reshape_sd_b, weight_sd_b,w);
+	     *leadingextrajetcsvweight_sd_2j1t_mtwcut=weight_sd_b;
 	     if(reweightall){
 	       syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_topMassExtra_sd_b,topsextra[0].M(),w*weight_sd_b);
 	       syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_leadingextrajetpt_sd_b,extrajets.at(0).vect.Pt(),w*weight_sd_b);
@@ -1193,18 +1302,27 @@ int main(int argc, char **argv) {
 	   }
 	   //	   cout << "extrajet csvs ok"<<endl;
 	   
+	   *leadingextrajetpt_2j1t_mtwcut=extrajets.at(0).vect.Pt();
+	   *leadingextrajetcsv_2j1t_mtwcut=extrajets.at(0).csv;
+	   *topMassExtra_2j1t_mtwcut=topsextra[0].M();
 	 }
 	 if(signalenriched){
+	   *leadingextrajetcsvweight_2j1t_mtwcut_sr=extrajets.at(0).csvreweight;
 	   if(fillcond){
 	   //	   cout<< " filling histograms for the signal enriched region"<<endl;
 	   syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_sr_topMassExtra,topsextra[0].M(),w);
 	   syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_sr_leadingextrajetpt,extrajets.at(0).vect.Pt(),w);
 	   syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_sr_leadingextrajetcsv,extrajets.at(0).csv,w*weightreshape);
+	   *leadingextrajetpt_2j1t_mtwcut_sr=extrajets.at(0).vect.Pt();
+	   *leadingextrajetcsv_2j1t_mtwcut_sr=extrajets.at(0).csv;
+	   *topMassExtra_2j1t_mtwcut_sr=topsextra[0].M();
+	   *leadingextrajetcsvweight_sd_2j1t_mtwcut_sr=0;
 	   }
 	   else{
 	     float weight_sd_b=extrajets.at(0).csvreweightsd;
 	     syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_sr_leadingextrajetcsv_sd_b,extrajets.at(0).csv,w*weightreshape*weight_sd_b);
 	     syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_sr_leadingextrajetcsv_reshape_sd_b, weight_sd_b,w);
+	     *leadingextrajetcsvweight_sd_2j1t_mtwcut_sr=weight_sd_b;
 	     if(reweightall){
 	       syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_sr_topMassExtra_sd_b,topsextra[0].M(),w*weight_sd_b);
 	       syst1BM.fillHistogramsSysts(h_2j1t_mtwcut_sr_leadingextrajetpt_sd_b,extrajets.at(0).vect.Pt(),w*weight_sd_b);
@@ -1218,8 +1336,15 @@ int main(int argc, char **argv) {
 	 }
        }
     }
+    if(qcddepleted){
+      *w_2j1t_mtwcut=w;
+      if(addTrees)syst1BM.fillTreesSysts(trees1T,"2j1t_mtwcut");
+    }
+    if(signalenriched && qcddepleted) {
+      *w_2j1t_mtwcut_sr=w;
+      if(addTrees)syst1BM.fillTreesSysts(trees1T,"2j1t_mtwcut_sr");}
     //AOB for 2j1t?
-  }
+    }
   //End 2j1t
 
   //3j1t   
@@ -1268,6 +1393,7 @@ int main(int argc, char **argv) {
           float phi_lmet = fabs(deltaPhi(tightMu[i].Phi(), metPhi[0]) );
           mt = sqrt(2* tightMu[i].Pt() * met* ( 1- cos(phi_lmet)));
           syst2BM.fillHistogramsSysts(h_3j2t_mtw,mt,w);
+	  *mtw_3j2t=mt;
 	}
       }
     }
@@ -1282,14 +1408,22 @@ int main(int argc, char **argv) {
 	syst2BM.fillHistogramsSysts(h_3j2t_ljetpt,(jets.at(j).Pt()),w);
 	syst2BM.fillHistogramsSysts(h_3j2t_ljeteta,(jets.at(j).Eta()),w);
 	syst2BM.fillHistogramsSysts(h_3j2t_etajprime,(fabs(jets.at(j).Eta())),w);
+	*etajprime_3j2t=fabs(jets.at(j).Eta());
       }
     }
-    syst2BM.fillHistogramsSysts(h_3j2t_nextrajets,extrajets.size(),w);
-    /* TH1F *h_3j2t_ljetpt[maxSysts];   systZero.initHistogramsSysts(h_3j2t_ljetpt,    "h_3j2t_ljetpt",     "3j2t b jet pt ",100,0,500);
-    TH1F *h_3j2t_ljeteta[maxSysts];   systZero.initHistogramsSysts(h_3j2t_ljeteta,    "h_3j2t_ljeteta",     "3j2t b jet pt ",100,0,500);
-    TH1F *h_3j2t_etajprime[maxSysts];   systZero.initHistogramsSysts(h_3j2t_etajprime,    "h_3j2t_etajprime",     "3j2t b jet pt ",100,-4.7,4.7);*/
-					  ;
 
+    vector<TLorentzVector> tops= topUtils.top4Momenta(tightMu, bjets ,metpx, metpy);
+    if(tops.size()!=0){
+      double massLeading = tops.at(0).M();
+      double massSecond = tops.at(1).M();
+      *topMassLeading_3j2t=massLeading;
+      *topMassSecond_3j2t=massSecond;
+    }    
+    syst2BM.fillHistogramsSysts(h_3j2t_nextrajets,extrajets.size(),w);
+    *nextrajets_3j2t= extrajets.size();
+    
+    *w_3j2t=w;
+    if(addTrees)syst2BM.fillTreesSysts(trees2T,"3j2t");
     //AOB for 3j2t?
   }
   //End 3j2t
@@ -1482,7 +1616,10 @@ int main(int argc, char **argv) {
   systZero.writeHistogramsSysts(h_nbJets, allMyFiles); 
 
 
-  
+  if(addTrees){
+    syst1BM.writeTreesSysts(trees1T,outTreeFile);
+    syst2BM.writeTreesSysts(trees2T,outTreeFile);
+  }
   
   systZero.closeFilesSysts(allMyFiles);
   

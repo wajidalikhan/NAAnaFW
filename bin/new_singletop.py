@@ -17,7 +17,7 @@ from utils import *
 #Usage: python new_singletop.py -c muonantiiso -s noSys -m local -P _test -d DATA
 #Usage: python new_singletop.py -c muonantiiso -s noSys -m local -P _test -l mc
 #Usage: python new_singletop.py --t3batch -f files/final/ -P SingleMuon -d DATA -S 40 -c munonantiiso
-#Usage: python new_singletop.py -c muonantiiso -s noSys --t3batch -f files/final/ -P SingleMuon -d DATA -S 40
+#Usage: python new_singletop.py -c muonantiiso -s noSys --t3batch -f files/final/ -P SingleMuon -d DATA -S 40 -t trees
 
 
 #More complex working example: this will run only the ST_T_tch and the V+Jets samples and split them into batches of 10 files, taking them from the remote folder on Orso's public:
@@ -53,6 +53,7 @@ parser.add_option('-C', '--cat',      dest='cat',     type='string',     default
 parser.add_option('-s', '--sys',      dest='sys',     type='string',     default = 'noSys',   help='Systematics: jesUp, jesDown, jerUp, jerDown')
 parser.add_option('',   '--sync',     dest='sync',    type='string',     default = 'noSync',  help='Synchro exercise')
 parser.add_option('-d', '--isData',   dest='isData',  type='string',     default = 'MC',      help='is Data or MC?')
+parser.add_option('-t', '--treesDir',        dest='treesDir',  type='string',  default = "noTrees",        help='trees directory, if blank no tree is generated')
 
 #Running mode details:
 parser.add_option('-g', '--gdb',      dest='gdb',     action='store_true', default=False)
@@ -65,6 +66,7 @@ parser.add_option('-S', '--split',        dest='split',  type=int,     default =
 
 isData="MC"
 (opt, args) = parser.parse_args()
+
 
 if opt.sys not in ["noSys", "jesUp", "jesDown", "jerUp", "jerDown", "metUnclUp", "metUnclDown"]:
     parser.error('Please choose an allowed value for sys: "noSys", "jesUp", "jesDown", "jerUp", "jerDown","metUnclUp", "metUnclDown"')
@@ -155,13 +157,17 @@ for s in samples:
     with open(sampleFileList,'w') as sl:
         sl.write('\n'.join(files))
     
+        
     outDirs = ['res','trees']
-    
+
+    if (opt.treesDir!="./" and opt.treesDir!='noTrees'): outDirs.append(opt.treesDir)
     for d in outDirs:
         if exists(d): continue
         os.makedirs(d)
-    
-    cmd = 'SingleTopAnalysis '+ s + ' ' + sampleFileList  + ' ' + opt.channel + ' ' + opt.cat + ' ' + opt.sys + ' ' + opt.sync + ' ' + isData
+        
+#    treescheck = (not (commands.getstatusoutput('ls '+ opt.treesDir)[0]==0))
+#    print "treescheck, command is ",("ls "+opt.treesDir)," result ",treescheck
+    cmd = 'SingleTopAnalysis '+ s + ' ' + sampleFileList  + ' ' + opt.channel + ' ' + opt.cat + ' ' + opt.sys + ' ' + opt.sync + ' ' + isData + ' ' + opt.treesDir
     print cmd
 
     if opt.gdb:
