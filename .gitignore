@@ -38,6 +38,10 @@ bin/backup
 test/CRAB
 python/MakePlot/output
 bin/work/qexe
+python/MakePlot/samples/__init__.pyc
+python/MakePlot/samples/__init__.py
+python/MakePlot/samples/*.pyc
+
 *.png
 *.pdf
 .__afs*
