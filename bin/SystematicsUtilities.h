@@ -11,6 +11,15 @@ struct systWeights{
   void rescaleHistograms(TH1F** histo, TH1F ** histoweights);
   void addHistograms(TH1F** histo, TH1F ** histoweights);
 
+  //Trees parts
+  void initTreesSysts(TTree ** trees, TFile * file);
+  void initTreeSysts(TTree * tree);
+  
+  void branchTreesSysts(TTree ** trees, TString selection, TString name, TFile * file, float * f);
+  void fillTreesSysts(TTree ** trees, TString selection);
+  void writeTreesSysts(TTree ** trees, TFile * file);
+  
+
   void closeFilesSysts(TFile ** allFiles);
   void writeHistogramsSysts(TH1F** histo, TFile ** allFiles );
   void writeSingleHistogramSysts(TH1F* histo,TFile ** allMyFiles);
@@ -31,11 +40,15 @@ struct systWeights{
   void addSyst(string name);
   void addSystNonPDF(string name);
   void setWCats(double *wcats);
+  void setSelectionsNames(string * selections);
+
+  //Selections
+  void addSelection(string name);
 
   void addkFact(string name);
   void setkFact(string name,float kfact_nom, float kfact_up,float kfact_down,  bool mult=true);
 
-  void copySysts(systWeights sys);
+  void copySysts(systWeights sys,bool copySelections=false);
   void calcPDFHisto(TH1F** histos, TH1F* singleHisto, double scalefactor=1.0, int c = 0);
   void setOnlyNominal(bool useOnlyNominal=false);
   bool onlyNominal;
@@ -43,9 +56,11 @@ struct systWeights{
   int maxSysts, maxSystsNonPDF;
   int nPDF;
   int nCategories;
+  int nSelections;
   float weightedSysts[150];
   double wCats[10];
   string weightedNames[150];
+  string selectionsNames[20];
   string categoriesNames[10];
   };
 
@@ -125,6 +140,48 @@ void systWeights::setWeight(string name, double value, bool mult){
 
 void systWeights::setWeight(int place, double value, bool mult){
   this->setSystValue(place, value, mult);
+}
+
+
+void systWeights::initTreesSysts(TTree ** trees, TFile * file){
+  file->cd();
+  for(int s =0;s<this->nSelections;++s){
+    trees[s]= new TTree(("events_"+this->selectionsNames[s]).c_str(),"");
+    this->initTreeSysts(trees[s]);
+  }
+}
+
+void systWeights::initTreeSysts(TTree * tree){
+  int MAX = this->maxSysts;
+  for(int sy=0;sy<(int)MAX;++sy){
+    TString ns= (this->weightedNames[sy]).c_str();
+    if(sy==0)ns = "w_nominal";
+    tree->Branch(ns,&(this->weightedSysts[(int)sy]));
+  }
+  for (int c = 0; c < this->nCategories; c++){
+    TString cname=  (this->categoriesNames[c]).c_str();
+    tree->Branch(cname, &(this->wCats[c]));
+  }  
+
+}
+
+void systWeights::branchTreesSysts(TTree ** trees, TString selection, TString name, TFile * file, float * f){
+  file->cd();
+  for(int s =0;s<this->nSelections;++s){
+    if(selection == this->selectionsNames[s]) trees[s]->Branch(name,f);
+  }
+}
+void systWeights::fillTreesSysts(TTree ** trees, TString selection){
+  for(int s =0;s<this->nSelections;++s){
+    if(selection == this->selectionsNames[s]) trees[s]->Fill();
+  }
+}
+void systWeights::writeTreesSysts(TTree ** trees, TFile * file){
+  file->cd();
+  for(int s =0;s<this->nSelections;++s){
+    trees[s]->Write();
+  }
+
 }
 
 void systWeights::initHistogramsSysts(TH1F** histo,TString name, TString title, int nbins, float min, float max){
@@ -336,29 +393,44 @@ void systWeights::fillHistogramsSysts(TH1F** histo, float v, float w, double * w
 
 void systWeights::setWCats(double * wcats){
   for(int i =0;i<this->nCategories;++i){
-    //    cout << "setting wcat #"<< i << " to be "<<wcats[i]<<endl;
+    //   cout << "setting wcat #"<< i << " to be "<<wcats[i]<<endl;
     this->wCats[i]=wcats[i];
   }
  
 }
 
-void systWeights::copySysts(systWeights sys){
+void systWeights::addSelection(string selection){
+  this->selectionsNames[this->nSelections]=selection;
+  this ->nSelections = this->nSelections+1;
+}
+
+void systWeights::setSelectionsNames(string * selections){
+  for(int s =0;s<this->nSelections;++s){
+    this->selectionsNames[s]=selections[s];
+
+    //   cout << "setting wcat #"<< i << " to be "<<wcats[i]<<endl;
+  }
+ 
+}
+
+void systWeights::copySysts(systWeights sys, bool copySelections){
   for(int i =0; i < sys.maxSysts;++i){
     this->weightedNames[i]=sys.weightedNames[i];
     this->weightedSysts[i]=sys.weightedSysts[i];
-
   }
   this->setOnlyNominal(sys.onlyNominal);
   this->setMax(sys.maxSysts);
   this->setMaxNonPDF(sys.maxSystsNonPDF);
   this->nPDF=sys.nPDF;
   this->nCategories=sys.nCategories;  
+  if(copySelections)this->nSelections=sys.nSelections;  
   this->addQ2=sys.addQ2;
   this->addPDF=sys.addPDF;
   this->addTopPt=sys.addTopPt;
   this->addVHF=sys.addVHF;
   this->addTTSplit=sys.addTTSplit;
   this->setWCats(sys.wCats);
+  if(copySelections)this->setSelectionsNames(sys.selectionsNames);
 
 }
 
@@ -379,6 +451,7 @@ void systWeights::prepareDefault(bool addDefault, bool addQ2, bool addPDF, bool 
   this->nCategories=1;
   categoriesNames[0]="";
   this->wCats[0]=1.0;
+  this->nSelections=0;
   if(addDefault){
     this->weightedNames[0]="";
     this->weightedNames[1]="btagUp";

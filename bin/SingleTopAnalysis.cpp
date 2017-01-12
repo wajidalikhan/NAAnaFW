@@ -545,7 +545,7 @@ int main(int argc, char **argv) {
       syst1BM.branchTreesSysts(trees1T,"2j1t_mtwcut","leadingextrajetcsvweight_sd", outTreeFile, leadingextrajetcsvweight_sd_2j1t_mtwcut_sr);
 
       
-      syst2BM.branchTreesSysts(trees1T,"3j2t","w", outTreeFile, w_3j2t);
+      syst2BM.branchTreesSysts(trees2T,"3j2t","w", outTreeFile, w_3j2t);
 
       syst2BM.branchTreesSysts(trees2T,"3j2t","mtw", outTreeFile, mtw_3j2t);
       syst2BM.branchTreesSysts(trees2T,"3j2t","etajprime", outTreeFile, etajprime_3j2t);
@@ -1047,30 +1047,31 @@ int main(int argc, char **argv) {
     std::sort(extrajets.begin(), extrajets.end(), by_pt_jet()); 
     //  bool passmuon = muonTrigger && nMu == 1 && muLooseSize==1 && nEl==0 && elLooseSize == 0;
   
-    bool passmuon = muonTrigger && nMu == 1 ;
-    if(passmuon){n_lepton+=w;nev_lepton+=1;}
+  bool passmuon = muonTrigger && nMu == 1 ;
+  if(passmuon){n_lepton+=w;nev_lepton+=1;}
 
-    passmuon = passmuon && muLooseSize==1;
-    if(passmuon){ n_loose_veto+=w; nev_loose_veto+=1;}
+  passmuon = passmuon && muLooseSize==1;
+  if(passmuon){ n_loose_veto+=w; nev_loose_veto+=1;}
   
-    passmuon = passmuon && nEl==0 && elLooseSize == 0;
-    if(passmuon){n_lepton_cross_veto+=w;nev_lepton_cross_veto+=1;}
+  passmuon = passmuon && nEl==0 && elLooseSize == 0;
+  if(passmuon){n_lepton_cross_veto+=w;nev_lepton_cross_veto+=1;}
 
-    if(topsize==1)topcharge=1.;
-    else if(antitopsize==1)topcharge=-1.;
- 
-    bool passantiisomuon = muonTrigger && muAntiIsoSize==1 && nMu==1 && nEl==0 && elLooseSize == 0;
-
-    bool passelectron = false;
-    bool passsinglelepton = passmuon || passelectron;
-    
-    if(channel=="muonantiiso" && !passantiisomuon) continue;
-    if(channel=="muon" && !passmuon)continue; 
-    
-    //cout <<"Evt No. after "<<evt<<" tightMuons "<<nMu<<" Loose Muons "<<muLooseSize<<endl;  
+  if(topsize==1)topcharge=1.;
+  else if(antitopsize==1)topcharge=-1.;
+  //bool passantiisomuon = muonTrigger && nMu == 1 && muLooseSize == 0 && nEl==0 && elLooseSize == 0;
+  //bool passantiisomuon = muonTrigger && muAntiIsoSize==1 && nMu==1 && nEl==0 && elLooseSize == 0;
   
-    if(channel=="electron" && !passelectron)continue;
-    if(channel=="singlelepton" && !passsinglelepton)continue;
+  bool passantiisomuon = muonTrigger && muAntiIsoSize==1 && nMu==1 && nEl==0 && elLooseSize == 0;
+  
+  bool passelectron = false;
+  bool passsinglelepton = passmuon || passelectron;
+
+  if(channel=="muonantiiso" && !passantiisomuon) continue;
+  if(channel=="muon" && !passmuon)continue; 
+  //cout <<"Evt No. after "<<evt<<" tightMuons "<<nMu<<" Loose Muons "<<muLooseSize<<endl; 
+  
+  if(channel=="electron" && !passelectron)continue;
+  if(channel=="singlelepton" && !passsinglelepton)continue;
   
     if(jets.size() ==2){ n_2j+=w; nev_2j+=1;}
     if(jets.size() ==2 && bjets.size()==1){ n_2j1t+=w; nev_2j1t+=1;  

@@ -882,7 +882,7 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
 
     stringstream mgenjet;
     mgenjet << max_instances_genjet;
-        cout <<" using genJets: not implemented atm"<<endl;
+            cout <<" using genJets: not implemented atm"<<endl;
     string nameshortv= "genJets";
     vector<string> extravarsgenjets = additionalVariables(nameshortv);
     for(size_t addv = 0; addv < extravarsgenjets.size();++addv){
@@ -1061,8 +1061,8 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     }
   
   
-  if(getPartonW || getPartonTop || doWReweighting || doTopReweighting){
-    if(!useLHE)return;
+  if((getPartonW || getPartonTop || doWReweighting || doTopReweighting )&& useLHE){
+    //    if(!useLHE)return;
     genlep.clear();
     gentop.clear();
     genantitop.clear();
@@ -1384,7 +1384,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
   iEvent.getByToken(jetAK8topSubjetIndex3, ak8jetSubjetIndex3);
 
   //  if(isFirstEvent)
-  //cout << "jec version is "<<JECVersion<<" Change JECs? " << changeJECs<<endl;
+  //  cout << "jec version is "<<JECVersion<<" Change JECs? " << changeJECs<<endl;
   //Part 0: trigger preselection
   
       
@@ -1557,7 +1557,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
   
   vector<int> flavors;
 
-
+  //  cout << "pres"<<endl;
   for (size_t s = 0; s< systematics.size();++s){
 
     //    cout << "syst"<< systematics.at(s)<<endl;
@@ -1591,7 +1591,8 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 
     //Photons
     //    initCategoriesSize(photon_label);
- 
+
+    //    cout << " prephoton "<<endl;
     for(int ph = 0;ph < max_instances[photon_label] ;++ph){
       string pref = obj_to_pref[photon_label];
       
@@ -1642,6 +1643,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     }
     
     //Muons
+    //    cout << "testing muons now"<<endl;
     //    initCategoriesSize(mu_label);
     for(int mu = 0;mu < max_instances[mu_label] ;++mu){
       string pref = obj_to_pref[mu_label];
@@ -1725,6 +1727,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       }
     }
     //    cout << "testing electrons now"<<endl;
+    //    cout << " test 1 "<<endl;
     //Electrons:
     for(int el = 0;el < max_instances[ele_label] ;++el){
       string pref = obj_to_pref[ele_label];
@@ -2128,17 +2131,16 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
         //passesID =  (nDau >1.0 && fabs(eta) < 4.7 && (fabs(eta)>=2.4 ||(chHadEnFrac>0.0 && chMulti>0 && chEmEnFrac<0.99)) && neuEmEnFrac<0.99 && neuHadEnFrac <0.99 && muEnFrac<0.8) ;
 
         if(fabs(eta)<=2.7){
-          passesID =  (neuHadEnFrac<0.99 && neuEmEnFrac<0.99 && numConst>1) && ((fabs(eta)<=2.4 && chHadEnFrac>0 && chMulti>0 && chEmEnFrac<0.99) || fabs(eta)>2.4);
-         }
-	
-        else if( (fabs(eta) >2.7) && (fabs(eta)<=3.0)) {
+          passesID =  (neuHadEnFrac<0.99 && neuEmEnFrac<0.99 && numConst>1) && 
+	    ( (fabs(eta)<=2.4 && chHadEnFrac>0 && chMulti>0 && chEmEnFrac<0.99) || fabs(eta)>2.4);
+        }
+	else if( (fabs(eta) >2.7) && (fabs(eta)<=3.0)) {
           passesID = neuEmEnFrac<0.90 && neuMulti>2. ;
-	        }
-        
+	}
         else if(fabs(eta)>3.0){
           passesID = neuEmEnFrac<0.90 && neuMulti>10. ;
-          }
         }
+      }
       
       vfloats_values[jets_label+"_PassesID"][j]=(float)passesID;
       //Remove overlap with tight electrons/muons
@@ -2150,10 +2152,9 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
  
 
       for (size_t e = 0; e < (size_t)electrons.size(); ++e){
-	      minDR = min(minDR,deltaR(math::PtEtaPhiELorentzVector(electrons.at(e).Pt(),electrons.at(e).Eta(),electrons.at(e).Phi(),electrons.at(e).Energy()),math::PtEtaPhiELorentzVector(ptCorr, eta, phi, energyCorr)));
-	    if(minDR<minDRThrEl)passesDR = false;
+	minDR = min(minDR,deltaR(math::PtEtaPhiELorentzVector(electrons.at(e).Pt(),electrons.at(e).Eta(),electrons.at(e).Phi(),electrons.at(e).Energy() ) ,math::PtEtaPhiELorentzVector(ptCorr, eta, phi, energyCorr)));
+	if(minDR<minDRThrEl)passesDR = false;
       }
-      
       for (size_t m = 0; m < (size_t)muons.size(); ++m){
 	minDR = min(minDR,deltaR(math::PtEtaPhiELorentzVector(muons.at(m).Pt(),muons.at(m).Eta(),muons.at(m).Phi(),muons.at(m).Energy() ) ,math::PtEtaPhiELorentzVector(ptCorr, eta, phi, energyCorr)));
 	if(minDR<minDRThrMu)passesDR = false;
@@ -2318,6 +2319,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 
     //Preselection part
 
+    //    cout << " before preselection "<<endl;
 		       
     if(doPreselection){
       bool passes = true;
@@ -2340,9 +2342,12 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       }
     }
     
+
     //======================================================
+    //    cout << " before lepton "<<endl;
+
     TLorentzVector lepton;
-    
+    //    cout << " test 1 "<<endl;
     if( ( (electrons.size()==1 && muons.size()==0 ) || (muons.size()==1 && electrons.size()==0) ) && bjets.size()>0 ){
       if(electrons.size()==1) lepton = electrons[0];
       else if(muons.size()==1) lepton = muons[0];
