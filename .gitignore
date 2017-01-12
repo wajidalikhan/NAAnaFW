@@ -41,6 +41,11 @@ bin/work/qexe
 python/MakePlot/samples/__init__.pyc
 python/MakePlot/samples/__init__.py
 python/MakePlot/samples/*.pyc
+python/MakePlot/plots/__init__.pyc
+python/MakePlot/plots/__init__.py
+python/__init__.pyc
+python/__init__.py
+
 
 *.png
 *.pdf
