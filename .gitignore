@@ -26,8 +26,11 @@ ompiled Object files
 
 
 # python compiled
-*pyc
-__init__.py*
+*.pyc
+*.pyo
+
+__init__.py
+__init__.pyc
 
 # root files
 *.root
