@@ -25,8 +25,9 @@
 <use   name="RecoEcal/EgammaCoreTools"/>
 <!-- <use   name="Utilities/Timing"/> -->
 <use   name="CondFormats/HLTObjects"/>
+<use   name="CondFormats/BTauObjects"/>
+<use   name="CondTools/BTau"/>
 <use   name="root"/>
-<use   name="rootmva"/>
 <use   name="DataFormats/CSCRecHit"/>
 <use   name="DataFormats/MuonDetId"/>
 <use   name="Geometry/CSCGeometry"/>
@@ -68,5 +69,4 @@
 <use name="DataFormats/PatCandidates"/>
 <use name="DataFormats/MuonReco"/>
 <use name="DataFormats/VertexReco"/>
-<use name="TopTagger/Resolved"/>
 <flags   EDM_PLUGIN="1"/>

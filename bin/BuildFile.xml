@@ -14,6 +14,5 @@
 <flags cxxflags="-g -ggdb -O0" />
 <environment>
   <bin  file="SingleTopAnalysis.cpp" name="SingleTopAnalysis"></bin>
-  <bin  file="Fit.cpp" name="Fit"></bin>
 </environment>
 <flags  EDM_PLUGIN="1"/>

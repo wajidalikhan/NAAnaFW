@@ -238,7 +238,7 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
             
             for c in s.components:
                 #print "comp ", c.label
-                if(opt.sys=="noSys") and (s.label=="DD-QCD"):
+                if(opt.sys=="noSys") and (s.label=="DDQCD"):
                     filename = opt.resdir+'/res/'+c.label + "_" + channel +".root"
                     filename_nEvt = opt.resdir+'/res/' + c.label + "_" + channel +".root"
                     

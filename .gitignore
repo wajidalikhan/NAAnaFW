@@ -26,8 +26,11 @@ ompiled Object files
 
 
 # python compiled
-*pyc
-__init__.py*
+*.pyc
+*.pyo
+
+__init__.py
+__init__.pyc
 
 # root files
 *.root
@@ -36,8 +39,17 @@ __init__.py*
 bin/SelectedEvents*
 bin/backup
 test/CRAB
-python/MakePlot/output/muon
+python/MakePlot/output
 bin/work/qexe
+python/MakePlot/samples/__init__.pyc
+python/MakePlot/samples/__init__.py
+python/MakePlot/samples/*.pyc
+python/MakePlot/plots/__init__.pyc
+python/MakePlot/plots/__init__.py
+python/__init__.pyc
+python/__init__.py
+
+
 *.png
 *.pdf
 .__afs*

@@ -2128,16 +2128,17 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
         //passesID =  (nDau >1.0 && fabs(eta) < 4.7 && (fabs(eta)>=2.4 ||(chHadEnFrac>0.0 && chMulti>0 && chEmEnFrac<0.99)) && neuEmEnFrac<0.99 && neuHadEnFrac <0.99 && muEnFrac<0.8) ;
 
         if(fabs(eta)<=2.7){
-          passesID =  (neuHadEnFrac<0.99 && neuEmEnFrac<0.99 && numConst>1) && 
-	    ( (fabs(eta)<=2.4 && chHadEnFrac>0 && chMulti>0 && chEmEnFrac<0.99) || fabs(eta)>2.4);
-        }
-	else if( (fabs(eta) >2.7) && (fabs(eta)<=3.0)) {
+          passesID =  (neuHadEnFrac<0.99 && neuEmEnFrac<0.99 && numConst>1) && ((fabs(eta)<=2.4 && chHadEnFrac>0 && chMulti>0 && chEmEnFrac<0.99) || fabs(eta)>2.4);
+         }
+	
+        else if( (fabs(eta) >2.7) && (fabs(eta)<=3.0)) {
           passesID = neuEmEnFrac<0.90 && neuMulti>2. ;
-	}
+	        }
+        
         else if(fabs(eta)>3.0){
           passesID = neuEmEnFrac<0.90 && neuMulti>10. ;
+          }
         }
-      }
       
       vfloats_values[jets_label+"_PassesID"][j]=(float)passesID;
       //Remove overlap with tight electrons/muons
@@ -2149,9 +2150,10 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
  
 
       for (size_t e = 0; e < (size_t)electrons.size(); ++e){
-	minDR = min(minDR,deltaR(math::PtEtaPhiELorentzVector(electrons.at(e).Pt(),electrons.at(e).Eta(),electrons.at(e).Phi(),electrons.at(e).Energy() ) ,math::PtEtaPhiELorentzVector(ptCorr, eta, phi, energyCorr)));
-	if(minDR<minDRThrEl)passesDR = false;
+	      minDR = min(minDR,deltaR(math::PtEtaPhiELorentzVector(electrons.at(e).Pt(),electrons.at(e).Eta(),electrons.at(e).Phi(),electrons.at(e).Energy()),math::PtEtaPhiELorentzVector(ptCorr, eta, phi, energyCorr)));
+	    if(minDR<minDRThrEl)passesDR = false;
       }
+      
       for (size_t m = 0; m < (size_t)muons.size(); ++m){
 	minDR = min(minDR,deltaR(math::PtEtaPhiELorentzVector(muons.at(m).Pt(),muons.at(m).Eta(),muons.at(m).Phi(),muons.at(m).Energy() ) ,math::PtEtaPhiELorentzVector(ptCorr, eta, phi, energyCorr)));
 	if(minDR<minDRThrMu)passesDR = false;
