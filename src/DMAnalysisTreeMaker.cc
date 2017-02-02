@@ -38,8 +38,11 @@
 #include "./Mt2Com_bisect.h"
 //#include "./EquationSolver.h"
 //#include "./DMTopVariables.h"
+#include "./Weights.h"
+
 
 #include "TFile.h"
+#include "TSpline.h"
 #include "TTree.h"
 #include "TMath.h"
 #include <vector>
@@ -96,19 +99,24 @@ private:
   void getEventPdf();
   int eventFlavour(bool getFlavour, int nb, int nc,int nudsg);
   bool flavourFilter(string ch, int nb, int nc,int nudsg); 
-
+  
   void initCategoriesSize(string label);
   void setCategorySize(string label, string category, size_t size);
   void fillCategory(string label, string category, int pos_nocat,int pos_cat);
-  
+  void fillSystCategory(string label, string category, string syst, int pos_nocat,int pos_cat, string scancut="");
+  void setCatCategoryValue(string label,string category, int pos_cat,string var, float value);
+
   void fillScanCuts(string label, string category, int pos_nocat);
+  void fillScanSystsCuts(string label, string category, int pos_nocat);
+  void fillSysts(string label, string category, int pos_nocat, string var, string cut, string prefix="");
   bool passesScanCut(string label, string category, string scanCut, int pos_nocat);
   string parseScanCut(string category, int obj);
-
+  bool isScanCut(string label, string category);
+  bool isSysCat(string label, string category);
   void resetVariables(string cat, int sizecat);
 
 
-  void setEventBTagSF(string label, string category);
+  void setEventBTagSF(string label, string category, string algo);
   void setEventLeptonSF(string label, string category);
 
 
@@ -122,15 +130,15 @@ private:
   bool getEventTriggers();
   bool getMETFilters();
   void getEventLHEWeights();
-
+  
   bool isEWKID(int id);
-
+  
   float getReshapedBTagValue(float flavor, float btag, float pt, float eta, string algo, string syst);
   
   //  helpers
-  double getMCTagEfficiencyFuncParam(float flavor, float ptCorr, string algo,string syst, string wp, string region);
+  double getMCTagEfficiencyFuncParam(float flavor, float ptCorr, float eta, string algo,string syst, string wp, string region);
   float avgRatioFunc(float x0,float x1,float a1, float b1 , float a2, float b2);
-  float getEffRatioFunc(float flavor,float btag,float pt,string algo ,string syst,bool normalize);
+  float getEffRatioFunc(float flavor,float btag,float pt, float eta, string algo ,string syst,bool normalize);
   //
   // Set up MVA reader
   //
@@ -160,7 +168,7 @@ private:
   std::vector<edm::InputTag > variablesFloat, variablesInt, singleFloat,  singleInt;
   
   std::vector<edm::InputTag > variablesDouble, singleDouble;
-
+  
   edm::EDGetTokenT< LHEEventProduct > t_lhes_;
   edm::EDGetTokenT< GenEventInfoProduct > t_genprod_;
   edm::EDGetTokenT< std::vector<string> > t_triggerNames_;
@@ -215,7 +223,8 @@ private:
   map< string , vector<string> > obj_to_floats,obj_to_ints, obj_to_doubles;
   map< string , string > obs_to_obj;
   map< string , string > obj_to_pref;
-  map< string , std::vector<string> > obj_cats, obj_scanCuts;
+  map< string , std::vector<string> > obj_cats, obj_scanCuts, obj_systCats;
+  map< string , bool > passesJecCuts;
 
   map< string , double[100] > vdoubles_values;
   map< string , double[100] > vdouble_values;
@@ -323,7 +332,7 @@ private:
   edm::Handle<double> rho;
   double Rho;
   string JECVersion;
-
+  
   //edm::Handle<double> Rho;
   std::vector<double> jetScanCuts;
   std::vector<JetCorrectorParameters> jecPars, jecParsL1_vect
@@ -339,8 +348,15 @@ private:
   bool doTopBToLightQuarkReweight;
   //BTag
   BTagCalibration *calib;
-  BTagCalibrationReader *readerLoose,*readerLooseUDSG, *readerMedium, *readerTight, *readerReshape;
+  BTagCalibration *calib_cmvav2;
+  BTagCalibrationReader *readerCSVLoose,*readerCSVLooseUDSG, *readerCSVMedium, *readerCSVTight, *readerCSVReshape;
+  BTagCalibrationReader *readerCMVALoose,*readerCMVALooseUDSG, *readerCMVAMedium, *readerCMVATight, *readerCMVAReshape;
 
+  string filename_cmva;
+  TFile* file_cmva;
+  Weights *cmvaeffbt,*cmvaeffbm,*cmvaeffbl;
+  Weights *cmvaeffct,*cmvaeffcm,*cmvaeffcl;
+  Weights *cmvaeffot,*cmvaeffom,*cmvaeffol;
 
   class BTagWeight
   {
@@ -461,11 +477,11 @@ private:
     b_weight_csvl_1_2_tags,
     b_weight_csvl_2_tags;
 
-  double MCTagEfficiency(string algo, int flavor, double pt); 
+  double MCTagEfficiency(string algo, int flavor, double pt, double eta=0.); 
   double TagScaleFactor(string algo, int flavor, string syst,double pt, double eta=0.);
-  double getMCTagEfficiencyFunc(float flavor, float btag, float pt, string algo,string syst, bool norm=false);
-  double getMCTagEfficiencyFuncInt(float flavor, float ptCorr,string algo, string syst);
-
+  double getMCTagEfficiencyFunc(float flavor, float btag, float pt, float eta, string algo,string syst, bool norm=false, bool spline=false);
+  double getMCTagEfficiencyFuncInt(float flavor, float ptCorr, float eta, string algo, string syst);
+  float getWPAlgo(string algo, string wp);
   bool doBTagSF;
   bool doPU;
   
@@ -628,10 +644,7 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
     max_bjets_for_top  = iConfig.getUntrackedParameter<int>("maxBJetsForTop",2);//Take the 8 leading jets for the top permutations
   }
   systematics = iConfig.getParameter<std::vector<std::string> >("systematics");
-
   jetScanCuts = iConfig.getParameter<std::vector<double> >("jetScanCuts");
-
-
   
   std::vector<edm::ParameterSet >::const_iterator itPsets = physObjects.begin();
 
@@ -675,6 +688,7 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
 
     std::vector<std::string > categories = itPsets->getParameter<std::vector<std::string> >("categories");
     std::vector<std::string > scanCuts = itPsets->getParameter<std::vector<std::string> >("scanCuts");
+    std::vector<std::string > systCats = itPsets->getParameter<std::vector<std::string> >("systCats");
     std::vector<std::string > toSave= itPsets->getParameter<std::vector<std::string> >("toSave");
         
     std::vector<edm::InputTag >::const_iterator itF = variablesFloat.begin();
@@ -683,13 +697,31 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
     std::vector<edm::InputTag >::const_iterator itsF = singleFloat.begin();
     std::vector<edm::InputTag >::const_iterator itsD = singleDouble.begin();
     std::vector<edm::InputTag >::const_iterator itsI = singleInt.begin();
-
+    
+    if(systCats.size() >=1){
+      for(size_t sy = 0; sy< systCats.size() ;++sy){
+	string systCat = systCats.at(sy);
+	obj_systCats[namelabel].push_back(systCat);
+      }
+    }
     for(size_t sc = 0; sc< categories.size() ;++sc){
       string category = categories.at(sc);
       if(scanCuts.size() >=1){
 	for(size_t sccut = 0; sccut< scanCuts.size() ;++sccut){
 	  string scanCut = scanCuts.at(sccut);
 	  obj_cats[namelabel].push_back(category+"_"+scanCut);
+	}
+      }
+      if(systCats.size() >=1){
+      	for(size_t sy = 0; sy< systCats.size() ;++sy){
+       	  string syCat = systCats.at(sy);
+	  if(scanCuts.size() >=1){
+	    for(size_t sccut = 0; sccut< scanCuts.size() ;++sccut){
+	      string scanCut = scanCuts.at(sccut);
+	      obj_cats[namelabel].push_back(category+syCat+"_"+scanCut);
+	    }
+	  }
+	  obj_cats[namelabel].push_back(category+syCat);
 	}
       }
       obj_cats[namelabel].push_back(category);
@@ -704,21 +736,26 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
     string nameobs = namelabel;
     string prefix = nameprefix;
 
-    
-  
 
+    if(saveNoCat) trees["noSyst"]->Branch((nameobs+"_size").c_str(), &sizes[nameobs]);
+    for(size_t sc = 0; sc< obj_cats[namelabel].size() ;++sc){
+      string category = obj_cats[namelabel].at(sc);
+      trees["noSyst"]->Branch((nameobs+category+"_size").c_str(), &sizes[nameobs+category]);
+    }
+    
     for (;itF != variablesFloat.end();++itF){
       
       string name=itF->instance()+"_"+itF->label();
       string nameinstance=itF->instance();
       string nameshort=itF->instance();
       
-
       string nametobranch = makeBranchName(namelabel,prefix,nameinstance);
       name = nametobranch;
       nameshort = nametobranch;
       //      if(saveBaseVariables|| isInVector(toSave,itF->instance())) trees["noSyst"]->Branch(nameshort.c_str(), &vfloats_values[name],(nameshort+"["+max_instance_str.str()+"]/F").c_str());
-      if(saveNoCat && (saveBaseVariables|| isInVector(toSave,itF->instance()))) trees["noSyst"]->Branch(nameshort.c_str(), &vfloats_values[name],(nameshort+"["+max_instance_str.str()+"]/F").c_str());
+      //      if (saveNoCat && (saveBaseVariables || isInVector(toSave, extravars.at(addv)) || isInVector(toSave, "allExtra") ) )trees["noSyst"]->Branch(name.c_str(), &vfloats_values[name],(name+"["+nameobs+"_size"+"]/F").c_str());
+      //if(saveBaseVariables|| isInVector(toSave,extravars.at(addv)) || isInVector(toSave,"allExtra")) trees["noSyst"]->Branch(namecat.c_str(), &vfloats_values[namecat],(namecat+"["+nameobs+category+"_size"+"]/F").c_str());	for(size_t sc = 0; sc< obj_cats[namelabel].size() ;++sc){
+      if(saveNoCat && (saveBaseVariables|| isInVector(toSave,itF->instance()))) trees["noSyst"]->Branch(nameshort.c_str(), &vfloats_values[name],(nameshort+"["+nameobs+"_size"+"]/F").c_str());
       names.push_back(name);
       obj_to_floats[namelabel].push_back(name);
       obs_to_obj[name] = nameobs;
@@ -732,7 +769,8 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
 	string nametobranchcat = makeBranchNameCat(namelabel,category,prefix,nameinstance);
 	string namecat = nametobranchcat;
 	nameshort = nametobranch;
-	if(saveBaseVariables|| isInVector(toSave,itF->instance())) trees["noSyst"]->Branch(namecat.c_str(), &vfloats_values[namecat],(namecat+"["+max_instance_str.str()+"]/F").c_str());
+	//	if(saveBaseVariables|| isInVector(toSave,itF->instance())) trees["noSyst"]->Branch(namecat.c_str(), &vfloats_values[namecat],(namecat+"["+max_instance_str.str()+"]/F").c_str());
+	if(saveBaseVariables|| isInVector(toSave,itF->instance())) trees["noSyst"]->Branch(namecat.c_str(), &vfloats_values[namecat],(namecat+"["+nameobs+category+"_size"+"]/F").c_str());
 	//	cout << " branching category "<< category<< " for label "<< namelabel<< " name "<<namecat<< endl;
       }
     }
@@ -743,13 +781,14 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
       string nametobranch = makeBranchName(namelabel,prefix,nameshort);
       name = nametobranch;
       nameshort = nametobranch;
-      if(saveNoCat && (saveBaseVariables|| isInVector(toSave,itI->instance())) ) trees["noSyst"]->Branch(nameshort.c_str(), &vints_values[name],(nameshort+"["+max_instance_str.str()+"]/I").c_str());
+      //      if(saveNoCat && (saveBaseVariables|| isInVector(toSave,itI->instance())) ) trees["noSyst"]->Branch(nameshort.c_str(), &vints_values[name],(nameshort+"["+max_instance_str.str()+"]/I").c_str());
+      if(saveNoCat && (saveBaseVariables|| isInVector(toSave,itI->instance())) ) trees["noSyst"]->Branch(nameshort.c_str(), &vints_values[name],(nameshort+"["+nameobs+"_size"+"]/I").c_str());
       for(size_t sc = 0; sc< obj_cats[namelabel].size() ;++sc){
 	string category = obj_cats[namelabel].at(sc);
 	string nametobranchcat = makeBranchNameCat(namelabel,category,prefix,nameshort);
 	string namecat = nametobranchcat;
 	nameshort = nametobranch;
-	if(saveBaseVariables|| isInVector(toSave,itF->instance())) trees["noSyst"]->Branch(namecat.c_str(), &vfloats_values[namecat],(namecat+"["+max_instance_str.str()+"]/I").c_str());
+	if(saveBaseVariables|| isInVector(toSave,itF->instance())) trees["noSyst"]->Branch(namecat.c_str(), &vfloats_values[namecat],(namecat+"["+nameobs+category+"_size"+"]/I").c_str());
       }
 
       names.push_back(name);
@@ -760,20 +799,23 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
       t_ints[ name ] = consumes< std::vector<int> >( *itI );
 
     }
-    
+        
     if (variablesFloat.size()>0){
       string nameshortv = namelabel;
       vector<string> extravars = additionalVariables(nameshortv);
       for(size_t addv = 0; addv < extravars.size();++addv){
 	string name = nameshortv+"_"+extravars.at(addv);
-	if (saveNoCat && (saveBaseVariables || isInVector(toSave, extravars.at(addv)) || isInVector(toSave, "allExtra") ) )trees["noSyst"]->Branch(name.c_str(), &vfloats_values[name],(name+"["+max_instance_str.str()+"]/F").c_str());
+	//	if (saveNoCat && (saveBaseVariables || isInVector(toSave, extravars.at(addv)) || isInVector(toSave, "allExtra") ) )trees["noSyst"]->Branch(name.c_str(), &vfloats_values[name],(name+"["+max_instance_str.str()+"]/F").c_str());
+	if (saveNoCat && (saveBaseVariables || isInVector(toSave, extravars.at(addv)) || isInVector(toSave, "allExtra") ) )trees["noSyst"]->Branch(name.c_str(), &vfloats_values[name],(name+"["+nameobs+"_size"+"]/F").c_str());
+	//	  if(saveBaseVariables|| isInVector(toSave,extravars.at(addv)) || isInVector(toSave,"allExtra")) trees["noSyst"]->Branch(namecat.c_str(), &vfloats_values[namecat],(namecat+"["+nameobs+category+"_size"+"]/F").c_str());	
 	for(size_t sc = 0; sc< obj_cats[namelabel].size() ;++sc){
 	  string category = obj_cats[namelabel].at(sc);
 	  string nametobranchcat = nameshortv+category+"_"+extravars.at(addv);
 	  string namecat = nametobranchcat;
 	  //	  cout << "extra var "<< extravars.at(addv)<<endl;
 	  //	  cout << " namecat "<< namecat<< endl;
-	  if(saveBaseVariables|| isInVector(toSave,extravars.at(addv)) || isInVector(toSave,"allExtra")) trees["noSyst"]->Branch(namecat.c_str(), &vfloats_values[namecat],(namecat+"["+max_instance_str.str()+"]/F").c_str());
+	  //	  if(saveBaseVariables|| isInVector(toSave,extravars.at(addv)) || isInVector(toSave,"allExtra")) trees["noSyst"]->Branch(namecat.c_str(), &vfloats_values[namecat],(namecat+"["+max_instance_str.str()+"]/F").c_str());
+	  if(saveBaseVariables|| isInVector(toSave,extravars.at(addv)) || isInVector(toSave,"allExtra")) trees["noSyst"]->Branch(namecat.c_str(), &vfloats_values[namecat],(namecat+"["+nameobs+category+"_size"+"]/F").c_str());
 	}
 
 
@@ -783,12 +825,9 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
       }
     }
     names.push_back(nameobs);
+  
+
     //    cout << "size part: nameobs is  "<< nameobs<<endl;
-    if(saveNoCat) trees["noSyst"]->Branch((nameobs+"_size").c_str(), &sizes[nameobs]);
-    for(size_t sc = 0; sc< obj_cats[namelabel].size() ;++sc){
-      string category = obj_cats[namelabel].at(sc);
-      trees["noSyst"]->Branch((nameobs+category+"_size").c_str(), &sizes[nameobs+category]);
-    }
     
     //Initialize single pset objects
      for (;itsF != singleFloat.end();++itsF){
@@ -971,34 +1010,70 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
   jecCorr = new FactorizedJetCorrector(jecPars);
   jecCorr_L1 = new FactorizedJetCorrector(jecParsL1_vect);
   jecUnc  = new JetCorrectionUncertainty(*(new JetCorrectorParameters(jecDir+"Spring16_25nsV6_DATA_UncertaintySources_AK4PFchs.txt", "Total")));
-  
+  filename_cmva="btagging_cmva.root";
+  file_cmva= TFile::Open(filename_cmva.c_str());
+  cmvaeffbt = new Weights(file_cmva,"b__tight");
+  cmvaeffbl = new Weights(file_cmva,"b__loose");
+  cmvaeffbm = new Weights(file_cmva,"b__medium");
+
+  cmvaeffct = new Weights(file_cmva,"c__tight");
+  cmvaeffcl = new Weights(file_cmva,"c__medium");
+  cmvaeffcm = new Weights(file_cmva,"c__loose");
+
+  cmvaeffot = new Weights(file_cmva,"other__tight");
+  cmvaeffol = new Weights(file_cmva,"other__medium");
+  cmvaeffom = new Weights(file_cmva,"other__loose");
+
+
   calib = new BTagCalibration("CSVv2", "CSVv2_ichep.csv");
+  readerCSVLoose = new BTagCalibrationReader(BTagEntry::OP_LOOSE, "central", {"up", "down"});      
+  readerCSVLoose->load(*calib, BTagEntry::FLAV_B,   "comb");
+  readerCSVLoose->load(*calib, BTagEntry::FLAV_C,   "comb");
+  readerCSVLoose->load(*calib, BTagEntry::FLAV_UDSG,   "incl");
 
-  readerLoose = new BTagCalibrationReader(BTagEntry::OP_LOOSE, "central", {"up", "down"});      
-  readerLoose->load(*calib, BTagEntry::FLAV_B,   "comb");
-  readerLoose->load(*calib, BTagEntry::FLAV_C,   "comb");
-  readerLoose->load(*calib, BTagEntry::FLAV_UDSG,   "incl");
+  readerCSVMedium = new BTagCalibrationReader(BTagEntry::OP_MEDIUM, "central", {"up", "down"});      
+  readerCSVMedium->load(*calib, BTagEntry::FLAV_B,   "comb");
+  readerCSVMedium->load(*calib, BTagEntry::FLAV_C,   "comb");
+  readerCSVMedium->load(*calib, BTagEntry::FLAV_UDSG,   "incl");
 
-  readerMedium = new BTagCalibrationReader(BTagEntry::OP_MEDIUM, "central", {"up", "down"});      
-  readerMedium->load(*calib, BTagEntry::FLAV_B,   "comb");
-  readerMedium->load(*calib, BTagEntry::FLAV_C,   "comb");
-  readerMedium->load(*calib, BTagEntry::FLAV_UDSG,   "incl");
+  readerCSVTight = new BTagCalibrationReader(BTagEntry::OP_TIGHT, "central", {"up", "down"});      
+  readerCSVTight->load(*calib, BTagEntry::FLAV_B,   "comb");
+  readerCSVTight->load(*calib, BTagEntry::FLAV_C,   "comb");
+  readerCSVTight->load(*calib, BTagEntry::FLAV_UDSG,   "incl");
 
-  readerTight = new BTagCalibrationReader(BTagEntry::OP_TIGHT, "central", {"up", "down"});      
-  readerTight->load(*calib, BTagEntry::FLAV_B,   "comb");
-  readerTight->load(*calib, BTagEntry::FLAV_C,   "comb");
-  readerTight->load(*calib, BTagEntry::FLAV_UDSG,   "incl");
-
-  readerReshape = new BTagCalibrationReader(BTagEntry::OP_RESHAPING, "central", {"up_jes", "down_jes"});      
-  readerReshape->load(*calib, BTagEntry::FLAV_B,   "iterativefit");
-  readerReshape->load(*calib, BTagEntry::FLAV_C,   "iterativefit");
-  readerReshape->load(*calib, BTagEntry::FLAV_UDSG,   "iterativefit");
+  readerCSVReshape = new BTagCalibrationReader(BTagEntry::OP_RESHAPING, "central", {"up_jes", "down_jes"});      
+  readerCSVReshape->load(*calib, BTagEntry::FLAV_B,   "iterativefit");
+  readerCSVReshape->load(*calib, BTagEntry::FLAV_C,   "iterativefit");
+  readerCSVReshape->load(*calib, BTagEntry::FLAV_UDSG,   "iterativefit");
 
 
+
+  //new combined MVAv2 tagger: pay load taken from: https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation80X
+  //cMVAv2_ichep.csv
+  
+  calib_cmvav2 = new BTagCalibration("CMVAv2", "cMVAv2_ichep.csv");
+  readerCMVALoose = new BTagCalibrationReader(BTagEntry::OP_LOOSE, "central", {"up", "down"});      
+  readerCMVALoose->load(*calib_cmvav2, BTagEntry::FLAV_B,   "ttbar");
+  readerCMVALoose->load(*calib_cmvav2, BTagEntry::FLAV_C,   "ttbar");
+  readerCMVALoose->load(*calib_cmvav2, BTagEntry::FLAV_UDSG,   "incl");
+
+  readerCMVAMedium = new BTagCalibrationReader(BTagEntry::OP_MEDIUM, "central", {"up", "down"});      
+  readerCMVAMedium->load(*calib_cmvav2, BTagEntry::FLAV_B,   "ttbar");
+  readerCMVAMedium->load(*calib_cmvav2, BTagEntry::FLAV_C,   "ttbar");
+  readerCMVAMedium->load(*calib_cmvav2, BTagEntry::FLAV_UDSG,   "incl");
+
+  readerCMVATight = new BTagCalibrationReader(BTagEntry::OP_TIGHT, "central", {"up", "down"});      
+  readerCMVATight->load(*calib_cmvav2, BTagEntry::FLAV_B,   "ttbar");
+  readerCMVATight->load(*calib_cmvav2, BTagEntry::FLAV_C,   "ttbar");
+  readerCMVATight->load(*calib_cmvav2, BTagEntry::FLAV_UDSG,   "incl");
+
+  readerCMVAReshape = new BTagCalibrationReader(BTagEntry::OP_RESHAPING, "central", {"up_jes", "down_jes"});      
+  readerCMVAReshape->load(*calib_cmvav2, BTagEntry::FLAV_B,   "iterativefit");
+  readerCMVAReshape->load(*calib_cmvav2, BTagEntry::FLAV_C,   "iterativefit");
+  readerCMVAReshape->load(*calib_cmvav2, BTagEntry::FLAV_UDSG,   "iterativefit");
 
   // reader.load(...)     // for FLAV_C
   // reader.load(...)     // for FLAV_UDSG
-
   
   isFirstEvent = true;
   doBTagSF= true;
@@ -1030,7 +1105,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
   iEvent.getByToken(t_lumiBlock_,lumiBlock );
   iEvent.getByToken(t_runNumber_,runNumber );
   iEvent.getByToken(t_eventNumber_,eventNumber );
-
+  
   if(usePrunedGenParticles)iEvent.getByToken(t_genParticles_,genParts);
   if(useGenJets)iEvent.getByToken(t_genJets_,genJets);
   
@@ -1139,7 +1214,6 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	}
       }      
     }
-    
     if(getPartonTop && gentop.size()==1){
       float_values["Event_T_Pt"]= gentop.at(0).Pt();
       float_values["Event_T_Eta"]= gentop.at(0).Eta();
@@ -1153,7 +1227,6 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       float_values["Event_Tbar_Phi"]= genantitop.at(0).Phi();
       float_values["Event_Tbar_E"]= genantitop.at(0).Energy();
       float_values["Event_Tbar_Mass"]= genantitop.at(0).M();
-      
     }
     topCharge=0;
     //    cout <<  " top charge"<<topCharge<<" gentop size "<<gentop.size()<<" antitop size"<< genantitop.size()<<endl;
@@ -1166,7 +1239,6 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       topCharge=-1; 
     }
     //    cout <<  " top charge after"<<topCharge<<endl;
-
     if((getPartonW || doWReweighting )) {
       if(genw.size()==1){
 	float_values["Event_W_Pt"]= genw.at(0).Pt();
@@ -1221,8 +1293,6 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       else {(float_values["Event_T_Weight"]=1.0);
 	(float_values["Event_T_Ext_Weight"]=1.0);}
     }
-    
-
     if( (getParticleWZ)) {
       for(size_t p=0;p<partID->size();++p){
  	if(partID->at(p)==partMom0ID->at(p) && isEWKID(partID->at(p)) ){
@@ -1277,7 +1347,6 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       //      cout << " parnutausize "<< parnutau.size()<< " partaubarsize"<<partaubar.size()<<endl;
       //      cout << "parw size "<< parw.size()<<endl;
       //      cout << "parz size "<< parz.size()<<endl;
-
       //Z
       if(parmu.size()>0&& parmubar.size()>0){parz.push_back(parmu.at(0)+parmubar.at(0)) ;}
       if(pare.size()>0&& parebar.size()>0){parz.push_back(pare.at(0)+parebar.at(0)) ;}
@@ -1431,9 +1500,6 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     iEvent.getByToken(t_pvRho_,pvRho);
     nPV = pvZ->size();
   }
-  
-
-
   //Part 1 taking the obs values from the edm file
   for (;itPsets!=physObjects.end();++itPsets){ 
     variablesFloat = itPsets->template getParameter<std::vector<edm::InputTag> >("variablesF"); 
@@ -1478,10 +1544,8 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       //Getting the sizes for the object
       sizes[namelabel]=h_floats[name]->size();
       initCategoriesSize(namelabel);
+      //      initSystsSize(namelabel);
     }
-
-    
-      
     //    std::cout << " checkpoint floats"<<endl;
     for (;itD != variablesDouble.end();++itD){
       string varname=itD->instance();
@@ -1661,11 +1725,11 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       
       
       //if(isTight>0 && pt> 24 && abs(eta) < 2.4 /*&& iso <0.15 Isolation added afterwards*/){//UCL Selection
-      if(isTight>0 && pt> 26 && abs(eta) < 2.1 /*&& iso <0.15 Isolation added afterwards*/){//NA Selection
+      if(isTight>0 && pt> 26 && fabs(eta) < 2.4 /*&& iso <0.15 Isolation added afterwards*/){//NA Selection
  	
 
-	//	if(iso<0.06){//UCL - 2015 Selection
-	if(iso<0.15){//NA Selection
+	if(iso<0.06){// 2015 Selection
+	  //if(iso<0.15){//NA Selection
 	  ++float_values["Event_nTightMuons"];
 	  TLorentzVector muon;
 	  muon.SetPtEtaPhiE(pt, eta, phi, energy);
@@ -1700,7 +1764,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	sizes[mu_label+"TightAntiIso"]=(int)float_values["Event_nTightAntiIsoMuons"];
       }
       
-      if(isLoose>0 && pt> 10 && abs(eta) < 2.4 && iso<0.25){//NA Selection
+      if(isLoose>0 && pt> 10 && fabs(eta) < 2.4 && iso<0.2){//NA Selection
       //if( isLoose>0 && pt> 10 && abs(eta) < 2.5 && iso<0.2){//UCL Selection
 	if(isInVector(obj_cats[mu_label],"Loose")){
 	  ++float_values["Event_nLooseMuons"];
@@ -1720,7 +1784,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       if(isSoft>0 && pt> 30 && abs(eta) < 2.4){
 	++float_values["Event_nSoftMuons"]; 
       }
-      if(isLoose>0 && pt > 15){
+      if(isLoose>0 && pt > 10){
 	TLorentzVector muon;
 	muon.SetPtEtaPhiE(pt, eta, phi, energy);
 	loosemuons.push_back(muon);
@@ -1736,7 +1800,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       float isLoose = vfloats_values[makeName(ele_label,pref,"isLoose")][el];
       float isMedium = vfloats_values[makeName(ele_label,pref,"isMedium")][el];
       float isVeto = vfloats_values[makeName(ele_label,pref,"isVeto")][el];
-
+      
       isTight = vfloats_values[makeName(ele_label,pref,"vidTight")][el];
       isLoose = vfloats_values[makeName(ele_label,pref,"vidLoose")][el];
       isMedium = vfloats_values[makeName(ele_label,pref,"vidMedium")][el];
@@ -1746,6 +1810,8 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       float phi = vfloats_values[makeName(ele_label,pref,"Phi")][el];
       float energy = vfloats_values[makeName(ele_label,pref,"E")][el];      
       float iso = vfloats_values[makeName(ele_label,pref,"Iso03")][el];
+      float eldz = vfloats_values[makeName(ele_label,pref,"Dz")][el];
+      float eldxy = vfloats_values[makeName(ele_label,pref,"Dxy")][el];
 
       float elCharge = vfloats_values[makeName(ele_label,pref,"Charge")][el];
 
@@ -1809,10 +1875,14 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       if(isMedium>0 && pt> 30 && fabs(eta) < 2.5){
 	++float_values["Event_nMediumElectrons"]; 
       }
-      
-      if(isVeto>0 && pt> 20 && fabs(eta) < 2.5 ){
-	if((fabs(scEta)<=1.479 && (iso<0.175)) 
-	   || ((fabs(scEta)>1.479 && fabs(scEta)<2.5) && (iso<0.159))){
+
+
+      if(isVeto>0 && pt> 15 && fabs(eta) < 2.5 ){
+	  
+      //if((fabs(scEta)<=1.479 && (iso<0.175)) || ((fabs(scEta)>1.479 && fabs(scEta)<2.5) && (iso<0.159))){
+	
+	if((fabs(scEta)<=1.479 && (fabs(eldz) < 0.10) && (fabs(eldxy) <0.05 )) 
+	   || ((fabs(scEta)>1.479 && fabs(scEta)<2.5) && (fabs(eldz) < 0.20) && (fabs(eldxy) < 0.10) )){
 	  ++float_values["Event_nVetoElectrons"]; 
 	  if(isInVector(obj_cats[ele_label],"Veto")){
 	    fillCategory(ele_label,"Veto",el,float_values["Event_nVetoElectrons"]-1);
@@ -1822,15 +1892,14 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       if(isInVector(obj_cats[ele_label],"Veto")){
 	sizes[ele_label+"Veto"]=(int)float_values["Event_nVetoElectrons"];
       }
-      
       vfloats_values[ele_label+"_PassesDRmu"][el]=(float)passesDRmu;
     } 
     int firstidx=-1, secondidx=-1;
     double maxpt=0.0;
-
+    
     int nTightLeptons = float_values["Event_nTightMuons"]+float_values["Event_nTightElectrons"];
     int nTightAntiIsoLeptons = float_values["Event_nTightAntiIsoMuons"]+float_values["Event_nTightAntiIsoElectrons"];
-
+    
     for(size_t l =0; l< leptons.size();++l){
       double lpt= leptons.at(l).Pt();
       if(lpt>maxpt){maxpt = lpt;firstidx=l;}
@@ -1859,11 +1928,8 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       float_values["Event_Lepton2_Eta"]=leptons.at(secondidx).Eta(); 
       float_values["Event_Lepton2_E"]=leptons.at(secondidx).E(); 
       float_values["Event_Lepton2_Flavour"]=flavors.at(secondidx);
-
       float_values["Event_Lepton2_Charge"]=leptonsCharge.at(secondidx);
-
     }
-    
     //Lepton charge to be used later on:
     leadingLeptonCharge=0;
     //    cout<< "ntight leptons "<<nTightLeptons << " charge bef "<< leadingLeptonCharge<<endl;
@@ -1897,6 +1963,15 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 
     //    cout << " max jets "<<max_instances[jets_label]<<endl;
 
+
+    for (size_t ju = 0; ju < obj_cats[jets_label].size();++ju){
+      if (obj_cats[jets_label].at(ju).find("JES")!=std::string::npos || 
+	  obj_cats[jets_label].at(ju).find("JER")!=std::string::npos){  
+	string catjet=obj_cats[jets_label].at(ju);
+	cout << " ju "<< ju <<" --> catname "<< catjet << endl;
+	passesJecCuts[catjet]=false;
+      }
+    }
     for(int j = 0;j < max_instances[jets_label] ;++j){
       
       string pref = obj_to_pref[jets_label];
@@ -1925,9 +2000,9 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       //cout << " jet "<<j << " pt "<< pt << " jecfactor0 "<< jecscale <<endl;
       float chEmEnFrac = vfloats_values[makeName(jets_label,pref,"chargedEmEnergyFrac")][j];
       float neuEmEnFrac = vfloats_values[makeName(jets_label,pref,"neutralEmEnergyFrac")][j];
-      
-      if(pt>0){
 
+
+      if(pt>0){
 	
 	TLorentzVector jetUncorr_, jetCorr, jetUncorrNoMu_,jetCorrNoMu, jetL1Corr;
 	TLorentzVector T1Corr;
@@ -1963,36 +2038,6 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	  energy = jetCorr.Energy();
 	  phi = jetCorr.Phi();
 	  if(doT1MET){
-	    //bool doMuons=true;
-	    /*
-	    if(doMuons){
-	      if(changeJECs && doMuons){
-		for( size_t c=0;c<jetKeys->at(j).size();++c){
-		  for( size_t mk=0;mk<muKeys->size();++mk){
-		    if(muKeys->at(mk).size()>0){
-		      if(muKeys->at(mk).at(0)  == jetKeys->at(j).at(c)){
-			
-			string prefmu = obj_to_pref[mu_label];
-			float mupt = vfloats_values[makeName(mu_label,prefmu,"Pt")][mk];
-			float mueta = vfloats_values[makeName(mu_label,prefmu,"Eta")][mk];
-			float muphi = vfloats_values[makeName(mu_label,prefmu,"Phi")][mk];
-			float mue = vfloats_values[makeName(mu_label,prefmu,"E")][mk];
-			float muIsGlobal = vfloats_values[makeName(mu_label,prefmu,"IsGlobalMuon")][mk];
-			float muIsTK = vfloats_values[makeName(mu_label,prefmu,"IsTrackerMuon")][mk];
-			float muISSAOnly = ((!muIsGlobal && !muIsTK));
-			
-			if(muIsGlobal || muISSAOnly){
-			  TLorentzVector muP4_;
-			  muP4_.SetPtEtaPhiE(mupt,mueta,muphi,mue);
-			  jetUncorrNoMu_ -=muP4_;
-			  
-			} 
-		      }
-		    }
-		  }	    
-		}
-	      }
-	    }*/
 	      
 	    jecCorr->setJetPhi(jetUncorrNoMu_.Phi());
 	    jecCorr->setJetEta(jetUncorrNoMu_.Eta());
@@ -2033,6 +2078,28 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	float unc = jetUncertainty(ptCorr,eta,syst);
 	float unc_nosmear = jetUncertainty(pt,eta,syst);
 	
+	for (size_t ju = 0; ju < obj_systCats[jets_label].size();++ju){
+	  string systjet=obj_systCats[jets_label].at(ju);
+	  if (systjet.find("JES")!=std::string::npos || 
+	      systjet.find("JER")!=std::string::npos ){
+	    cout << " ju "<< ju <<endl;
+	    float smearfactJet= smear(pt, genpt, eta,systjet);
+	    float uncJet=jetUncertainty(ptCorr,eta,systjet);
+	    float ptCorrJet = pt * (1+uncJet) * smearfactJet;
+	    float energyCorrJet = energy * (1+uncJet) * smearfactJet;
+	    cout << " cat "<< systjet<< " pt "<< ptCorr;
+	    cout << " catname " << makeName(jets_label,pref,"CorrPt"+systjet)<< " value " << ptCorrJet<<endl;
+	      //makeBranchNameCat(jets_label,systjet,jets_label+"_","CorrPt")<<endl;
+	    //	    fillCategory()
+	    //	    vfloats_values[makeName(jets_label+systjet,pref,"CorrPt")][j]=ptCorrJet;
+	    vfloats_values[makeName(jets_label,pref,"CorrPt"+systjet)][j]=ptCorrJet;
+	    vfloats_values[makeName(jets_label,pref,"CorrE"+systjet)][j]=energyCorrJet;
+	    cout <<" value after "<<vfloats_values[makeName(jets_label,pref,"CorrPt"+systjet)][j]<<endl;
+	    //setCatCategoryValue(jets_label,systjet,sizes[jets_label+systjet],"CorrPt",ptCorrJet);
+	  }
+	}
+	
+
 	ptCorr = ptCorr * (1 + unc);
 	energyCorr = energyCorr * (1 + unc);
 
@@ -2061,6 +2128,8 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       }
       
       float csv = vfloats_values[makeName(jets_label,pref,"CSVv2")][j];
+      float cmva = vfloats_values[makeName(jets_label,pref,"CMVAv2")][j];
+      
       float partonFlavour = vfloats_values[makeName(jets_label,pref,"PartonFlavour")][j];
       float hadronFlavour = vfloats_values[makeName(jets_label,pref,"HadronFlavour")][j];
       int flavor = int(hadronFlavour);
@@ -2080,12 +2149,27 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       vfloats_values[jets_label+"_CorrEta"][j]=eta;
       vfloats_values[jets_label+"_CorrPhi"][j]=phi;
 
-      bool isCSVT = csv  > 0.935;
-      bool isCSVM = csv  > 0.800;
-      bool isCSVL = csv  > 0.460;
+      //WP taken from: https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation80XReReco
+
+      bool isCSVT = csv  > getWPAlgo("CSV","T");
+//0.9535;
+      bool isCSVM = csv  > getWPAlgo("CSV","M");//0.8484;
+      bool isCSVL = csv  > getWPAlgo("CSV","L");//0.5426;
+      
+      bool isCMVAT = cmva  > getWPAlgo("CMVA","T");//0.9432;
+      bool isCMVAM = cmva  > getWPAlgo("CMVA","M");//0.4432;
+      bool isCMVAL = cmva  > getWPAlgo("CMVA","L");//-0.5884;
+
+
+
       vfloats_values[jets_label+"_IsCSVT"][j]=isCSVT;
       vfloats_values[jets_label+"_IsCSVM"][j]=isCSVM;
       vfloats_values[jets_label+"_IsCSVL"][j]=isCSVL;
+      
+      vfloats_values[jets_label+"_IsCMVAT"][j]=isCMVAT;
+      vfloats_values[jets_label+"_IsCMVAM"][j]=isCMVAM;
+      vfloats_values[jets_label+"_IsCMVAL"][j]=isCMVAL;
+
       
       //      float bsf = getScaleFactor(ptCorr,eta,hadronFlavour,"noSyst");
       //      float bsfup = getScaleFactor(ptCorr,eta,hadronFlavour,"up");
@@ -2101,23 +2185,28 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 
 	//double leadingLeptonCharge=+1;//leadingleptonCharge;
 	double product = partonFlavour*topCharge;
-	float reshapeF_SD=1.0;
+	float reshapeF_SD_CSV=1.0;
+	float reshapeF_SD_CMVA=1.0;
 	if(abs(partonFlavour)==5 && product >0 ){
-	  reshapeF_SD=getReshapedBTagValue(partonFlavour, csv, pt, eta,"csv_sd",syst);
+	  reshapeF_SD_CSV=getReshapedBTagValue(partonFlavour, csv, pt, eta,"CSV_sd",syst);
+	  reshapeF_SD_CMVA=getReshapedBTagValue(partonFlavour, cmva, pt, eta,"CMVA_sd",syst);
 	  //reshapeF_SD = getReshapedBTagValue(1, csv, pt, eta,"csv_sd",syst)/reshapeF_SD;
 	  //	  reshapeF_SD = getReshapedBTagValue(1, csv, pt, eta,"csv_sd",syst)/reshapeF_SD;
 
 	  flavForShaping=1;//CSV needs to be reshaped to lihgt-quark data scale factors rather than b-tag scale factors
 	}
-	vfloats_values[jets_label+"_reshapeFactorCSV_SD"][j]=reshapeF_SD;
+	vfloats_values[jets_label+"_reshapeFactorCSV_SD"][j]=reshapeF_SD_CSV;
+	vfloats_values[jets_label+"_reshapeFactorCMVA_SD"][j]=reshapeF_SD_CMVA;
 	
       }
-      float reshapeF=getReshapedBTagValue(flavForShaping, csv, pt, eta,"csv",syst);
-
+      float reshapeF=getReshapedBTagValue(flavForShaping, csv, pt, eta,"CSV",syst);
+      float reshapeF_CMVA=getReshapedBTagValue(flavForShaping, cmva, pt, eta,"CMVA",syst);
       //      cout << " jet csv"<< csv<<endl;
       //      cout << "reshape factor "<< reshapeF << " value "<< reshapeF*csv<<endl;
       vfloats_values[jets_label+"_reshapeFactorCSV"][j]=reshapeF;
       vfloats_values[jets_label+"_reshapedCSV"][j]=reshapeF*csv;
+      vfloats_values[jets_label+"_reshapeFactorCMVA"][j]=reshapeF_CMVA;
+      vfloats_values[jets_label+"_reshapedCMVA"][j]=reshapeF_CMVA*cmva;
       
       bool passesID = true;
   
@@ -2150,7 +2239,8 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       double minDRThrMu=0.4;
       bool passesDR=true;
  
-
+      
+      
       for (size_t e = 0; e < (size_t)electrons.size(); ++e){
 	minDR = min(minDR,deltaR(math::PtEtaPhiELorentzVector(electrons.at(e).Pt(),electrons.at(e).Eta(),electrons.at(e).Phi(),electrons.at(e).Energy() ) ,math::PtEtaPhiELorentzVector(ptCorr, eta, phi, energyCorr)));
 	if(minDR<minDRThrEl)passesDR = false;
@@ -2180,34 +2270,28 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       
       bool passesCut = ( ptCorr > jetval && fabs(eta) < 4.7);
       
-      if(passesID && passesCut && passesDR){
+      if(passesID && passesDR){
+	//	fillSysts(jets_label,"Tight",)
 	
-	vfloats_values[jets_label+"_IsTight"][j]=1.0;
-	TLorentzVector jet;
-	jet.SetPtEtaPhiE(ptCorr, eta, phi, energyCorr);
-	jets.push_back(jet);
-	
-	if(!isCSVM)     jetsnob.push_back(jet);
-	
-	if(passesCut &&  passesID && passesDR){	
-	  float_values["Event_nJets"]+=1;
+	if(passesCut){
+	  vfloats_values[jets_label+"_IsTight"][j]=1.0;
+	  TLorentzVector jet;
+	  jet.SetPtEtaPhiE(ptCorr, eta, phi, energyCorr);
+	  jets.push_back(jet);
+	  
+	  if(!isCSVM) jetsnob.push_back(jet);
+	  
 	  nTightJets+=1;
 	  if(isInVector(obj_cats[jets_label],"Tight")){
-	    //	  cout<< " tight jet precat "<<j <<endl;
-	    fillCategory(jets_label,"Tight",j,float_values["Event_nJets"]-1);
+	    cout<< " tight jet precat "<<j << " sizes tight cat "<<sizes[jets_label+"Tight"]<<endl;
+
+	    fillCategory(jets_label,"Tight",j,sizes[jets_label+"Tight"]);
+	    cout << " sizes post cat "<< sizes[jets_label+"Tight"]<<endl;
 	    //	  cout<< " tight jet poscat "<<j <<endl;
+	    
 	  }
 	}
-	if(passesCut &&  passesID && passesDR){
-	}
-	
-      if(isCSVT && passesCut &&  passesID && passesDR && fabs(eta) < 2.4) {
-	float_values["Event_nCSVTJets"]+=1.0;
-	ncsvt_tags +=1;
-      }
-      
-      if(isCSVL && passesCut &&  passesID && passesDR && fabs(eta) < 2.4) { 
-      ncsvl_tags +=1;
+	fillSysts(jets_label,"Tight",j,"CorrPt","40_GE");
       }
       if(isCSVM && passesCut &&  passesID && passesDR && fabs(eta) < 2.4) { 
 	float_values["Event_nCSVMJets"]+=1.0;
@@ -2220,27 +2304,49 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       }
       
       if(isCSVL && passesCut &&  passesID && passesDR && abs(eta) < 2.4) float_values["Event_nCSVLJets"]+=1;
-      }
+      
       bool passesBaseCut = ( ptCorr > jetbaseval && fabs(eta) < 4.7);
+      cout <<" in cat loop "<<endl;
+      if(passesID && passesDR) if(obj_scanCuts[jets_label].size()>=1) {
+	  if(passesBaseCut) fillScanCuts(jets_label,"Tight",j);
+	  if(fabs(eta) < 4.7) fillScanSystsCuts(jets_label,"Tight",j);
       
-      if(passesID && passesDR && passesBaseCut) if(obj_scanCuts[jets_label].size()>=1) {
-	  //	cout << "now testing scan jets "<<endl;
-	  fillScanCuts(jets_label,"Tight",j);
-	}
+	  /*if(passesBaseCut) fillScanCuts(jets_label,"Tight",j);
+	  	    if(isInVector(obj_cats[jets_label],"Tight")){
+	      string catjet=obj_cats[jets_label].at(ju);
+	      if ( ( catjet.find("JES")!=std::string::npos || 
+		     catjet.find("JER")!=std::string::npos ) && !isScanCut(jets_label,catjet) )  {
+		cout << " cat "<< catjet << " jet "<< j << " pt "<< makeName(jets_label+catjet,pref,"Pt")<< " value "<< vfloats_values[makeName(jets_label+catjet,pref,"Pt")][j] <<endl;
+		passesJecCuts[catjet]= fabs(eta) < 4.7 && vfloats_values[makeName(jets_label+catjet,pref,"Pt")][j] >jetbaseval;
+		if (passesJecCuts[catjet]){
+		  cout << " cat "<< catjet<< " size is? ";
+		  cout << sizes[jets_label+catjet];
+		  fillScanCuts(jets_label,catjet,j);
+		  cout << " after "<<sizes[jets_label+catjet]<< endl;
+		}
+		//	cout << "now testing scan jets "<<endl;
+	      }
+	    }
+	  }
+	  */
       
+    }
+    
       //      }//ENDS HERE
       
     }
     
     if(isInVector(obj_cats[jets_label],"Tight")){
       sizes[jets_label+"Tight"]=(int)nTightJets;
-      setEventBTagSF(jets_label,"Tight");
+      setEventBTagSF(jets_label,"Tight","CSV");
+      setEventBTagSF(jets_label,"Tight","CMVA");
       
       for(size_t jc = 0; jc < obj_scanCuts[jets_label].size();++jc){
 	string scanCut=obj_scanCuts[jets_label].at(jc);
 	
 	//	if(false)
-	setEventBTagSF(jets_label,"Tight_"+scanCut);
+	setEventBTagSF(jets_label,"Tight_"+scanCut,"CSV");
+	setEventBTagSF(jets_label,"Tight_"+scanCut,"CMVA");
       }
     }
     
@@ -2525,15 +2631,33 @@ string DMAnalysisTreeMaker::makeName(string label,string pref,string var){
 void DMAnalysisTreeMaker::initCategoriesSize(string label){
   for(size_t sc = 0; sc< obj_cats[label].size() ;++sc){
     string category = obj_cats[label].at(sc);
-    //    cout << " label "<<label<< " cat "<<category << " size bef "<<sizes[label+category]<<endl;
+    //cout << " label "<<label<< " cat "<<category << " size bef "<<sizes[label+category]<<endl;
     sizes[label+category]=0;
     //    cout << " size after "<<sizes[label+category]<<endl;
   }
 }
 
+/*void DMAnalysisTreeMaker::initSystSize(string label){
+  for(size_t ss = 0; sc< obj_systs[label].size() ;++ss){
+    for(size_t sc = 0; sc< obj_cats[label].size() ;++sc){
+      string category = obj_cats[label].at(sc);
+      string category = obj_cats[label].at(sc);
+      //cout << " label "<<label<< " cat "<<category << " size bef "<<sizes[label+category]<<endl;
+      sizes[label+category]=0;
+      //    cout << " size after "<<sizes[label+category]<<endl;
+    }
+  }
+  }*/
+
 void DMAnalysisTreeMaker::setCategorySize(string label, string category, size_t size){
     sizes[label+category]=size;
 }
+
+void  DMAnalysisTreeMaker::setCatCategoryValue(string label,string category, int pos_cat,string var, float value){
+  string varCat = makeName(label+category,"",var);
+  vfloats_values[varCat][pos_cat]=value;
+}
+
 void DMAnalysisTreeMaker::fillCategory(string label, string category, int pos_nocat, int pos_cat){
   //  cout << " filling cat  " << category << " for label "<< label<<endl;
   sizes[label+category]=pos_cat+1;//Update the size with the latest position filled
@@ -2548,6 +2672,60 @@ void DMAnalysisTreeMaker::fillCategory(string label, string category, int pos_no
   }
   //  cout << "sizes is there "<< sizes[label+category]<<endl;
 }
+
+
+void DMAnalysisTreeMaker::fillSystCategory(string label, string category, string sys, int pos_nocat, int pos_cat, string scancut){
+  //  cout << " filling cat  " << category << " for label "<< label<<endl;
+  string catsys = category+sys+scancut;
+  sizes[label+catsys]=pos_cat+1;//Update the size with the latest position filled
+
+
+  for (size_t obj =0; obj< obj_to_floats[label].size(); ++obj){
+    
+    string var = obj_to_floats[label].at(obj);
+    
+    string varCat = makeBranchNameCat(label,catsys,label+"_",var);
+    cout << " var "<< var << " varcat "<< varCat<<endl;
+    cout << " poscat "<< pos_cat << " posnocat "<< pos_nocat<<endl;
+    vfloats_values[varCat][pos_cat]= vfloats_values[var][pos_nocat];
+  }
+  for (size_t obj =0; obj< obj_to_floats[label].size(); ++obj){
+    string var = obj_to_floats[label].at(obj);    
+ if(var.find(sys)!=std::string::npos){
+   string varnew = var;
+      varnew.replace(varnew.find(sys),sys.length(),"");
+      string varCat = makeBranchNameCat(label,catsys,label+"_",varnew);
+      vfloats_values[varCat][pos_cat]= vfloats_values[var][pos_nocat];
+	//      piecetmp.replace(piecetmp.find("p"),1,".");
+    }
+  }
+  //  cout << "sizes is there "<< sizes[label+category]<<endl;
+}
+
+bool DMAnalysisTreeMaker::isScanCut(string label, string category){
+  bool isScCut=false;
+  for(size_t sccut = 0; sccut< obj_scanCuts[label].size() ;++sccut){
+    string scanCut = obj_scanCuts[label].at(sccut);
+    if(category.find(scanCut)!=std::string::npos){
+      isScCut=true;
+      break;
+    };
+  }
+  return isScCut;
+}
+
+bool DMAnalysisTreeMaker::isSysCat(string label, string category){
+  bool isScCut=false;
+  for(size_t sccut = 0; sccut< obj_systCats[label].size() ;++sccut){
+    string scanCut = obj_systCats[label].at(sccut);
+    if(category.find(scanCut)!=std::string::npos){
+      isScCut=true;
+      break;
+    };
+  }
+  return isScCut;
+}
+
 void DMAnalysisTreeMaker::fillScanCuts(string label, string category, int pos_nocat){
   for(size_t sccut = 0; sccut< obj_scanCuts[label].size() ;++sccut){
     string scanCut = obj_scanCuts[label].at(sccut);
@@ -2555,6 +2733,32 @@ void DMAnalysisTreeMaker::fillScanCuts(string label, string category, int pos_no
     if(passesScanCut(label,category,scanCut,pos_nocat)){
       int pos_cat=sizes[label+category+"_"+scanCut];// the size is the position of the last element
       fillCategory(label,category+"_"+scanCut,pos_nocat,pos_cat); // this will also increment the size of the category
+    }
+  }    
+}
+
+void DMAnalysisTreeMaker::fillScanSystsCuts(string label, string category, int pos_nocat){
+  for(size_t sccut = 0; sccut< obj_scanCuts[label].size() ;++sccut){
+    string scanCut = obj_scanCuts[label].at(sccut);
+    string variable = parseScanCut(scanCut,0);
+    string endcut= scanCut;
+    endcut.replace(endcut.find(variable),variable.length()+1,"");
+    fillSysts(label, category, pos_nocat, variable, endcut, "_"+scanCut);
+  }
+}
+
+void DMAnalysisTreeMaker::fillSysts(string label,string category,int pos_nocat, string variable, string cut, string postfix){
+  for(size_t syCat = 0; syCat< obj_systCats[label].size() ;++syCat){
+    string sysCat = obj_systCats[label].at(syCat);
+    string finalcut = (variable+sysCat+"_"+cut);
+    cout << " sy is  "<< sysCat << " cut is "<< cut << " final cut is "<<finalcut<< " pf "<< postfix<<endl;
+    cout << " posnocat "<<pos_nocat<<" value "<< vfloats_values[label+category+"_"+variable+sysCat][pos_nocat]<<endl;
+    
+    if(passesScanCut(label,category,finalcut,pos_nocat)){
+      cout<< " passes! filling cat "<< label+category+sysCat<< " pos "<< sizes[label+category+sysCat]<<endl; 
+      int pos_cat=sizes[label+category+sysCat+postfix];// the size is the position of the last element
+      cout << " posnocat "<<pos_nocat<<endl;
+      fillSystCategory(label,category,sysCat,pos_nocat,pos_cat,postfix); // this will also increment the size of the category
     }
   }    
 }
@@ -2575,8 +2779,12 @@ string DMAnalysisTreeMaker::parseScanCut(string category, int obj){
     return (pieces.at(0));
   }
   if(obj==1){
-    
-    return (pieces.at(1));
+    string piecetmp = pieces.at(1);
+
+    if( piecetmp.find("p")!=std::string::npos){
+      piecetmp.replace(piecetmp.find("p"),1,".");
+    }
+    return piecetmp;
   }
   if(obj==2){
     if (pieces.size()<3) return "GE";
@@ -2586,20 +2794,24 @@ string DMAnalysisTreeMaker::parseScanCut(string category, int obj){
   }
   return "";
 }
+
+
 bool DMAnalysisTreeMaker::passesScanCut(string label, string category, string scanCut, int pos_nocat){
   string lookAtLabel = label+category;  
   string variable = parseScanCut(scanCut,0);
-  stringstream cutvalue ;
+  stringstream cutvalue;
   cutvalue << parseScanCut(scanCut,1);
   float cutfloat=0.;
   cutvalue >> cutfloat;
   string sign = parseScanCut(scanCut,2);
-  //  cout << " obs " << variable<< " sign "<< sign << " threshold " <<  cutfloat << endl;
+  cout << " obs " << variable<< " sign "<< sign << " threshold " <<  cutfloat << endl;
   string pref = obj_to_pref[label];
   float var = vfloats_values[makeName(label,pref,variable)][pos_nocat];
-  //  cout << " variable full name is is "<< makeName(label,pref,variable)<<" value "<<var<< " passes cut? "<< (bool)(var>cutfloat) <<endl;
+  //  if( isSystCat(label, category))var=vfloats_values[makeName(label+category,pref,variable);
+  cout << " variable full name is is "<< makeName(label,pref,variable)<<" value "<<var<< " passes cut? "<< cutfloat <<endl;
   
   if(sign=="GE") return (bool)(var>cutfloat);
+  if(sign=="LE") return (bool)(var<cutfloat);
 
   return true;
   //  return false;
@@ -2617,7 +2829,7 @@ vector<string> DMAnalysisTreeMaker::additionalVariables(string object){
   bool isevent=object.find("Event")!=std::string::npos;
   bool isResolvedTopHad=object.find("resolvedTopHad")!=std::string::npos;
   bool isResolvedTopSemiLep=object.find("resolvedTopSemiLep")!=std::string::npos;
-
+  
   bool isgenpart=object.find("genMuon")!=std::string::npos 
     || object.find("genEle")!=std::string::npos 
     || object.find("genTop")!=std::string::npos
@@ -2680,6 +2892,11 @@ vector<string> DMAnalysisTreeMaker::additionalVariables(string object){
     addvar.push_back("IsCSVT");
     addvar.push_back("IsCSVM");
     addvar.push_back("IsCSVL");
+
+     addvar.push_back("IsCMVAT");
+     addvar.push_back("IsCMVAM");
+     addvar.push_back("IsCMVAL");
+
        addvar.push_back("BSF");
         addvar.push_back("BSFUp");
         addvar.push_back("BSFDown");
@@ -2693,12 +2910,20 @@ vector<string> DMAnalysisTreeMaker::additionalVariables(string object){
     
     addvar.push_back("reshapeFactorCSV");
     addvar.push_back("reshapeFactorCSV_SD");
+    addvar.push_back("reshapeFactorCMVA");
+    addvar.push_back("reshapeFactorCMVA_SD");
     addvar.push_back("reshapedCSV");
+    addvar.push_back("reshapedCMVA");
     addvar.push_back("reshapedCSVJESUp");
     addvar.push_back("reshapedCSVJESDown");
     //    addvar.push_back("nReshapedCSV");
     //    addvar.push_back("nReshapedCSVMisTagDown");
 
+    for(size_t sccut = 0; sccut< obj_systCats[jets_label].size() ;++sccut){
+      string syCat=obj_systCats[jets_label].at(sccut);
+      addvar.push_back("CorrPt"+syCat);
+      addvar.push_back("CorrE"+syCat);
+    }
   }
   if(isak8){
     addvar.push_back("CorrPt");
@@ -2764,196 +2989,122 @@ vector<string> DMAnalysisTreeMaker::additionalVariables(string object){
     addvar.push_back("nGoodPV");
     addvar.push_back("nPV");
     addvar.push_back("nTruePV");
-
+    
+    std::vector<std::string>algos;
+    algos.push_back("CSV");
+    algos.push_back("CMVA");
     for (size_t jc=0;jc<obj_cats[jets_label].size();jc++){
       string category = obj_cats[jets_label].at(jc);
-
+      
       addvar.push_back("nJets"+category);
-      addvar.push_back("nJetsCSVT"+category);
-      addvar.push_back("nJetsCSVM"+category);
-      addvar.push_back("nJetsCSVL"+category);
+      
+      for(size_t alg =0; alg< algos.size();++alg){
+	string algo= algos.at(alg);
+	addvar.push_back("nJets"+algo+"T"+category);
+	addvar.push_back("nJets"+algo+"M"+category);
+	addvar.push_back("nJets"+algo+"L"+category);
+	
+	addvar.push_back("bWeight0"+algo+"T"+category);
+	addvar.push_back("bWeight1"+algo+"T"+category);
+	addvar.push_back("bWeight2"+algo+"T"+category);
+	addvar.push_back("bWeight1_2"+algo+"T"+category);
+	addvar.push_back("bWeightGE3"+algo+"T"+category);
+	
+	addvar.push_back("bWeight0"+algo+"M"+category);
+	addvar.push_back("bWeight1"+algo+"M"+category);
+	addvar.push_back("bWeight2"+algo+"M"+category);
+	addvar.push_back("bWeight1_2"+algo+"M"+category);
+	addvar.push_back("bWeightGE3"+algo+"M"+category);
+	
+	addvar.push_back("bWeight0"+algo+"L"+category);
+	addvar.push_back("bWeight1"+algo+"L"+category);
+	addvar.push_back("bWeight2"+algo+"L"+category);
+	addvar.push_back("bWeight1_2"+algo+"L"+category);
+	addvar.push_back("bWeightGE3"+algo+"L"+category);
+	
 
-      addvar.push_back("bWeight0CSVT"+category);
-      addvar.push_back("bWeight1CSVT"+category);
-      addvar.push_back("bWeight2CSVT"+category);
-      addvar.push_back("bWeight1_2CSVT"+category);
-      addvar.push_back("bWeightGE3CSVT"+category);
+	addvar.push_back("bWeightBTagUp0"+algo+"T"+category);
+	addvar.push_back("bWeightBTagUp1"+algo+"T"+category);
+	addvar.push_back("bWeightBTagUp2"+algo+"T"+category);
+	addvar.push_back("bWeightBTagUp1_2"+algo+"T"+category);
+	addvar.push_back("bWeightBTagUpGE3"+algo+"T"+category);
+	
+	addvar.push_back("bWeightBTagUp0"+algo+"M"+category);
+	addvar.push_back("bWeightBTagUp1"+algo+"M"+category);
+	addvar.push_back("bWeightBTagUp2"+algo+"M"+category);
+	addvar.push_back("bWeightBTagUp1_2"+algo+"M"+category);
+	addvar.push_back("bWeightBTagUpGE3"+algo+"M"+category);
 
-      addvar.push_back("bWeight0CSVM"+category);
-      addvar.push_back("bWeight1CSVM"+category);
-      addvar.push_back("bWeight2CSVM"+category);
-      addvar.push_back("bWeight1_2CSVM"+category);
-      addvar.push_back("bWeightGE3CSVM"+category);
-
-      addvar.push_back("bWeight0CSVL"+category);
-      addvar.push_back("bWeight1CSVL"+category);
-      addvar.push_back("bWeight2CSVL"+category);
-      addvar.push_back("bWeight1_2CSVL"+category);
-      addvar.push_back("bWeightGE3CSVL"+category);
-
-
-      addvar.push_back("bWeightBTagUp0CSVT"+category);
-      addvar.push_back("bWeightBTagUp1CSVT"+category);
-      addvar.push_back("bWeightBTagUp2CSVT"+category);
-      addvar.push_back("bWeightBTagUp1_2CSVT"+category);
-      addvar.push_back("bWeightBTagUpGE3CSVT"+category);
-
-      addvar.push_back("bWeightBTagUp0CSVM"+category);
-      addvar.push_back("bWeightBTagUp1CSVM"+category);
-      addvar.push_back("bWeightBTagUp2CSVM"+category);
-      addvar.push_back("bWeightBTagUp1_2CSVM"+category);
-      addvar.push_back("bWeightBTagUpGE3CSVM"+category);
-
-      addvar.push_back("bWeightBTagUp0CSVL"+category);
-      addvar.push_back("bWeightBTagUp1CSVL"+category);
-      addvar.push_back("bWeightBTagUp2CSVL"+category);
-      addvar.push_back("bWeightBTagUp1_2CSVL"+category);
-      addvar.push_back("bWeightBTagUpGE3CSVL"+category);
-
-
-      addvar.push_back("bWeightBTagDown0CSVT"+category);
-      addvar.push_back("bWeightBTagDown1CSVT"+category);
-      addvar.push_back("bWeightBTagDown2CSVT"+category);
-      addvar.push_back("bWeightBTagDown1_2CSVT"+category);
-      addvar.push_back("bWeightBTagDownGE3CSVT"+category);
-
-      addvar.push_back("bWeightBTagDown0CSVM"+category);
-      addvar.push_back("bWeightBTagDown1CSVM"+category);
-      addvar.push_back("bWeightBTagDown2CSVM"+category);
-      addvar.push_back("bWeightBTagDown1_2CSVM"+category);
-      addvar.push_back("bWeightBTagDownGE3CSVM"+category);
-
-      addvar.push_back("bWeightBTagDown0CSVL"+category);
-      addvar.push_back("bWeightBTagDown1CSVL"+category);
-      addvar.push_back("bWeightBTagDown2CSVL"+category);
-      addvar.push_back("bWeightBTagDown1_2CSVL"+category);
-      addvar.push_back("bWeightBTagDownGE3CSVL"+category);
-
-
-
-
-
-      addvar.push_back("bWeightMisTagUp0CSVT"+category);
-      addvar.push_back("bWeightMisTagUp1CSVT"+category);
-      addvar.push_back("bWeightMisTagUp2CSVT"+category);
-      addvar.push_back("bWeightMisTagUp1_2CSVT"+category);
-      addvar.push_back("bWeightMisTagUpGE3CSVT"+category);
-
-      addvar.push_back("bWeightMisTagUp0CSVM"+category);
-      addvar.push_back("bWeightMisTagUp1CSVM"+category);
-      addvar.push_back("bWeightMisTagUp2CSVM"+category);
-      addvar.push_back("bWeightMisTagUp1_2CSVM"+category);
-      addvar.push_back("bWeightMisTagUpGE3CSVM"+category);
-
-      addvar.push_back("bWeightMisTagUp0CSVL"+category);
-      addvar.push_back("bWeightMisTagUp1CSVL"+category);
-      addvar.push_back("bWeightMisTagUp2CSVL"+category);
-      addvar.push_back("bWeightMisTagUp1_2CSVL"+category);
-      addvar.push_back("bWeightMisTagUpGE3CSVL"+category);
-
-
-
-      addvar.push_back("bWeightMisTagDown0CSVT"+category);
-      addvar.push_back("bWeightMisTagDown1CSVT"+category);
-      addvar.push_back("bWeightMisTagDown2CSVT"+category);
-      addvar.push_back("bWeightMisTagDown1_2CSVT"+category);
-      addvar.push_back("bWeightMisTagDownGE3CSVT"+category);
-
-      addvar.push_back("bWeightMisTagDown0CSVM"+category);
-      addvar.push_back("bWeightMisTagDown1CSVM"+category);
-      addvar.push_back("bWeightMisTagDown2CSVM"+category);
-      addvar.push_back("bWeightMisTagDown1_2CSVM"+category);
-      addvar.push_back("bWeightMisTagDownGE3CSVM"+category);
-
-      addvar.push_back("bWeightMisTagDown0CSVL"+category);
-      addvar.push_back("bWeightMisTagDown1CSVL"+category);
-      addvar.push_back("bWeightMisTagDown2CSVL"+category);
-      addvar.push_back("bWeightMisTagDown1_2CSVL"+category);
-      addvar.push_back("bWeightMisTagDownGE3CSVL"+category);
-
-      if(doTopBToLightQuarkReweight){
+	addvar.push_back("bWeightBTagUp0"+algo+"L"+category);
+	addvar.push_back("bWeightBTagUp1"+algo+"L"+category);
+	addvar.push_back("bWeightBTagUp2"+algo+"L"+category);
+	addvar.push_back("bWeightBTagUp1_2"+algo+"L"+category);
+	addvar.push_back("bWeightBTagUpGE3"+algo+"L"+category);
+	
+	addvar.push_back("bWeightBTagDown0"+algo+"T"+category);
+	addvar.push_back("bWeightBTagDown1"+algo+"T"+category);
+	addvar.push_back("bWeightBTagDown2"+algo+"T"+category);
+	addvar.push_back("bWeightBTagDown1_2"+algo+"T"+category);
+	addvar.push_back("bWeightBTagDownGE3"+algo+"T"+category);
+	
+	addvar.push_back("bWeightBTagDown0"+algo+"M"+category);
+	addvar.push_back("bWeightBTagDown1"+algo+"M"+category);
+	addvar.push_back("bWeightBTagDown2"+algo+"M"+category);
+	addvar.push_back("bWeightBTagDown1_2"+algo+"M"+category);
+	addvar.push_back("bWeightBTagDownGE3"+algo+"M"+category);
+	
+	addvar.push_back("bWeightBTagDown0"+algo+"L"+category);
+	addvar.push_back("bWeightBTagDown1"+algo+"L"+category);
+	addvar.push_back("bWeightBTagDown2"+algo+"L"+category);
+	addvar.push_back("bWeightBTagDown1_2"+algo+"L"+category);
+	addvar.push_back("bWeightBTagDownGE3"+algo+"L"+category);
+	
+	addvar.push_back("bWeightMisTagUp0"+algo+"T"+category);
+	addvar.push_back("bWeightMisTagUp1"+algo+"T"+category);
+	addvar.push_back("bWeightMisTagUp2"+algo+"T"+category);
+	addvar.push_back("bWeightMisTagUp1_2"+algo+"T"+category);
+	addvar.push_back("bWeightMisTagUpGE3"+algo+"T"+category);
+	
+	addvar.push_back("bWeightMisTagUp0"+algo+"M"+category);
+	addvar.push_back("bWeightMisTagUp1"+algo+"M"+category);
+	addvar.push_back("bWeightMisTagUp2"+algo+"M"+category);
+	addvar.push_back("bWeightMisTagUp1_2"+algo+"M"+category);
+	addvar.push_back("bWeightMisTagUpGE3"+algo+"M"+category);
+	
+	addvar.push_back("bWeightMisTagUp0"+algo+"L"+category);
+	addvar.push_back("bWeightMisTagUp1"+algo+"L"+category);
+	addvar.push_back("bWeightMisTagUp2"+algo+"L"+category);
+	addvar.push_back("bWeightMisTagUp1_2"+algo+"L"+category);
+	addvar.push_back("bWeightMisTagUpGE3"+algo+"L"+category);
+	
+	addvar.push_back("bWeightMisTagDown0"+algo+"T"+category);
+	addvar.push_back("bWeightMisTagDown1"+algo+"T"+category);
+	addvar.push_back("bWeightMisTagDown2"+algo+"T"+category);
+	addvar.push_back("bWeightMisTagDown1_2"+algo+"T"+category);
+	addvar.push_back("bWeightMisTagDownGE3"+algo+"T"+category);
+	
+	addvar.push_back("bWeightMisTagDown0"+algo+"M"+category);
+	addvar.push_back("bWeightMisTagDown1"+algo+"M"+category);
+	addvar.push_back("bWeightMisTagDown2"+algo+"M"+category);
+	addvar.push_back("bWeightMisTagDown1_2"+algo+"M"+category);
+	addvar.push_back("bWeightMisTagDownGE3"+algo+"M"+category);
+	
+	addvar.push_back("bWeightMisTagDown0"+algo+"L"+category);
+	addvar.push_back("bWeightMisTagDown1"+algo+"L"+category);
+	addvar.push_back("bWeightMisTagDown2"+algo+"L"+category);
+	addvar.push_back("bWeightMisTagDown1_2"+algo+"L"+category);
+	addvar.push_back("bWeightMisTagDownGE3"+algo+"L"+category);
+	
+	if(doTopBToLightQuarkReweight){
 	  addvar.push_back("reweightBToQ"+category);
 	  addvar.push_back("reweightBToQBTagUp"+category);
 	  addvar.push_back("reweightBToQBTagDown"+category);
 	  addvar.push_back("reweightBToQMisTagUp"+category);
 	  addvar.push_back("reweightBToQMisTagDown"+category);
 	}
+      }
     }
 
-//    addvar.push_back("bWeight0CSVT");
-//    addvar.push_back("bWeight1CSVT");
-//    addvar.push_back("bWeight2CSVT");
-//    addvar.push_back("bWeight1_2CSVT");
-//
-//    addvar.push_back("bWeight0CSVM");
-//    addvar.push_back("bWeight1CSVM");
-//    addvar.push_back("bWeight2CSVM");
-//    addvar.push_back("bWeight1_2CSVM");
-//
-//    addvar.push_back("bWeight0CSVL");
-//    addvar.push_back("bWeight1CSVL");
-//    addvar.push_back("bWeight2CSVL");
-//    addvar.push_back("bWeight1_2CSVL");
-//
-//    addvar.push_back("bWeightMisTagDown0CSVT");
-//    addvar.push_back("bWeightMisTagDown1CSVT");
-//    addvar.push_back("bWeightMisTagDown2CSVT");
-//    addvar.push_back("bWeightMisTagDown1_2CSVT");
-//
-//    addvar.push_back("bWeightMisTagDown0CSVM");
-//    addvar.push_back("bWeightMisTagDown1CSVM");
-//    addvar.push_back("bWeightMisTagDown2CSVM");
-//    addvar.push_back("bWeightMisTagDown1_2CSVM");
-//
-//    addvar.push_back("bWeightMisTagDown0CSVL");
-//    addvar.push_back("bWeightMisTagDown1CSVL");
-//    addvar.push_back("bWeightMisTagDown2CSVL");
-//    addvar.push_back("bWeightMisTagDown1_2CSVL");
-//
-//    addvar.push_back("bWeightMisTagUp0CSVT");
-//    addvar.push_back("bWeightMisTagUp1CSVT");
-//    addvar.push_back("bWeightMisTagUp2CSVT");
-//    addvar.push_back("bWeightMisTagUp1_2CSVT");
-//
-//    addvar.push_back("bWeightMisTagUp0CSVM");
-//    addvar.push_back("bWeightMisTagUp1CSVM");
-//    addvar.push_back("bWeightMisTagUp2CSVM");
-//    addvar.push_back("bWeightMisTagUp1_2CSVM");
-//
-//    addvar.push_back("bWeightMisTagUp0CSVL");
-//    addvar.push_back("bWeightMisTagUp1CSVL");
-//    addvar.push_back("bWeightMisTagUp2CSVL");
-//    addvar.push_back("bWeightMisTagUp1_2CSVL");
-//
-//    addvar.push_back("bWeightBTagUp0CSVT");
-//    addvar.push_back("bWeightBTagUp1CSVT");
-//    addvar.push_back("bWeightBTagUp2CSVT");
-//    addvar.push_back("bWeightBTagUp1_2CSVT");
-//
-//    addvar.push_back("bWeightBTagUp0CSVM");
-//    addvar.push_back("bWeightBTagUp1CSVM");
-//    addvar.push_back("bWeightBTagUp2CSVM");
-//    addvar.push_back("bWeightBTagUp1_2CSVM");
-//
-//    addvar.push_back("bWeightBTagUp0CSVL");
-//    addvar.push_back("bWeightBTagUp1CSVL");
-//    addvar.push_back("bWeightBTagUp2CSVL");
-//    addvar.push_back("bWeightBTagUp1_2CSVL");
-//
-//    addvar.push_back("bWeightBTagDown0CSVT");
-//    addvar.push_back("bWeightBTagDown1CSVT");
-//    addvar.push_back("bWeightBTagDown2CSVT");
-//    addvar.push_back("bWeightBTagDown1_2CSVT");
-//
-//    addvar.push_back("bWeightBTagDown0CSVM");
-//    addvar.push_back("bWeightBTagDown1CSVM");
-//    addvar.push_back("bWeightBTagDown2CSVM");
-//    addvar.push_back("bWeightBTagDown1_2CSVM");
-//
-//    addvar.push_back("bWeightBTagDown0CSVL");
-//    addvar.push_back("bWeightBTagDown1CSVL");
-//    addvar.push_back("bWeightBTagDown2CSVL");
-//    addvar.push_back("bWeightBTagDown1_2CSVL");
 
     addvar.push_back("T_Pt");
     addvar.push_back("T_Eta");
@@ -3075,59 +3226,86 @@ vector<string> DMAnalysisTreeMaker::additionalVariables(string object){
   return addvar;
 }
 
-double DMAnalysisTreeMaker::getMCTagEfficiencyFunc(float flavor, float btag, float ptCorr, string algo,string syst, bool norm){
+double DMAnalysisTreeMaker::getMCTagEfficiencyFunc(float flavor, float btag, float ptCorr, float eta, string algo,string syst, bool norm, bool spline ){
+  bool doSpline = spline;
   double scale=1.0;
-  if (algo == "csv"){
-    double btagmin=0.0,btagmax=1.0;
-    double thrloose=0.46,thrmedium=0.8,thrtight=0.935;
-    if (btag > btagmin && btag<=thrloose ){
-      scale= (1. - (btag-btagmin)*(1-MCTagEfficiency("csvl",flavor, ptCorr))/(thrloose-btagmin));
+  if (algo == "CSV"|| algo=="CMVA"){
+    double btagmin=getWPAlgo(algo,"MIN"),btagmax=getWPAlgo(algo,"MAX");
+    double thrloose=getWPAlgo(algo,"L"),thrmedium=getWPAlgo(algo,"M"),thrtight=getWPAlgo(algo,"T");
+    if(btag<thrtight)doSpline=false;
+    if( doSpline){
+      Double_t xs[5] = {btagmin,thrloose,thrmedium,thrtight,btagmax};
+      Double_t ys[5] = {1,MCTagEfficiency(algo+"L",flavor, ptCorr,eta),MCTagEfficiency(algo+"M",flavor, ptCorr,eta),MCTagEfficiency(algo+"T",flavor, ptCorr,eta),0};
+      Double_t endpointder=0.0;
+      if(fabs(flavor)==5){
+	endpointder= -(MCTagEfficiency(algo+"T",flavor, ptCorr,eta))/(btagmax-thrtight);
+	//cout << "endpointder "<<endpointer<<endl;
+	//	endpointder=-1;
+      }
+      cout <<" xs[5]={";
+      for( int i = 0; i < 5; ++i){cout << xs[i]<<", ";}
+      cout <<"}"<<endl<<" ys[5]={";
+      for( int i = 0; i < 5; ++i){cout << ys[i]<<", ";}
+      cout <<"}"<<endl;
+      cout <<"endpointder="<<endpointder<<endl;
+      
+      TSpline3 sp("sp",xs,ys,5,"sp",0.0,endpointder);
+
+      scale = sp.Eval(btag);
+
     }
-    if (btag > thrloose && btag<=thrmedium){
-      scale= (MCTagEfficiency("csvl",flavor, ptCorr) - (btag-thrloose)*(MCTagEfficiency("csvl",flavor, ptCorr)-MCTagEfficiency("csvm",flavor, ptCorr))/(thrmedium-thrloose));
+
+    else{
+      if (btag > btagmin && btag<=thrloose ){
+	scale= (1. - (btag-btagmin)*(1-MCTagEfficiency(algo+"L",flavor, ptCorr,eta))/(thrloose-btagmin));
+      }
+      if (btag > thrloose && btag<=thrmedium){
+	scale= (MCTagEfficiency(algo+"L",flavor, ptCorr,eta) - (btag-thrloose)*(MCTagEfficiency(algo+"L",flavor, ptCorr,eta)-MCTagEfficiency(algo+"M",flavor, ptCorr,eta))/(thrmedium-thrloose));
+      }
+      if (btag > thrmedium && btag<=thrtight){
+	//      cout << "efffM "<< MCTagEfficiency(algo+"M",flavor, ptCorr,eta) << " btag "<< btag << " thrmed "<< thrmedium << " effT " <<MCTagEfficiency(algo+"T",flavor, ptCorr,eta)<< " pt "<<ptCorr << " eta "<< eta <<endl;
+	scale = MCTagEfficiency(algo+"M",flavor, ptCorr,eta) - (btag-thrmedium)*(MCTagEfficiency(algo+"M",flavor, ptCorr,eta)-MCTagEfficiency(algo+"T",flavor, ptCorr,eta))/(thrtight-thrmedium);
+      }
+      if (btag > thrtight && btag <= btagmax){
+	scale = MCTagEfficiency(algo+"T",flavor, ptCorr,eta) - (btag-thrtight)*(MCTagEfficiency(algo+"T",flavor, ptCorr,eta)-0)/(btagmax-thrtight);
+      }
+      if(btag<btagmin || btag > btagmax)scale= 1.;
     }
-    if (btag > thrmedium && btag<=thrtight){
-      scale = MCTagEfficiency("csvm",flavor, ptCorr) - (btag-thrmedium)*(MCTagEfficiency("csvm",flavor, ptCorr)-MCTagEfficiency("csvt",flavor, ptCorr))/(thrtight-thrmedium);
-    }
-    if (btag > thrtight && btag <= btagmax){
-      scale = MCTagEfficiency("csvt",flavor, ptCorr) - (btag-thrtight)*(MCTagEfficiency("csvt",flavor, ptCorr)-0)/(btagmax-thrtight);
-    }
-    if(btag<btagmin || btag > btagmax)scale= 1.;
   }
   return scale;
 }
 
 //Helper to get a/b of the working point:
-double DMAnalysisTreeMaker::getMCTagEfficiencyFuncParam(float flavor, float ptCorr, string algo,string syst, string param, string region){
-  if (algo == "csv"){
-    double btagmin=0.0,btagmax=1.0;
-    double thrloose=0.46,thrmedium=0.8,thrtight=0.935;
+double DMAnalysisTreeMaker::getMCTagEfficiencyFuncParam(float flavor, float ptCorr, float eta, string algo,string syst, string param, string region){
+  if (algo == "CSV"|| algo=="CMVA"){
+    double btagmin=getWPAlgo(algo,"MIN"),btagmax=getWPAlgo(algo,"MAX");
+    double thrloose=getWPAlgo(algo,"L"),thrmedium=getWPAlgo(algo,"M"),thrtight=getWPAlgo(algo,"T");
     if (param=="a"){
-      if ( region == "0L") return (1. + (btagmin)*(1-MCTagEfficiency("csvl",flavor, ptCorr))/(thrloose-btagmin));
-      if ( region == "LM") return (MCTagEfficiency("csvl",flavor, ptCorr) + (thrloose)*(MCTagEfficiency("csvl",flavor, ptCorr)-MCTagEfficiency("csvm",flavor, ptCorr))/(thrmedium-thrloose));
-      if ( region == "MT")  return MCTagEfficiency("csvm",flavor, ptCorr) + (thrmedium)*(MCTagEfficiency("csvm",flavor, ptCorr)-MCTagEfficiency("csvt",flavor, ptCorr))/(thrtight-thrmedium);
-      if ( region == "T1") return MCTagEfficiency("csvt",flavor, ptCorr) + (thrtight)*(MCTagEfficiency("csvt",flavor, ptCorr)-0)/(btagmax-thrtight);
+      if ( region == "0L") return (1. + (btagmin)*(1-MCTagEfficiency(algo+"L",flavor, ptCorr,eta))/(thrloose-btagmin));
+      if ( region == "LM") return (MCTagEfficiency(algo+"L",flavor, ptCorr,eta) + (thrloose)*(MCTagEfficiency(algo+"L",flavor, ptCorr,eta)-MCTagEfficiency(algo+"M",flavor, ptCorr,eta))/(thrmedium-thrloose));
+      if ( region == "MT")  return MCTagEfficiency(algo+"M",flavor, ptCorr,eta) + (thrmedium)*(MCTagEfficiency(algo+"M",flavor, ptCorr,eta)-MCTagEfficiency(algo+"T",flavor, ptCorr,eta))/(thrtight-thrmedium);
+      if ( region == "T1") return MCTagEfficiency(algo+"T",flavor, ptCorr,eta) + (thrtight)*(MCTagEfficiency(algo+"T",flavor, ptCorr,eta)-0)/(btagmax-thrtight);
     }
     if (param=="b"){
-      if ( region == "0L") return -((1-MCTagEfficiency("csvl",flavor, ptCorr))/(thrloose-btagmin));
-      if ( region == "LM") return -((MCTagEfficiency("csvl",flavor, ptCorr)-MCTagEfficiency("csvm",flavor, ptCorr))/(thrmedium-thrloose));
-      if ( region == "MT") return -(MCTagEfficiency("csvm",flavor, ptCorr)-MCTagEfficiency("csvt",flavor, ptCorr))/(thrtight-thrmedium);
-      if ( region == "T1") return -(MCTagEfficiency("csvt",flavor, ptCorr)-0)/(btagmax-thrtight);
+      if ( region == "0L") return -((1-MCTagEfficiency(algo+"L",flavor, ptCorr,eta))/(thrloose-btagmin));
+      if ( region == "LM") return -((MCTagEfficiency(algo+"L",flavor, ptCorr,eta)-MCTagEfficiency(algo+"M",flavor, ptCorr,eta))/(thrmedium-thrloose));
+      if ( region == "MT") return -(MCTagEfficiency(algo+"M",flavor, ptCorr,eta)-MCTagEfficiency(algo+"T",flavor, ptCorr,eta))/(thrtight-thrmedium);
+      if ( region == "T1") return -(MCTagEfficiency(algo+"T",flavor, ptCorr,eta)-0)/(btagmax-thrtight);
     }
   }
   return 0.;
 }
 
-double DMAnalysisTreeMaker::getMCTagEfficiencyFuncInt(float flavor, float ptCorr,string algo, string syst){
+double DMAnalysisTreeMaker::getMCTagEfficiencyFuncInt(float flavor, float ptCorr,float eta, string algo, string syst){
   double integral=0.;
-  if (algo == "csv"){
+  if (algo == "CSV"){
     integral =0.0;
-    double btagmin=0.0,btagmax=1.0;
-    double thrloose=0.46,thrmedium=0.8,thrtight=0.935;
-    integral+= (thrloose-btagmin)*(1+MCTagEfficiency("csvl",flavor, ptCorr))/2.;
-    integral+= (thrmedium-thrloose)*(MCTagEfficiency("csvm",flavor, ptCorr)+MCTagEfficiency("csvl",flavor, ptCorr))/2.;
-    integral+= (thrtight-thrmedium)*(MCTagEfficiency("csvt",flavor, ptCorr)+MCTagEfficiency("csvm",flavor, ptCorr))/2.;
-    integral+= (btagmax-thrtight)*(MCTagEfficiency("csvm",flavor, ptCorr)+0)/2.;
+    double btagmin=getWPAlgo(algo,"MIN"),btagmax=getWPAlgo(algo,"MAX");
+    double thrloose=getWPAlgo(algo,"L"),thrmedium=getWPAlgo(algo,"M"),thrtight=getWPAlgo(algo,"T");
+    integral+= (thrloose-btagmin)*(1+MCTagEfficiency(algo+"L",flavor, ptCorr,eta))/2.;
+    integral+= (thrmedium-thrloose)*(MCTagEfficiency(algo+"M",flavor, ptCorr,eta)+MCTagEfficiency(algo+"L",flavor, ptCorr,eta))/2.;
+    integral+= (thrtight-thrmedium)*(MCTagEfficiency(algo+"T",flavor, ptCorr,eta)+MCTagEfficiency(algo+"M",flavor, ptCorr,eta))/2.;
+    integral+= (btagmax-thrtight)*(MCTagEfficiency(algo+"T",flavor, ptCorr,eta)+0)/2.;
   } 
   return integral;
 }
@@ -3136,95 +3314,127 @@ double DMAnalysisTreeMaker::getMCTagEfficiencyFuncInt(float flavor, float ptCorr
 float DMAnalysisTreeMaker::getReshapedBTagValue(float flavor, float btag, float pt, float eta, string algo, string syst){
   if (fabs(eta)>2.4)return 1.;
   if (syst=="noSyst"){
-    if(algo == "csv_sd") {
+    if(algo == "CSV_sd") {
       if(fabs(flavor)!=5) return 1.;
-      double effRatio = getEffRatioFunc(flavor,btag,pt,"csv",syst,true);
-	//getMCTagEfficiencyFunc(1,btag,pt,"csv",syst,false)/getMCTagEfficiencyFunc(flavor,btag,pt,"csv",syst,false);//Get the MC efficiency ratio
-      //      cout << "Effratio "<< effRatio << "flavor "<< flavor << " btag "<< btag<< " pt "<< pt <<"mc tag nom "<< getMCTagEfficiencyFunc(1,btag,pt,"csv",syst)<<" mc tag den "<< getMCTagEfficiencyFunc(flavor,btag,pt,"csv",syst)<<endl;
-      //      double effRatioInt = getMCTagEfficiencyFuncInt(1,pt,"csv",syst);
-      //if(effRatioInt!=0) effRatioInt= getMCTagEfficiencyFuncInt(1,pt,"csv",syst)/effRatioInt;//Get the MC efficiency ratio integral correction as it's a cumulative function.
-      //      double SFRatio = readerReshape->eval_auto_bounds("central",BTagEntry::FLAV_UDSG, eta, pt, btag)/readerReshape->eval_auto_bounds("central",BTagEntry::FLAV_B, eta, pt, btag);//Multiply by the udsg flavor reshaping
-
-      //      if(effRatioInt!=0) effRatio= effRatio/effRatioInt;
-      //      else cout<< "careful my friend, effratioInt is 0" <<endl;
-      //      return effRatio * SFRatio;
+      double effRatio = getEffRatioFunc(flavor,btag,pt,eta,"CSV",syst,false);
+      //      cout<< effRatio <<" effRatio "<<flavor << " flavor "<<endl;
       return effRatio;
     }
-    if(fabs(flavor) == 5) return readerReshape->eval_auto_bounds("central",BTagEntry::FLAV_B, eta, pt, btag);
-    if(fabs(flavor) == 4) return readerReshape->eval_auto_bounds("central",BTagEntry::FLAV_C, eta, pt, btag);
-    if(fabs(flavor) != 4 && fabs(flavor) != 5) return readerReshape->eval_auto_bounds("central",BTagEntry::FLAV_UDSG, eta, pt, btag);
-    
+    if(algo == "CMVA_sd") {
+      if(fabs(flavor)!=5) return 1.;
+      double effRatio = getEffRatioFunc(flavor,btag,pt,eta,"CMVA",syst,false);
+      //      cout<< effRatio <<" effRatio "<<flavor << " flavor "<<endl;
+      return effRatio;
+    }
+    if(algo=="CSV"){
+      if(fabs(flavor) == 5) return readerCSVReshape->eval_auto_bounds("central",BTagEntry::FLAV_B, eta, pt, btag);
+      if(fabs(flavor) == 4) return readerCSVReshape->eval_auto_bounds("central",BTagEntry::FLAV_C, eta, pt, btag);
+      if(fabs(flavor) != 4 && fabs(flavor) != 5) return readerCSVReshape->eval_auto_bounds("central",BTagEntry::FLAV_UDSG, eta, pt, btag);
+    }
+    if(algo=="CMVA"){
+      if(fabs(flavor) == 5) return readerCMVAReshape->eval_auto_bounds("central",BTagEntry::FLAV_B, eta, pt, btag);
+      if(fabs(flavor) == 4) return readerCMVAReshape->eval_auto_bounds("central",BTagEntry::FLAV_C, eta, pt, btag);
+      if(fabs(flavor) != 4 && fabs(flavor) != 5) return readerCMVAReshape->eval_auto_bounds("central",BTagEntry::FLAV_UDSG, eta, pt, btag);
+    }
   }
   
   return 1.;
 }
 
+float DMAnalysisTreeMaker::getWPAlgo(string algo, string wp){
+  if(algo=="CSV"){
+    if(wp=="MIN")return 0.0;
+    if(wp=="L")return 0.5426;
+    if(wp=="M")return 0.8484;
+    if(wp=="T")return 0.9535;
+    if(wp=="MAX")return 0.999999;
+  }
+  if(algo=="CMVA"){
+    if(wp=="MIN")return -1.;
+    if(wp=="L")return -0.5884;
+    if(wp=="M")return 0.4432;
+    if(wp=="T")return 0.9432;
+    if(wp=="MAX")return 0.999999;
+  }
+  return -1.0;
+}
 //double DMAnalysisTreeMaker::getMCTagEfficiencyFunc(float flavor, float ptCorr, string algo,string syst, string wp, string region){
 //float avgRatioFunc(float x0,float x1,float a1, string b1 , float a2, float b2){
 
-float DMAnalysisTreeMaker::getEffRatioFunc(float flavor,float btag,float pt,string algo ,string syst,bool normalize){
+float DMAnalysisTreeMaker::getEffRatioFunc(float flavor,float btag,float pt,float eta, string algo ,string syst,bool normalize){
 
   float localvalue=-1;
-  if(algo=="csv"){
-    double btagmin=0.0,btagmax=0.999999;
-    double thrloose=0.46,thrmedium=0.8,thrtight=0.935;
+  if(algo=="CSV" || algo == "CMVA"){
+    double btagmin=getWPAlgo(algo,"MIN"),btagmax=getWPAlgo(algo,"MAX");
+    double thrloose=getWPAlgo(algo,"L"),thrmedium=getWPAlgo(algo,"M"),thrtight=getWPAlgo(algo,"T");
+    cout << " btagmin "<<btagmin<<" btag "<< btag <<endl;
     
-    localvalue= getMCTagEfficiencyFunc(1,btag,pt,"csv",syst,false)/getMCTagEfficiencyFunc(flavor,btag,pt,"csv",syst,false);//Get the MC efficiency ratio
+    //    localvalue= getMCTagEfficiencyFunc(1,btag,pt, eta, algo,syst,false,false)/getMCTagEfficiencyFunc(flavor,btag,pt,eta,algo,syst,false,false);//Get the MC efficiency ratio
+   
+    //Spline version:
+    localvalue= getMCTagEfficiencyFunc(1,btag,pt, eta, algo,syst,false,true)/getMCTagEfficiencyFunc(flavor,btag,pt,eta,algo,syst,false,true);//Get the MC efficiency ratio
+    cout << " btag "<< btag<<endl;
+    cout<< " eff l "<< getMCTagEfficiencyFunc(1,btag,pt, eta, algo,syst,false,false)<< " eff b "<< getMCTagEfficiencyFunc(flavor,btag,pt,eta,algo,syst,false,false) <<endl;
+    cout<< " lvl "<< localvalue <<endl;
     if( normalize){ 
       //Use analytically evaluated function average to get the reweighting:
       float average=0.;
       //      float valMin= 1;
 
-      float numA0L= getMCTagEfficiencyFuncParam(1, pt, "csv",syst, "a",  "0L");
-      float numB0L= getMCTagEfficiencyFuncParam(1, pt, "csv",syst, "b",  "0L");
+      float numA0L= getMCTagEfficiencyFuncParam(1, pt, eta, algo,syst, "a",  "0L");
+      float numB0L= getMCTagEfficiencyFuncParam(1, pt, eta, algo,syst, "b",  "0L");
 
-      float numALM= getMCTagEfficiencyFuncParam(1, pt, "csv",syst, "a",  "LM");
-      float numBLM= getMCTagEfficiencyFuncParam(1, pt, "csv",syst, "b",  "LM");
+      float numALM= getMCTagEfficiencyFuncParam(1, pt, eta, algo,syst, "a",  "LM");
+      float numBLM= getMCTagEfficiencyFuncParam(1, pt, eta, algo,syst, "b",  "LM");
 
-      float numAMT= getMCTagEfficiencyFuncParam(1, pt, "csv",syst, "a",  "MT");
-      float numBMT= getMCTagEfficiencyFuncParam(1, pt, "csv",syst, "b",  "MT");
+      float numAMT= getMCTagEfficiencyFuncParam(1, pt, eta, algo,syst, "a",  "MT");
+      float numBMT= getMCTagEfficiencyFuncParam(1, pt, eta, algo,syst, "b",  "MT");
 
-      float numAT1= getMCTagEfficiencyFuncParam(1, pt, "csv",syst, "a",  "T1");
-      float numBT1= getMCTagEfficiencyFuncParam(1, pt, "csv",syst, "b",  "T1");
+      float numAT1= getMCTagEfficiencyFuncParam(1, pt, eta, algo,syst, "a",  "T1");
+      float numBT1= getMCTagEfficiencyFuncParam(1, pt, eta, algo,syst, "b",  "T1");
 
-      float denA0L= getMCTagEfficiencyFuncParam(flavor, pt, "csv",syst, "a",  "0L");
-      float denB0L= getMCTagEfficiencyFuncParam(flavor, pt, "csv",syst, "b",  "0L");
+      float denA0L= getMCTagEfficiencyFuncParam(flavor, pt, eta, algo,syst, "a",  "0L");
+      float denB0L= getMCTagEfficiencyFuncParam(flavor, pt, eta, algo,syst, "b",  "0L");
 
-      float denALM= getMCTagEfficiencyFuncParam(flavor, pt, "csv",syst, "a",  "LM");
-      float denBLM= getMCTagEfficiencyFuncParam(flavor, pt, "csv",syst, "b",  "LM");
+      float denALM= getMCTagEfficiencyFuncParam(flavor, pt, eta, algo,syst, "a",  "LM");
+      float denBLM= getMCTagEfficiencyFuncParam(flavor, pt, eta, algo,syst, "b",  "LM");
 
-      float denAMT= getMCTagEfficiencyFuncParam(flavor, pt, "csv",syst, "a",  "MT");
-      float denBMT= getMCTagEfficiencyFuncParam(flavor, pt, "csv",syst, "b",  "MT");
+      float denAMT= getMCTagEfficiencyFuncParam(flavor, pt, eta, algo,syst, "a",  "MT");
+      float denBMT= getMCTagEfficiencyFuncParam(flavor, pt, eta, algo,syst, "b",  "MT");
 
-      float denAT1= getMCTagEfficiencyFuncParam(flavor, pt, "csv",syst, "a",  "T1");
-      float denBT1= getMCTagEfficiencyFuncParam(flavor, pt, "csv",syst, "b",  "T1");
+      float denAT1= getMCTagEfficiencyFuncParam(flavor, pt, eta, algo,syst, "a",  "T1");
+      float denBT1= getMCTagEfficiencyFuncParam(flavor, pt, eta, algo,syst, "b",  "T1");
      
       float averagetot =average;
-      //      cout << " localvalue before "<< localvalue << endl;
+      cout << " localvalue before "<< localvalue << endl;
       //average = -denB0L*avgRatioFunc(btagmin,thrloose,numA0L,numB0L,denA0L,denB0L);
       average = avgRatioFunc(btagmin,thrloose,numA0L,numB0L,denA0L,denB0L);
-      //      cout<< " average 0L " <<average<<endl;
+            cout<< " average 0L " <<average<<endl;
       averagetot +=average;
 	    
-      //average = -denBLM*avgRatioFunc(thrloose,thrmedium,numALM,numBLM,denALM,denBLM);
+      average = -denBLM*avgRatioFunc(thrloose,thrmedium,numALM,numBLM,denALM,denBLM);
       average = avgRatioFunc(thrloose,thrmedium,numALM,numBLM,denALM,denBLM);
-      //      cout<< " average LM " <<average<<endl;
+      cout<< " average LM " <<average<<endl;
       averagetot +=average;
 
-      //      average = -denBMT*avgRatioFunc(thrmedium,thrtight,numAMT,numBMT,denAMT,denBMT);
+      //            average = -denBMT*avgRatioFunc(thrmedium,thrtight,numAMT,numBMT,denAMT,denBMT);
       average = avgRatioFunc(thrmedium,thrtight,numAMT,numBMT,denAMT,denBMT);
-      //      cout<< " average MT " <<average<<endl;
+      cout<< " average MT " <<average<<endl;
       averagetot +=average;
       
-      //average = -denBT1*avgRatioFunc(thrtight,btagmax,numAT1,numBT1,denAT1,denBT1);
-      average = avgRatioFunc(thrtight,btagmax,numAT1,numBT1,denAT1,denBT1);
-      //cout << " localvalue before "<< localvalue << endl;
-      //      cout<< " average is " <<average<<endl;
+      //      average = -denBT1*avgRatioFunc(thrtight,btagmax,numAT1,numBT1,denAT1,denBT1);
+      //average = avgRatioFunc(thrtight,btagmax,numAT1,numBT1,denAT1,denBT1); Not-well defined because AT1 == BT1, use simplified integral
+
+      average = numAT1/denAT1*(btagmax-thrtight);
+
+      cout << " localvalue before "<< localvalue << endl;
+      cout<< " average is " <<average<<endl;
+      cout << "tight "<< thrtight <<" max "<< btagmax<< " numaT1 "<< numAT1<<" numBT1 "<<  numBT1<< " denAT1 "<< denAT1<< " denBT1 "<< denBT1<<endl;
       averagetot +=average;
 
-      //      cout<< " average tot is " <<averagetot<<endl;
+      cout<< " average tot is " <<averagetot<<endl;
       localvalue=localvalue/averagetot;
-      //      cout << " localvalue after "<< localvalue << endl;
+      cout << " localvalue after "<< localvalue << endl;
     }
   }
   
@@ -3245,7 +3455,7 @@ float DMAnalysisTreeMaker::avgRatioFunc(float x0,float x1,float anum, float bnum
   return p0+p1+p2;
 }
 
-void DMAnalysisTreeMaker::setEventBTagSF(string label, string category){
+void DMAnalysisTreeMaker::setEventBTagSF(string label, string category, string algo){
   
   int ncsv_tmp_t_tags =0;
   int ncsv_tmp_m_tags =0;
@@ -3273,25 +3483,26 @@ void DMAnalysisTreeMaker::setEventBTagSF(string label, string category){
   
   for(int j =0; j<sizes[label+category];++j){
     if(fabs(vfloats_values[lc+"_Eta"][j])>2.4)continue;
-    if(vfloats_values[lc+"_IsCSVT"][j])++ncsv_tmp_t_tags;
-    if(vfloats_values[lc+"_IsCSVM"][j])++ncsv_tmp_m_tags;
-    if(vfloats_values[lc+"_IsCSVL"][j])++ncsv_tmp_l_tags;
+    if(vfloats_values[lc+"_Is"+algo+"T"][j])++ncsv_tmp_t_tags;
+    if(vfloats_values[lc+"_Is"+algo+"M"][j])++ncsv_tmp_m_tags;
+    if(vfloats_values[lc+"_Is"+algo+"L"][j])++ncsv_tmp_l_tags;
 
     float ptCorr = vfloats_values[lc+"_CorrPt"][j];
+    float eta = vfloats_values[lc+"_Eta"][j];
     //    int flavor = vfloats_values[lc+"_PartonFlavour"][j];
     int flavor = vfloats_values[lc+"_HadronFlavour"][j];
     
     //    cout <<"jet "<< j<< " istagged l "<<vfloats_values[lc+"_IsCSVL"][j]<< " flavor "<< flavor<<endl;
     
-    double csvteff = MCTagEfficiency("csvt",flavor, ptCorr);
-    double sfcsvt = TagScaleFactor("csvt", flavor, "noSyst", ptCorr);
+    double csvteff = MCTagEfficiency(algo+"T",flavor, ptCorr,eta);
+    double sfcsvt = TagScaleFactor(algo+"T", flavor, "noSyst", ptCorr,eta);
     
-    double csvleff = MCTagEfficiency("csvl",flavor,ptCorr);
-    double sfcsvl = TagScaleFactor("csvl", flavor, "noSyst", ptCorr);
+    double csvleff = MCTagEfficiency(algo+"L",flavor,ptCorr,eta);
+    double sfcsvl = TagScaleFactor(algo+"L", flavor, "noSyst", ptCorr,eta);
     
-    double csvmeff = MCTagEfficiency("csvm",flavor,ptCorr);
-    double sfcsvm = TagScaleFactor("csvm", flavor, "noSyst", ptCorr);
-	
+    double csvmeff = MCTagEfficiency(algo+"M",flavor,ptCorr,eta);
+    double sfcsvm = TagScaleFactor(algo+"M", flavor, "noSyst", ptCorr,eta);
+    
     if(doTopDecayReshaping){
       //double leadingLeptonCharge=+1;//leadingleptonCharge;
       double pFlavour=vfloats_values[lc+"_PartonFlavour"][j];
@@ -3299,30 +3510,29 @@ void DMAnalysisTreeMaker::setEventBTagSF(string label, string category){
       if(fabs(pFlavour)==5){
 	//	cout << "jet j"<< j<< " pflav "<< pFlavour <<" sf bef "<<sfcsvt <<endl;
 	if(fabs(pFlavour)==5 && product >0){
-	  
-	  sfcsvt = sfcsvt*MCTagEfficiency("csvt",1,ptCorr)/csvteff;
-	  sfcsvm = sfcsvm*MCTagEfficiency("csvm",1,ptCorr)/csvmeff;
-	  sfcsvl = sfcsvl*MCTagEfficiency("csvl",1,ptCorr)/csvleff;
+	  sfcsvt = sfcsvt*MCTagEfficiency(algo+"T",1,ptCorr,eta)/csvteff;
+	  sfcsvm = sfcsvm*MCTagEfficiency(algo+"M",1,ptCorr,eta)/csvmeff;
+	  sfcsvl = sfcsvl*MCTagEfficiency(algo+"L",1,ptCorr,eta)/csvleff;
 	}
 	//	cout << "jet j"<< j<< " pflav "<< pFlavour <<" sf aft "<<sfcsvt <<endl;
       }
     }
     
-    double sfcsvt_mistag_up = TagScaleFactor("csvt", flavor, "mistag_up", ptCorr);
-    double sfcsvl_mistag_up = TagScaleFactor("csvl", flavor, "mistag_up", ptCorr);
-    double sfcsvm_mistag_up = TagScaleFactor("csvm", flavor, "mistag_up", ptCorr);
+    double sfcsvt_mistag_up = TagScaleFactor(algo+"T", flavor, "mistag_up", ptCorr,eta);
+    double sfcsvl_mistag_up = TagScaleFactor(algo+"L", flavor, "mistag_up", ptCorr,eta);
+    double sfcsvm_mistag_up = TagScaleFactor(algo+"M", flavor, "mistag_up", ptCorr,eta);
     
-    double sfcsvt_mistag_down = TagScaleFactor("csvt", flavor, "mistag_down", ptCorr);
-    double sfcsvl_mistag_down = TagScaleFactor("csvl", flavor, "mistag_down", ptCorr);
-    double sfcsvm_mistag_down = TagScaleFactor("csvm", flavor, "mistag_down", ptCorr);
+    double sfcsvt_mistag_down = TagScaleFactor(algo+"T", flavor, "mistag_down", ptCorr,eta);
+    double sfcsvl_mistag_down = TagScaleFactor(algo+"L", flavor, "mistag_down", ptCorr,eta);
+    double sfcsvm_mistag_down = TagScaleFactor(algo+"M", flavor, "mistag_down", ptCorr,eta);
     
-    double sfcsvt_b_tag_down = TagScaleFactor("csvt", flavor, "b_tag_down", ptCorr);
-    double sfcsvl_b_tag_down = TagScaleFactor("csvl", flavor, "b_tag_down", ptCorr);
-    double sfcsvm_b_tag_down = TagScaleFactor("csvm", flavor, "b_tag_down", ptCorr);
+    double sfcsvt_b_tag_down = TagScaleFactor(algo+"T", flavor, "b_tag_down", ptCorr,eta);
+    double sfcsvl_b_tag_down = TagScaleFactor(algo+"L", flavor, "b_tag_down", ptCorr,eta);
+    double sfcsvm_b_tag_down = TagScaleFactor(algo+"M", flavor, "b_tag_down", ptCorr,eta);
     
-    double sfcsvt_b_tag_up = TagScaleFactor("csvt", flavor, "b_tag_up", ptCorr);
-    double sfcsvl_b_tag_up = TagScaleFactor("csvl", flavor, "b_tag_up", ptCorr);
-    double sfcsvm_b_tag_up = TagScaleFactor("csvm", flavor, "b_tag_up", ptCorr);
+    double sfcsvt_b_tag_up = TagScaleFactor(algo+"T", flavor, "b_tag_up", ptCorr,eta);
+    double sfcsvl_b_tag_up = TagScaleFactor(algo+"L", flavor, "b_tag_up", ptCorr,eta);
+    double sfcsvm_b_tag_up = TagScaleFactor(algo+"M", flavor, "b_tag_up", ptCorr,eta);
     
     
     jsfscsvt.push_back(BTagWeight::JetInfo(csvteff, sfcsvt));
@@ -3447,82 +3657,82 @@ void DMAnalysisTreeMaker::setEventBTagSF(string label, string category){
     //    cout << " n tight tags "<< ncsv_tmp_l_tags  << " w0tag "<< b_weight_csvl_0_tags<<" w1tag " << b_weight_csvl_1_tag <<" w2tags "<<b_weight_csvt_2_tags  <<endl;
 
     
-    float_values["Event_bWeight0CSVL"+category]=b_weight_csvl_0_tags;
-    float_values["Event_bWeight1CSVL"+category]=b_weight_csvl_1_tag;
-    float_values["Event_bWeight2CSVL"+category]=b_weight_csvl_2_tags;
-    float_values["Event_bWeight1_2CSVL"+category]=b_weight_csvl_1_2_tags;
+    float_values["Event_bWeight0"+algo+"L"+category]=b_weight_csvl_0_tags;
+    float_values["Event_bWeight1"+algo+"L"+category]=b_weight_csvl_1_tag;
+    float_values["Event_bWeight2"+algo+"L"+category]=b_weight_csvl_2_tags;
+    float_values["Event_bWeight1_2"+algo+"L"+category]=b_weight_csvl_1_2_tags;
     
-    float_values["Event_bWeight0CSVM"+category]=b_weight_csvm_0_tags;
-    float_values["Event_bWeight1CSVM"+category]=b_weight_csvm_1_tag;
-    float_values["Event_bWeight2CSVM"+category]=b_weight_csvm_2_tags;
-    float_values["Event_bWeight1_2CSVM"+category]=b_weight_csvm_1_2_tags;
+    float_values["Event_bWeight0"+algo+"M"+category]=b_weight_csvm_0_tags;
+    float_values["Event_bWeight1"+algo+"M"+category]=b_weight_csvm_1_tag;
+    float_values["Event_bWeight2"+algo+"M"+category]=b_weight_csvm_2_tags;
+    float_values["Event_bWeight1_2"+algo+"M"+category]=b_weight_csvm_1_2_tags;
     
-    float_values["Event_bWeight0CSVT"+category]=b_weight_csvt_0_tags;
-    float_values["Event_bWeight1CSVT"+category]=b_weight_csvt_1_tag;
-    float_values["Event_bWeight2CSVT"+category]=b_weight_csvt_2_tags;
-    float_values["Event_bWeight1_2CSVT"+category]=b_weight_csvt_1_2_tags;
+    float_values["Event_bWeight0"+algo+"T"+category]=b_weight_csvt_0_tags;
+    float_values["Event_bWeight1"+algo+"T"+category]=b_weight_csvt_1_tag;
+    float_values["Event_bWeight2"+algo+"T"+category]=b_weight_csvt_2_tags;
+    float_values["Event_bWeight1_2"+algo+"T"+category]=b_weight_csvt_1_2_tags;
     
     //Mistag
-    float_values["Event_bWeightMisTagUp0CSVL"+category]=b_weight_csvl_0_tags_mistag_up;
-    float_values["Event_bWeightMisTagUp1CSVL"+category]=b_weight_csvl_1_tag_mistag_up;
-    float_values["Event_bWeightMisTagUp2CSVL"+category]=b_weight_csvl_2_tags_mistag_up;
-    float_values["Event_bWeightMisTagUp1_2CSVL"+category]=b_weight_csvl_1_2_tags_mistag_up;
+    float_values["Event_bWeightMisTagUp0"+algo+"L"+category]=b_weight_csvl_0_tags_mistag_up;
+    float_values["Event_bWeightMisTagUp1"+algo+"L"+category]=b_weight_csvl_1_tag_mistag_up;
+    float_values["Event_bWeightMisTagUp2"+algo+"L"+category]=b_weight_csvl_2_tags_mistag_up;
+    float_values["Event_bWeightMisTagUp1_2"+algo+"L"+category]=b_weight_csvl_1_2_tags_mistag_up;
     
-    float_values["Event_bWeightMisTagUp0CSVM"+category]=b_weight_csvm_0_tags_mistag_up;
-    float_values["Event_bWeightMisTagUp1CSVM"+category]=b_weight_csvm_1_tag_mistag_up;
-    float_values["Event_bWeightMisTagUp2CSVM"+category]=b_weight_csvm_2_tags_mistag_up;
-    float_values["Event_bWeightMisTagUp1_2CSVM"+category]=b_weight_csvm_1_2_tags_mistag_up;
+    float_values["Event_bWeightMisTagUp0"+algo+"M"+category]=b_weight_csvm_0_tags_mistag_up;
+    float_values["Event_bWeightMisTagUp1"+algo+"M"+category]=b_weight_csvm_1_tag_mistag_up;
+    float_values["Event_bWeightMisTagUp2"+algo+"M"+category]=b_weight_csvm_2_tags_mistag_up;
+    float_values["Event_bWeightMisTagUp1_2"+algo+"M"+category]=b_weight_csvm_1_2_tags_mistag_up;
     
-    float_values["Event_bWeightMisTagUp0CSVT"+category]=b_weight_csvt_0_tags_mistag_up;
-    float_values["Event_bWeightMisTagUp1CSVT"+category]=b_weight_csvt_1_tag_mistag_up;
-    float_values["Event_bWeightMisTagUp2CSVT"+category]=b_weight_csvt_2_tags_mistag_up;
-    float_values["Event_bWeightMisTagUp1_2CSVT"+category]=b_weight_csvt_1_2_tags_mistag_up;
+    float_values["Event_bWeightMisTagUp0"+algo+"T"+category]=b_weight_csvt_0_tags_mistag_up;
+    float_values["Event_bWeightMisTagUp1"+algo+"T"+category]=b_weight_csvt_1_tag_mistag_up;
+    float_values["Event_bWeightMisTagUp2"+algo+"T"+category]=b_weight_csvt_2_tags_mistag_up;
+    float_values["Event_bWeightMisTagUp1_2"+algo+"T"+category]=b_weight_csvt_1_2_tags_mistag_up;
     
-    float_values["Event_bWeightMisTagDown0CSVL"+category]=b_weight_csvl_0_tags_mistag_down;
-    float_values["Event_bWeightMisTagDown1CSVL"+category]=b_weight_csvl_1_tag_mistag_down;
-    float_values["Event_bWeightMisTagDown2CSVL"+category]=b_weight_csvl_2_tags_mistag_down;
-    float_values["Event_bWeightMisTagDown1_2CSVL"+category]=b_weight_csvl_1_2_tags_mistag_down;
+    float_values["Event_bWeightMisTagDown0"+algo+"L"+category]=b_weight_csvl_0_tags_mistag_down;
+    float_values["Event_bWeightMisTagDown1"+algo+"L"+category]=b_weight_csvl_1_tag_mistag_down;
+    float_values["Event_bWeightMisTagDown2"+algo+"L"+category]=b_weight_csvl_2_tags_mistag_down;
+    float_values["Event_bWeightMisTagDown1_2"+algo+"L"+category]=b_weight_csvl_1_2_tags_mistag_down;
     
-    float_values["Event_bWeightMisTagDown0CSVM"+category]=b_weight_csvm_0_tags_mistag_down;
-    float_values["Event_bWeightMisTagDown1CSVM"+category]=b_weight_csvm_1_tag_mistag_down;
-    float_values["Event_bWeightMisTagDown2CSVM"+category]=b_weight_csvm_2_tags_mistag_down;
-    float_values["Event_bWeightMisTagDown1_2CSVM"+category]=b_weight_csvm_1_2_tags_mistag_down;
+    float_values["Event_bWeightMisTagDown0"+algo+"M"+category]=b_weight_csvm_0_tags_mistag_down;
+    float_values["Event_bWeightMisTagDown1"+algo+"M"+category]=b_weight_csvm_1_tag_mistag_down;
+    float_values["Event_bWeightMisTagDown2"+algo+"M"+category]=b_weight_csvm_2_tags_mistag_down;
+    float_values["Event_bWeightMisTagDown1_2"+algo+"M"+category]=b_weight_csvm_1_2_tags_mistag_down;
     
-    float_values["Event_bWeightMisTagDown0CSVT"+category]=b_weight_csvt_0_tags_mistag_down;
-    float_values["Event_bWeightMisTagDown1CSVT"+category]=b_weight_csvt_1_tag_mistag_down;
-    float_values["Event_bWeightMisTagDown2CSVT"+category]=b_weight_csvt_2_tags_mistag_down;
-    float_values["Event_bWeightMisTagDown1_2CSVT"+category]=b_weight_csvt_1_2_tags_mistag_down;
+    float_values["Event_bWeightMisTagDown0"+algo+"T"+category]=b_weight_csvt_0_tags_mistag_down;
+    float_values["Event_bWeightMisTagDown1"+algo+"T"+category]=b_weight_csvt_1_tag_mistag_down;
+    float_values["Event_bWeightMisTagDown2"+algo+"T"+category]=b_weight_csvt_2_tags_mistag_down;
+    float_values["Event_bWeightMisTagDown1_2"+algo+"T"+category]=b_weight_csvt_1_2_tags_mistag_down;
     
     //Btag
-    float_values["Event_bWeightBTagUp0CSVL"+category]=b_weight_csvl_0_tags_b_tag_up;
-    float_values["Event_bWeightBTagUp1CSVL"+category]=b_weight_csvl_1_tag_b_tag_up;
-    float_values["Event_bWeightBTagUp2CSVL"+category]=b_weight_csvl_2_tags_b_tag_up;
-    float_values["Event_bWeightBTagUp1_2CSVL"+category]=b_weight_csvl_1_2_tags_b_tag_up;
+    float_values["Event_bWeightBTagUp0"+algo+"L"+category]=b_weight_csvl_0_tags_b_tag_up;
+    float_values["Event_bWeightBTagUp1"+algo+"L"+category]=b_weight_csvl_1_tag_b_tag_up;
+    float_values["Event_bWeightBTagUp2"+algo+"L"+category]=b_weight_csvl_2_tags_b_tag_up;
+    float_values["Event_bWeightBTagUp1_2"+algo+"L"+category]=b_weight_csvl_1_2_tags_b_tag_up;
     
-    float_values["Event_bWeightBTagUp0CSVM"+category]=b_weight_csvm_0_tags_b_tag_up;
-    float_values["Event_bWeightBTagUp1CSVM"+category]=b_weight_csvm_1_tag_b_tag_up;
-    float_values["Event_bWeightBTagUp2CSVM"+category]=b_weight_csvm_2_tags_b_tag_up;
-    float_values["Event_bWeightBTagUp1_2CSVM"+category]=b_weight_csvm_1_2_tags_b_tag_up;
+    float_values["Event_bWeightBTagUp0"+algo+"M"+category]=b_weight_csvm_0_tags_b_tag_up;
+    float_values["Event_bWeightBTagUp1"+algo+"M"+category]=b_weight_csvm_1_tag_b_tag_up;
+    float_values["Event_bWeightBTagUp2"+algo+"M"+category]=b_weight_csvm_2_tags_b_tag_up;
+    float_values["Event_bWeightBTagUp1_2"+algo+"M"+category]=b_weight_csvm_1_2_tags_b_tag_up;
     
-    float_values["Event_bWeightBTagUp0CSVT"+category]=b_weight_csvt_0_tags_b_tag_up;
-    float_values["Event_bWeightBTagUp1CSVT"+category]=b_weight_csvt_1_tag_b_tag_up;
-    float_values["Event_bWeightBTagUp2CSVT"+category]=b_weight_csvt_2_tags_b_tag_up;
-    float_values["Event_bWeightBTagUp1_2CSVT"+category]=b_weight_csvt_1_2_tags_b_tag_up;
+    float_values["Event_bWeightBTagUp0"+algo+"T"+category]=b_weight_csvt_0_tags_b_tag_up;
+    float_values["Event_bWeightBTagUp1"+algo+"T"+category]=b_weight_csvt_1_tag_b_tag_up;
+    float_values["Event_bWeightBTagUp2"+algo+"T"+category]=b_weight_csvt_2_tags_b_tag_up;
+    float_values["Event_bWeightBTagUp1_2"+algo+"T"+category]=b_weight_csvt_1_2_tags_b_tag_up;
     
-    float_values["Event_bWeightBTagDown0CSVL"+category]=b_weight_csvl_0_tags_b_tag_down;
-    float_values["Event_bWeightBTagDown1CSVL"+category]=b_weight_csvl_1_tag_b_tag_down;
-    float_values["Event_bWeightBTagDown2CSVL"+category]=b_weight_csvl_2_tags_b_tag_down;
-    float_values["Event_bWeightBTagDown1_2CSVL"+category]=b_weight_csvl_1_2_tags_b_tag_down;
+    float_values["Event_bWeightBTagDown0"+algo+"L"+category]=b_weight_csvl_0_tags_b_tag_down;
+    float_values["Event_bWeightBTagDown1"+algo+"L"+category]=b_weight_csvl_1_tag_b_tag_down;
+    float_values["Event_bWeightBTagDown2"+algo+"L"+category]=b_weight_csvl_2_tags_b_tag_down;
+    float_values["Event_bWeightBTagDown1_2"+algo+"L"+category]=b_weight_csvl_1_2_tags_b_tag_down;
     
-    float_values["Event_bWeightBTagDown0CSVM"+category]=b_weight_csvm_0_tags_b_tag_down;
-    float_values["Event_bWeightBTagDown1CSVM"+category]=b_weight_csvm_1_tag_b_tag_down;
-    float_values["Event_bWeightBTagDown2CSVM"+category]=b_weight_csvm_2_tags_b_tag_down;
-    float_values["Event_bWeightBTagDown1_2CSVM"+category]=b_weight_csvm_1_2_tags_b_tag_down;
+    float_values["Event_bWeightBTagDown0"+algo+"M"+category]=b_weight_csvm_0_tags_b_tag_down;
+    float_values["Event_bWeightBTagDown1"+algo+"M"+category]=b_weight_csvm_1_tag_b_tag_down;
+    float_values["Event_bWeightBTagDown2"+algo+"M"+category]=b_weight_csvm_2_tags_b_tag_down;
+    float_values["Event_bWeightBTagDown1_2"+algo+"M"+category]=b_weight_csvm_1_2_tags_b_tag_down;
     
-    float_values["Event_bWeightBTagDown0CSVT"+category]=b_weight_csvt_0_tags_b_tag_down;
-    float_values["Event_bWeightBTagDown1CSVT"+category]=b_weight_csvt_1_tag_b_tag_down;
-    float_values["Event_bWeightBTagDown2CSVT"+category]=b_weight_csvt_2_tags_b_tag_down;
-    float_values["Event_bWeightBTagDown1_2CSVT"+category]=b_weight_csvt_1_2_tags_b_tag_down;
+    float_values["Event_bWeightBTagDown0"+algo+"T"+category]=b_weight_csvt_0_tags_b_tag_down;
+    float_values["Event_bWeightBTagDown1"+algo+"T"+category]=b_weight_csvt_1_tag_b_tag_down;
+    float_values["Event_bWeightBTagDown2"+algo+"T"+category]=b_weight_csvt_2_tags_b_tag_down;
+    float_values["Event_bWeightBTagDown1_2"+algo+"T"+category]=b_weight_csvt_1_2_tags_b_tag_down;
   }
 }
 
@@ -3920,9 +4130,9 @@ double DMAnalysisTreeMaker::getEffectiveArea(string particle, double eta){
 double DMAnalysisTreeMaker::jetUncertainty(double ptCorr, double eta, string syst)
 {
   if(ptCorr<0)return ptCorr;
-  if(syst == "jes__up" || syst == "jes__down"){
+  if(syst == "JESUp" || syst == "JESDown"){
     double fac = 1.;
-    if (syst == "jes__down")fac = -1.;
+    if (syst == "JESDown")fac = -1.;
     jecUnc->setJetEta(eta);
     jecUnc->setJetPt(ptCorr);
     double JetCorrection = jecUnc->getUncertainty(true);
@@ -4016,23 +4226,34 @@ float DMAnalysisTreeMaker::BTagWeight::weight(vector<JetInfo> jetTags, int tags)
     return pData / pMC;
 }
 
-double DMAnalysisTreeMaker::MCTagEfficiency(string algo, int flavor, double pt){
+double DMAnalysisTreeMaker::MCTagEfficiency(string algo, int flavor, double pt, double eta){
+  if(pt < 40)pt = 40.1;
   if (abs(flavor) ==5){
-    if(algo=="csvt") return 0.38;
-    if(algo=="csvm") return 0.58;
-    if(algo=="csvl") return 0.755;
+    if(algo=="CSVT") return 0.51;
+    if(algo=="CSVM") return 0.71;
+    if(algo=="CSVL") return 0.86;
+    if(algo=="CMVAT") return cmvaeffbt->getEff(fabs(eta),pt);
+    if(algo=="CMVAM") return cmvaeffbm->getEff(fabs(eta),pt);
+    if(algo=="CMVAL") return cmvaeffbl->getEff(fabs(eta),pt);
+
   }
 
   if (abs(flavor) ==4){
-    if(algo=="csvt") return 0.015;
-    if(algo=="csvm") return 0.08;
-    if(algo=="csvl") return 0.28;
+    if(algo=="CSVT") return 0.015;
+    if(algo=="CSVM") return 0.08;
+    if(algo=="CSVL") return 0.28;
+    if(algo=="CMVAT") return cmvaeffct->getEff(fabs(eta),pt);
+    if(algo=="CMVAM") return cmvaeffcm->getEff(fabs(eta),pt);
+    if(algo=="CMVAL") return cmvaeffcl->getEff(fabs(eta),pt);
   }
 
   if (abs(flavor) !=4 && abs(flavor) !=5){
-    if(algo=="csvt") return 0.0008;
-    if(algo=="csvm") return 0.007;
-    if(algo=="csvl") return 0.079;
+    if(algo=="CSVT") return 0.003;
+    if(algo=="CSVM") return 0.02;
+    if(algo=="CSVL") return 0.16;
+    if(algo=="CMVAT") return 0.003; //cmvaeffot->getEff(fabs(eta),pt);
+    if(algo=="CMVAM") return 0.02;//cmvaeffom->getEff(fabs(eta),pt);
+    if(algo=="CMVAL") return 0.13; //cmvaeffol->getEff(fabs(eta),pt);
   }
   return 1.0;
 }
@@ -4041,208 +4262,139 @@ double DMAnalysisTreeMaker::MCTagEfficiency(string algo, int flavor, double pt){
 double DMAnalysisTreeMaker::TagScaleFactor(string algo, int flavor, string syst, double pt, double eta){
   // source (02/11):
   // https://twiki.cern.ch/twiki/pub/CMS/BtagRecommendation76X/CSVv2_prelim.csv
-  if(algo == "csvl"){
+  if(algo == "CSVL"){
     if(syst ==  "noSyst") {
-      
-      if(abs(flavor)==5){
-	return readerLoose->eval_auto_bounds("central",BTagEntry::FLAV_B, eta, pt);
-	//if (pt >= 30  && pt < 670) return 0.931535+(1.40704e-05*pt);
-      }
-      if(abs(flavor)==4){
-	return readerLoose->eval_auto_bounds("central",BTagEntry::FLAV_C, eta, pt);
-	//	if (pt >= 30  && pt < 670) return 0.931535+(1.40704e-05*pt);
-      }
-      if(abs(flavor)!=5 && abs(flavor)!=4){
-	return readerLoose->eval_auto_bounds("central",BTagEntry::FLAV_UDSG, eta, pt);
-	//return 1.05636+0.000920353*pt+-7.85916e-07*pt*pt+1.92221e-11*pt*pt*pt;
-      }
-    }
+      if(abs(flavor)==5){return readerCSVLoose->eval_auto_bounds("central",BTagEntry::FLAV_B, eta, pt);    }
+      if(abs(flavor)==4){return readerCSVLoose->eval_auto_bounds("central",BTagEntry::FLAV_C, eta, pt);    }
+      if(abs(flavor)!=5 && abs(flavor)!=4){ return readerCSVLoose->eval_auto_bounds("central",BTagEntry::FLAV_UDSG, eta, pt);    }    }
     if(syst ==  "mistag_up") {
-      if(abs(flavor)==5){
-	return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);
-      }
-      if(abs(flavor)==4){
-	return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);
-      }
-      if(abs(flavor)!=5 && abs(flavor)!=4){
-	return readerLoose->eval_auto_bounds("up",BTagEntry::FLAV_UDSG, eta, pt);
-	//return (1.05636+0.000920353*pt+-7.85916e-07*pt*pt+1.92221e-11*pt*pt*pt)*(1+(0.0539991+-6.29073e-06*pt+-3.39895e-09*pt*pt));
-      }
-    }
+      if(abs(flavor)==5){	return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);      }
+      if(abs(flavor)==4){	return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);      }
+      if(abs(flavor)!=5 && abs(flavor)!=4){	return readerCSVLoose->eval_auto_bounds("up",BTagEntry::FLAV_UDSG, eta, pt);      }    }
     if(syst ==  "mistag_down") {
-      if(abs(flavor)==5){
-	return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);
-      }
-      if(abs(flavor)==4){
-	return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);
-      }
-      if(abs(flavor)!=5 && abs(flavor)!=4){
-	return readerLoose->eval_auto_bounds("down",BTagEntry::FLAV_UDSG, eta, pt);
-	//	return (1.05636+0.000920353*pt+-7.85916e-07*pt*pt+1.92221e-11*pt*pt*pt)*(1-(0.0539991+-6.29073e-06*pt+-3.39895e-09*pt*pt));
-      }
-    }
-
+      if(abs(flavor)==5){	return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);      }
+      if(abs(flavor)==4){	return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);      }
+      if(abs(flavor)!=5 && abs(flavor)!=4){	return readerCSVLoose->eval_auto_bounds("down",BTagEntry::FLAV_UDSG, eta, pt);      }    }
     if(syst ==  "b_tag_up") {
-      if(abs(flavor)==5){
-	return readerLoose->eval_auto_bounds("up",BTagEntry::FLAV_B, eta, pt);
-	//if (pt >= 30  && pt < 50 ) return 0.931535+((1.40704e-05*pt)+0.0085541494190692902);
-	//if (pt >= 50  && pt < 70 ) return 0.931535+((1.40704e-05*pt)+0.010088782757520676);
-	//if (pt >= 70  && pt < 100) return 0.931535+((1.40704e-05*pt)+0.0096752624958753586);
-	//if (pt >= 100 && pt < 140) return 0.931535+((1.40704e-05*pt)+0.013629432767629623);
-	//if (pt >= 140 && pt < 200) return 0.931535+((1.40704e-05*pt)+0.013655256479978561);
-	//if (pt >= 200 && pt < 300) return 0.931535+((1.40704e-05*pt)+0.019513897597789764);
-	//if (pt >= 300 && pt < 670) return 0.931535+((1.40704e-05*pt)+0.044546689838171005);
-      }
-      if(abs(flavor)==4){
-	return readerLoose->eval_auto_bounds("up",BTagEntry::FLAV_C, eta, pt);
-      }
-      if(abs(flavor)!=5 && abs(flavor)!=4){
-	return 1.0*TagScaleFactor(algo,flavor,"noSyst",pt);
-      }
-    }
-
+      if(abs(flavor)==5){return readerCSVLoose->eval_auto_bounds("up",BTagEntry::FLAV_B, eta, pt);      }
+      if(abs(flavor)==4){return readerCSVLoose->eval_auto_bounds("up",BTagEntry::FLAV_C, eta, pt);      }
+      if(abs(flavor)!=5 && abs(flavor)!=4){return 1.0*TagScaleFactor(algo,flavor,"noSyst",pt);      }    }
     if(syst ==  "b_tag_down") {
-      if(abs(flavor)==5){
-	return readerLoose->eval_auto_bounds("down",BTagEntry::FLAV_B, eta, pt);
-//	if (pt >= 30  && pt < 50 ) return 0.931535+((1.40704e-05*pt)-0.0085541494190692902);
-//	if (pt >= 50  && pt < 70 ) return 0.931535+((1.40704e-05*pt)-0.010088782757520676);
-//	if (pt >= 70  && pt < 100) return 0.931535+((1.40704e-05*pt)-0.0096752624958753586);
-//	if (pt >= 100 && pt < 140) return 0.931535+((1.40704e-05*pt)-0.013629432767629623);
-//	if (pt >= 140 && pt < 200) return 0.931535+((1.40704e-05*pt)-0.013655256479978561);
-//	if (pt >= 200 && pt < 300) return 0.931535+((1.40704e-05*pt)-0.019513897597789764);
-//	if (pt >= 300 && pt < 670) return 0.931535+((1.40704e-05*pt)-0.044546689838171005);
-      }
-
-      if(abs(flavor)==4){
-	return readerLoose->eval_auto_bounds("down",BTagEntry::FLAV_C, eta, pt);
-      }
-      if(abs(flavor)!=5 && abs(flavor)!=4){
-	return 1.0*TagScaleFactor(algo,flavor,"noSyst",pt);
-      }
-    }
+      if(abs(flavor)==5){return readerCSVLoose->eval_auto_bounds("down",BTagEntry::FLAV_B, eta, pt);      }
+      if(abs(flavor)==4){return readerCSVLoose->eval_auto_bounds("down",BTagEntry::FLAV_C, eta, pt);      }
+      if(abs(flavor)!=5 && abs(flavor)!=4){return 1.0*TagScaleFactor(algo,flavor,"noSyst",pt);      }    }
   }
-
-  if(algo == "csvm"){
+  if(algo == "CSVM"){
     if(syst ==  "noSyst") {
-      if(abs(flavor)==5){
-	return readerMedium->eval_auto_bounds("central",BTagEntry::FLAV_B, eta, pt);
-      }
-      if(abs(flavor)==4){
-	return readerMedium->eval_auto_bounds("central",BTagEntry::FLAV_C, eta, pt);
-      }
-      if(abs(flavor)!=5 && abs(flavor)!=4){
-	return readerMedium->eval_auto_bounds("central",BTagEntry::FLAV_UDSG, eta, pt);
-      }
+      if(abs(flavor)==5){return readerCSVMedium->eval_auto_bounds("central",BTagEntry::FLAV_B, eta, pt);      }
+      if(abs(flavor)==4){return readerCSVMedium->eval_auto_bounds("central",BTagEntry::FLAV_C, eta, pt);      }
+      if(abs(flavor)!=5 && abs(flavor)!=4){return readerCSVMedium->eval_auto_bounds("central",BTagEntry::FLAV_UDSG, eta, pt);      }
     }
     if(syst ==  "mistag_up") {
-      if(abs(flavor)==5){
-	return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);
-      }
-      if(abs(flavor)==4){
-	return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);
-      }
-      if(abs(flavor)!=5 && abs(flavor)!=4){
-	return readerMedium->eval_auto_bounds("up",BTagEntry::FLAV_UDSG, eta, pt);
-      }
-    }
+      if(abs(flavor)==5){return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);      }
+      if(abs(flavor)==4){return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);      }
+      if(abs(flavor)!=5 && abs(flavor)!=4){return readerCSVMedium->eval_auto_bounds("up",BTagEntry::FLAV_UDSG, eta, pt);      }    }
     if(syst ==  "mistag_down") {
-      if(abs(flavor)==5){
-	return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);
-      }
-      if(abs(flavor)==4){
-	return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);
-      }
-      if(abs(flavor)!=5 && abs(flavor)!=4){
-	return readerMedium->eval_auto_bounds("down",BTagEntry::FLAV_UDSG, eta, pt);
-      }
-    }
-
+      if(abs(flavor)==5){return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);      }
+      if(abs(flavor)==4){return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);      }
+      if(abs(flavor)!=5 && abs(flavor)!=4){return readerCSVMedium->eval_auto_bounds("down",BTagEntry::FLAV_UDSG, eta, pt);      }   }
     if(syst ==  "b_tag_up") {
-      if(abs(flavor)==5){
-	return readerMedium->eval_auto_bounds("up",BTagEntry::FLAV_B, eta, pt);
-      }
-
-      if(abs(flavor)==4){
-	return readerMedium->eval_auto_bounds("up",BTagEntry::FLAV_C, eta, pt);
-      }
-      if(abs(flavor)!=5 && abs(flavor)!=4){
-	return 1.0*TagScaleFactor(algo,flavor,"noSyst",pt);
-      }
-    }
-
+      if(abs(flavor)==5){return readerCSVMedium->eval_auto_bounds("up",BTagEntry::FLAV_B, eta, pt);      }
+      if(abs(flavor)==4){return readerCSVMedium->eval_auto_bounds("up",BTagEntry::FLAV_C, eta, pt);      }
+      if(abs(flavor)!=5 && abs(flavor)!=4){return 1.0*TagScaleFactor(algo,flavor,"noSyst",pt);      }     }
     if(syst ==  "b_tag_down") {
-      if(abs(flavor)==5){
-	return readerMedium->eval_auto_bounds("down",BTagEntry::FLAV_B, eta, pt);
-      }
-
-      if(abs(flavor)==4){
-	return readerMedium->eval_auto_bounds("down",BTagEntry::FLAV_C, eta, pt);
-      }
-      if(abs(flavor)!=5 && abs(flavor)!=4){
-	return 1.0*TagScaleFactor(algo,flavor,"noSyst",pt);
-      }
-    }
+      if(abs(flavor)==5){return readerCSVMedium->eval_auto_bounds("down",BTagEntry::FLAV_B, eta, pt);      }
+      if(abs(flavor)==4){return readerCSVMedium->eval_auto_bounds("down",BTagEntry::FLAV_C, eta, pt);      }
+      if(abs(flavor)!=5 && abs(flavor)!=4){return 1.0*TagScaleFactor(algo,flavor,"noSyst",pt);      }    }  
   }
-  if(algo == "csvt"){
+  if(algo == "CSVT"){
     if(syst ==  "noSyst") {
-      if(abs(flavor)==5){
-	return readerTight->eval_auto_bounds("central",BTagEntry::FLAV_B, eta, pt);
-      }
-      if(abs(flavor)==4){
-	return readerTight->eval_auto_bounds("central",BTagEntry::FLAV_C, eta, pt);
-      }
-      if(abs(flavor)!=5 && abs(flavor)!=4){
-	return readerTight->eval_auto_bounds("central",BTagEntry::FLAV_UDSG, eta, pt);
-      }
+      if(abs(flavor)==5){return readerCSVTight->eval_auto_bounds("central",BTagEntry::FLAV_B, eta, pt);      }
+      if(abs(flavor)==4){return readerCSVTight->eval_auto_bounds("central",BTagEntry::FLAV_C, eta, pt);      }
+      if(abs(flavor)!=5 && abs(flavor)!=4){return readerCSVTight->eval_auto_bounds("central",BTagEntry::FLAV_UDSG, eta, pt);      }    }
+    if(syst ==  "mistag_up") {
+      if(abs(flavor)==5){return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);      }
+      if(abs(flavor)==4){return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);      }
+      if(abs(flavor)!=5 && abs(flavor)!=4){return readerCSVTight->eval_auto_bounds("up",BTagEntry::FLAV_UDSG, eta, pt);      }    }
+    if(syst ==  "mistag_down") {
+      if(abs(flavor)==5){return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);      }
+      if(abs(flavor)==4){return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);      }
+      if(abs(flavor)!=5 && abs(flavor)!=4){return readerCSVTight->eval_auto_bounds("down",BTagEntry::FLAV_UDSG, eta, pt);      }    }
+    if(syst ==  "b_tag_up") {
+      if(abs(flavor)==5){return readerCSVTight->eval_auto_bounds("up",BTagEntry::FLAV_B, eta, pt);      }
+      if(abs(flavor)==4){return readerCSVTight->eval_auto_bounds("up",BTagEntry::FLAV_C, eta, pt);      }
+      if(abs(flavor)!=5 && abs(flavor)!=4){return 1.0*TagScaleFactor(algo,flavor,"noSyst",pt);      }    }
+    if(syst ==  "b_tag_down") {
+      if(abs(flavor)==5){return readerCSVTight->eval_auto_bounds("down",BTagEntry::FLAV_B, eta, pt);      }
+      if(abs(flavor)==4){return readerCSVTight->eval_auto_bounds("down",BTagEntry::FLAV_C, eta, pt);      }
+      if(abs(flavor)!=5 && abs(flavor)!=4){return 1.0*TagScaleFactor(algo,flavor,"noSyst",pt);      }    }
+  }
+if(algo == "CMVAL"){
+    if(syst ==  "noSyst") {
+      if(abs(flavor)==5){return readerCMVALoose->eval_auto_bounds("central",BTagEntry::FLAV_B, eta, pt);    }
+      if(abs(flavor)==4){return readerCMVALoose->eval_auto_bounds("central",BTagEntry::FLAV_C, eta, pt);    }
+      if(abs(flavor)!=5 && abs(flavor)!=4){ return readerCMVALoose->eval_auto_bounds("central",BTagEntry::FLAV_UDSG, eta, pt);    }    }
+    if(syst ==  "mistag_up") {
+      if(abs(flavor)==5){	return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);      }
+      if(abs(flavor)==4){	return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);      }
+      if(abs(flavor)!=5 && abs(flavor)!=4){	return readerCMVALoose->eval_auto_bounds("up",BTagEntry::FLAV_UDSG, eta, pt);      }    }
+    if(syst ==  "mistag_down") {
+      if(abs(flavor)==5){	return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);      }
+      if(abs(flavor)==4){	return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);      }
+      if(abs(flavor)!=5 && abs(flavor)!=4){	return readerCMVALoose->eval_auto_bounds("down",BTagEntry::FLAV_UDSG, eta, pt);      }    }
+    if(syst ==  "b_tag_up") {
+      if(abs(flavor)==5){return readerCMVALoose->eval_auto_bounds("up",BTagEntry::FLAV_B, eta, pt);      }
+      if(abs(flavor)==4){return readerCMVALoose->eval_auto_bounds("up",BTagEntry::FLAV_C, eta, pt);      }
+      if(abs(flavor)!=5 && abs(flavor)!=4){return 1.0*TagScaleFactor(algo,flavor,"noSyst",pt);      }    }
+    if(syst ==  "b_tag_down") {
+      if(abs(flavor)==5){return readerCMVALoose->eval_auto_bounds("down",BTagEntry::FLAV_B, eta, pt);      }
+      if(abs(flavor)==4){return readerCMVALoose->eval_auto_bounds("down",BTagEntry::FLAV_C, eta, pt);      }
+      if(abs(flavor)!=5 && abs(flavor)!=4){return 1.0*TagScaleFactor(algo,flavor,"noSyst",pt);      }    }
+  }
+  if(algo == "CMVAM"){
+    if(syst ==  "noSyst") {
+      if(abs(flavor)==5){return readerCMVAMedium->eval_auto_bounds("central",BTagEntry::FLAV_B, eta, pt);      }
+      if(abs(flavor)==4){return readerCMVAMedium->eval_auto_bounds("central",BTagEntry::FLAV_C, eta, pt);      }
+      if(abs(flavor)!=5 && abs(flavor)!=4){return readerCMVAMedium->eval_auto_bounds("central",BTagEntry::FLAV_UDSG, eta, pt);      }
     }
     if(syst ==  "mistag_up") {
-      if(abs(flavor)==5){
-	return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);
-      }
-      if(abs(flavor)==4){
-	return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);
-      }
-      if(abs(flavor)!=5 && abs(flavor)!=4){
-	return readerTight->eval_auto_bounds("up",BTagEntry::FLAV_UDSG, eta, pt);
-      }
-    }
+      if(abs(flavor)==5){return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);      }
+      if(abs(flavor)==4){return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);      }
+      if(abs(flavor)!=5 && abs(flavor)!=4){return readerCMVAMedium->eval_auto_bounds("up",BTagEntry::FLAV_UDSG, eta, pt);      }    }
     if(syst ==  "mistag_down") {
-      if(abs(flavor)==5){
-	return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);
-      }
-      if(abs(flavor)==4){
-	return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);
-      }
-      if(abs(flavor)!=5 && abs(flavor)!=4){
-	return readerTight->eval_auto_bounds("down",BTagEntry::FLAV_UDSG, eta, pt);
-      }
-    }
-
+      if(abs(flavor)==5){return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);      }
+      if(abs(flavor)==4){return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);      }
+      if(abs(flavor)!=5 && abs(flavor)!=4){return readerCMVAMedium->eval_auto_bounds("down",BTagEntry::FLAV_UDSG, eta, pt);      }   }
     if(syst ==  "b_tag_up") {
-      if(abs(flavor)==5){
-	return readerTight->eval_auto_bounds("up",BTagEntry::FLAV_B, eta, pt);
-      }
-
-      if(abs(flavor)==4){
-	return readerTight->eval_auto_bounds("up",BTagEntry::FLAV_C, eta, pt);
-      }
-      if(abs(flavor)!=5 && abs(flavor)!=4){
-	return 1.0*TagScaleFactor(algo,flavor,"noSyst",pt);
-      }
-    }
-
+      if(abs(flavor)==5){return readerCMVAMedium->eval_auto_bounds("up",BTagEntry::FLAV_B, eta, pt);      }
+      if(abs(flavor)==4){return readerCMVAMedium->eval_auto_bounds("up",BTagEntry::FLAV_C, eta, pt);      }
+      if(abs(flavor)!=5 && abs(flavor)!=4){return 1.0*TagScaleFactor(algo,flavor,"noSyst",pt);      }     }
     if(syst ==  "b_tag_down") {
-      if(abs(flavor)==5){
-	return readerTight->eval_auto_bounds("down",BTagEntry::FLAV_B, eta, pt);
-      }
-
-      if(abs(flavor)==4){
-	return readerTight->eval_auto_bounds("down",BTagEntry::FLAV_C, eta, pt);
-      }
-      if(abs(flavor)!=5 && abs(flavor)!=4){
-	return 1.0*TagScaleFactor(algo,flavor,"noSyst",pt);
-      }
-    }
+      if(abs(flavor)==5){return readerCMVAMedium->eval_auto_bounds("down",BTagEntry::FLAV_B, eta, pt);      }
+      if(abs(flavor)==4){return readerCMVAMedium->eval_auto_bounds("down",BTagEntry::FLAV_C, eta, pt);      }
+      if(abs(flavor)!=5 && abs(flavor)!=4){return 1.0*TagScaleFactor(algo,flavor,"noSyst",pt);      }    }  
+  }
+  if(algo == "CMVAT"){
+    if(syst ==  "noSyst") {
+      if(abs(flavor)==5){return readerCMVATight->eval_auto_bounds("central",BTagEntry::FLAV_B, eta, pt);      }
+      if(abs(flavor)==4){return readerCMVATight->eval_auto_bounds("central",BTagEntry::FLAV_C, eta, pt);      }
+      if(abs(flavor)!=5 && abs(flavor)!=4){return readerCMVATight->eval_auto_bounds("central",BTagEntry::FLAV_UDSG, eta, pt);      }    }
+    if(syst ==  "mistag_up") {
+      if(abs(flavor)==5){return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);      }
+      if(abs(flavor)==4){return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);      }
+      if(abs(flavor)!=5 && abs(flavor)!=4){return readerCMVATight->eval_auto_bounds("up",BTagEntry::FLAV_UDSG, eta, pt);      }    }
+    if(syst ==  "mistag_down") {
+      if(abs(flavor)==5){return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);      }
+      if(abs(flavor)==4){return 1.00*TagScaleFactor(algo,flavor,"noSyst",pt);      }
+      if(abs(flavor)!=5 && abs(flavor)!=4){return readerCMVATight->eval_auto_bounds("down",BTagEntry::FLAV_UDSG, eta, pt);      }    }
+    if(syst ==  "b_tag_up") {
+      if(abs(flavor)==5){return readerCMVATight->eval_auto_bounds("up",BTagEntry::FLAV_B, eta, pt);      }
+      if(abs(flavor)==4){return readerCMVATight->eval_auto_bounds("up",BTagEntry::FLAV_C, eta, pt);      }
+      if(abs(flavor)!=5 && abs(flavor)!=4){return 1.0*TagScaleFactor(algo,flavor,"noSyst",pt);      }    }
+    if(syst ==  "b_tag_down") {
+      if(abs(flavor)==5){return readerCMVATight->eval_auto_bounds("down",BTagEntry::FLAV_B, eta, pt);      }
+      if(abs(flavor)==4){return readerCMVATight->eval_auto_bounds("down",BTagEntry::FLAV_C, eta, pt);      }
+      if(abs(flavor)!=5 && abs(flavor)!=4){return 1.0*TagScaleFactor(algo,flavor,"noSyst",pt);      }    }
   }
   return 1.0;
 }
