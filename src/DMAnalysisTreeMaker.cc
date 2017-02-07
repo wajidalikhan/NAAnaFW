@@ -921,7 +921,7 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
 
     stringstream mgenjet;
     mgenjet << max_instances_genjet;
-            cout <<" using genJets: not implemented atm"<<endl;
+                cout <<" using genJets: not implemented atm"<<endl;
     string nameshortv= "genJets";
     vector<string> extravarsgenjets = additionalVariables(nameshortv);
     for(size_t addv = 0; addv < extravarsgenjets.size();++addv){
@@ -1739,11 +1739,11 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	  leptonsCharge.push_back(muCharge);
 	  if(isInVector(obj_cats[mu_label],"Tight")){
 	    fillCategory(mu_label,"Tight",mu,float_values["Event_nTightMuons"]-1);
-	  if(obj_scanCuts[mu_label].size()>=1) {
-	    fillScanCuts(mu_label,"Tight",mu);
-	  }
 	  }
 	  ++lepidx;
+	}
+	if(obj_scanCuts[mu_label].size()>=1) {
+	  if(iso<0.15)fillScanCuts(mu_label,"Tight",mu);
 	}
 	if(iso>0.15){
 	  ++float_values["Event_nTightAntiIsoMuons"];
@@ -1968,12 +1968,13 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       if (obj_cats[jets_label].at(ju).find("JES")!=std::string::npos || 
 	  obj_cats[jets_label].at(ju).find("JER")!=std::string::npos){  
 	string catjet=obj_cats[jets_label].at(ju);
-	cout << " ju "<< ju <<" --> catname "<< catjet << endl;
+	//	cout << " ju "<< ju <<" --> catname "<< catjet << endl;
 	passesJecCuts[catjet]=false;
       }
     }
+    //    for(int j = 0;j < max_instances[jets_label] ;++j){
     for(int j = 0;j < max_instances[jets_label] ;++j){
-      
+      if(j > sizes[jets_label])continue;
       string pref = obj_to_pref[jets_label];
       float pt = vfloats_values[makeName(jets_label,pref,"Pt")][j];
       float ptzero = vfloats_values[makeName(jets_label,pref,"Pt")][j];
@@ -2082,19 +2083,19 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	  string systjet=obj_systCats[jets_label].at(ju);
 	  if (systjet.find("JES")!=std::string::npos || 
 	      systjet.find("JER")!=std::string::npos ){
-	    cout << " ju "<< ju <<endl;
+	    //	    cout << " ju "<< ju <<endl;
 	    float smearfactJet= smear(pt, genpt, eta,systjet);
 	    float uncJet=jetUncertainty(ptCorr,eta,systjet);
 	    float ptCorrJet = pt * (1+uncJet) * smearfactJet;
 	    float energyCorrJet = energy * (1+uncJet) * smearfactJet;
-	    cout << " cat "<< systjet<< " pt "<< ptCorr;
-	    cout << " catname " << makeName(jets_label,pref,"CorrPt"+systjet)<< " value " << ptCorrJet<<endl;
+	    //	    cout << " cat "<< systjet<< " pt "<< ptCorr;
+	    //	    cout << " catname " << makeName(jets_label,pref,"CorrPt"+systjet)<< " value " << ptCorrJet<<endl;
 	      //makeBranchNameCat(jets_label,systjet,jets_label+"_","CorrPt")<<endl;
 	    //	    fillCategory()
 	    //	    vfloats_values[makeName(jets_label+systjet,pref,"CorrPt")][j]=ptCorrJet;
 	    vfloats_values[makeName(jets_label,pref,"CorrPt"+systjet)][j]=ptCorrJet;
 	    vfloats_values[makeName(jets_label,pref,"CorrE"+systjet)][j]=energyCorrJet;
-	    cout <<" value after "<<vfloats_values[makeName(jets_label,pref,"CorrPt"+systjet)][j]<<endl;
+	    //	    cout <<" value after "<<vfloats_values[makeName(jets_label,pref,"CorrPt"+systjet)][j]<<endl;
 	    //setCatCategoryValue(jets_label,systjet,sizes[jets_label+systjet],"CorrPt",ptCorrJet);
 	  }
 	}
@@ -2240,7 +2241,39 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       bool passesDR=true;
  
       
-      
+      for(size_t nmuc=0;nmuc<obj_cats[mu_label].size();nmuc++){
+	string catmu = obj_cats[mu_label].at(nmuc);
+	if (catmu.find("Tight")==std::string::npos)continue;
+	double minDRCat = 9999;
+	bool passesDRCat=true;
+	for (int m =0;m<sizes[mu_label+catmu];++m){
+	  minDRCat = min(minDRCat,deltaR(math::PtEtaPhiELorentzVector(vfloats_values[makeName(mu_label+catmu,"","Pt")][m],vfloats_values[makeName(mu_label+catmu,"","Eta")][m],vfloats_values[makeName(mu_label+catmu,"","Phi")][m],vfloats_values[makeName(mu_label+catmu,"","E")][m]),math::PtEtaPhiELorentzVector(ptCorr, eta, phi, energyCorr)));
+	  //	  cout << " ptetaphie "<< ptCorr<<" "<< eta <<" " <<phi <<" " <<energyCorr<<endl;
+	  //	  cout << "catmu is "<<catmu<<" min DR Cat "<<minDRCat<<endl;
+	  if(minDRCat <minDRThrMu){
+	    passesDRCat=false;break;
+	  }
+	}
+	vfloats_values[jets_label+"_PassesDRmu"+catmu][j]=(float)passesDRCat;
+      }
+
+      for(size_t nelc=0;nelc<obj_cats[ele_label].size();nelc++){
+	string catel = obj_cats[ele_label].at(nelc);
+	if (catel.find("Tight")==std::string::npos)continue;
+	double minDRCat = 9999;
+	bool passesDRCat=true;
+	for (int m =0;m<sizes[ele_label+catel];++m){
+	  minDRCat = min(minDRCat,deltaR(math::PtEtaPhiELorentzVector(vfloats_values[makeName(ele_label+catel,"","Pt")][m],vfloats_values[makeName(ele_label+catel,"","Eta")][m],vfloats_values[makeName(ele_label+catel,"","Phi")][m],vfloats_values[makeName(ele_label+catel,"","E")][m]),math::PtEtaPhiELorentzVector(ptCorr, eta, phi, energyCorr)));
+	  //	  cout << " ptetaphie "<< ptCorr<<" "<< eta <<" " <<phi <<" " <<energyCorr<<endl;
+	  //      cout << "catel is "<<catel<<" min DR Cat "<<minDRCat<<endl;
+	  if(minDRCat <minDRThrEl){
+	    passesDRCat=false;break;
+	  }
+	}
+	vfloats_values[jets_label+"_PassesDRel"+catel][j]=(float)passesDRCat;
+      }
+
+
       for (size_t e = 0; e < (size_t)electrons.size(); ++e){
 	minDR = min(minDR,deltaR(math::PtEtaPhiELorentzVector(electrons.at(e).Pt(),electrons.at(e).Eta(),electrons.at(e).Phi(),electrons.at(e).Energy() ) ,math::PtEtaPhiELorentzVector(ptCorr, eta, phi, energyCorr)));
 	if(minDR<minDRThrEl)passesDR = false;
@@ -2249,6 +2282,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	minDR = min(minDR,deltaR(math::PtEtaPhiELorentzVector(muons.at(m).Pt(),muons.at(m).Eta(),muons.at(m).Phi(),muons.at(m).Energy() ) ,math::PtEtaPhiELorentzVector(ptCorr, eta, phi, energyCorr)));
 	if(minDR<minDRThrMu)passesDR = false;
       }
+      //      cout<<" jet "<<j<< " minDR is "<< minDR<<endl;
       
       vfloats_values[jets_label+"_MinDR"][j]=minDR;
       vfloats_values[jets_label+"_PassesDR"][j]=(float)passesDR;
@@ -2283,10 +2317,10 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	  
 	  nTightJets+=1;
 	  if(isInVector(obj_cats[jets_label],"Tight")){
-	    cout<< " tight jet precat "<<j << " sizes tight cat "<<sizes[jets_label+"Tight"]<<endl;
+	    //	    cout<< " tight jet precat "<<j << " sizes tight cat "<<sizes[jets_label+"Tight"]<<endl;
 
 	    fillCategory(jets_label,"Tight",j,sizes[jets_label+"Tight"]);
-	    cout << " sizes post cat "<< sizes[jets_label+"Tight"]<<endl;
+	    //	    cout << " sizes post cat "<< sizes[jets_label+"Tight"]<<endl;
 	    //	  cout<< " tight jet poscat "<<j <<endl;
 	    
 	  }
@@ -2306,7 +2340,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       if(isCSVL && passesCut &&  passesID && passesDR && abs(eta) < 2.4) float_values["Event_nCSVLJets"]+=1;
       
       bool passesBaseCut = ( ptCorr > jetbaseval && fabs(eta) < 4.7);
-      cout <<" in cat loop "<<endl;
+      //      cout <<" in cat loop "<<endl;
       if(passesID && passesDR) if(obj_scanCuts[jets_label].size()>=1) {
 	  if(passesBaseCut) fillScanCuts(jets_label,"Tight",j);
 	  if(fabs(eta) < 4.7) fillScanSystsCuts(jets_label,"Tight",j);
@@ -2685,8 +2719,8 @@ void DMAnalysisTreeMaker::fillSystCategory(string label, string category, string
     string var = obj_to_floats[label].at(obj);
     
     string varCat = makeBranchNameCat(label,catsys,label+"_",var);
-    cout << " var "<< var << " varcat "<< varCat<<endl;
-    cout << " poscat "<< pos_cat << " posnocat "<< pos_nocat<<endl;
+    //    cout << " var "<< var << " varcat "<< varCat<<endl;
+    //    cout << " poscat "<< pos_cat << " posnocat "<< pos_nocat<<endl;
     vfloats_values[varCat][pos_cat]= vfloats_values[var][pos_nocat];
   }
   for (size_t obj =0; obj< obj_to_floats[label].size(); ++obj){
@@ -2751,13 +2785,13 @@ void DMAnalysisTreeMaker::fillSysts(string label,string category,int pos_nocat, 
   for(size_t syCat = 0; syCat< obj_systCats[label].size() ;++syCat){
     string sysCat = obj_systCats[label].at(syCat);
     string finalcut = (variable+sysCat+"_"+cut);
-    cout << " sy is  "<< sysCat << " cut is "<< cut << " final cut is "<<finalcut<< " pf "<< postfix<<endl;
-    cout << " posnocat "<<pos_nocat<<" value "<< vfloats_values[label+category+"_"+variable+sysCat][pos_nocat]<<endl;
+    //    cout << " sy is  "<< sysCat << " cut is "<< cut << " final cut is "<<finalcut<< " pf "<< postfix<<endl;
+    //    cout << " posnocat "<<pos_nocat<<" value "<< vfloats_values[label+category+"_"+variable+sysCat][pos_nocat]<<endl;
     
     if(passesScanCut(label,category,finalcut,pos_nocat)){
-      cout<< " passes! filling cat "<< label+category+sysCat<< " pos "<< sizes[label+category+sysCat]<<endl; 
+      //      cout<< " passes! filling cat "<< label+category+sysCat<< " pos "<< sizes[label+category+sysCat]<<endl; 
       int pos_cat=sizes[label+category+sysCat+postfix];// the size is the position of the last element
-      cout << " posnocat "<<pos_nocat<<endl;
+      //      cout << " posnocat "<<pos_nocat<<endl;
       fillSystCategory(label,category,sysCat,pos_nocat,pos_cat,postfix); // this will also increment the size of the category
     }
   }    
@@ -2804,11 +2838,11 @@ bool DMAnalysisTreeMaker::passesScanCut(string label, string category, string sc
   float cutfloat=0.;
   cutvalue >> cutfloat;
   string sign = parseScanCut(scanCut,2);
-  cout << " obs " << variable<< " sign "<< sign << " threshold " <<  cutfloat << endl;
+  //  cout << " obs " << variable<< " sign "<< sign << " threshold " <<  cutfloat << endl;
   string pref = obj_to_pref[label];
   float var = vfloats_values[makeName(label,pref,variable)][pos_nocat];
   //  if( isSystCat(label, category))var=vfloats_values[makeName(label+category,pref,variable);
-  cout << " variable full name is is "<< makeName(label,pref,variable)<<" value "<<var<< " passes cut? "<< cutfloat <<endl;
+  //  cout << " variable full name is is "<< makeName(label,pref,variable)<<" value "<<var<< " passes cut? "<< cutfloat <<endl;
   
   if(sign=="GE") return (bool)(var>cutfloat);
   if(sign=="LE") return (bool)(var<cutfloat);
@@ -2897,14 +2931,26 @@ vector<string> DMAnalysisTreeMaker::additionalVariables(string object){
      addvar.push_back("IsCMVAM");
      addvar.push_back("IsCMVAL");
 
-       addvar.push_back("BSF");
-        addvar.push_back("BSFUp");
-        addvar.push_back("BSFDown");
+     addvar.push_back("BSF");
+     addvar.push_back("BSFUp");
+     addvar.push_back("BSFDown");
     addvar.push_back("PassesID");
     addvar.push_back("PassesDR");
     addvar.push_back("CorrMass");
     addvar.push_back("IsTight");
     addvar.push_back("IsLoose");
+
+    for(size_t nmuc=0;nmuc<obj_cats[mu_label].size();nmuc++){
+      string catmu = obj_cats[mu_label].at(nmuc);
+      if (catmu.find("Tight")==std::string::npos)continue;
+      addvar.push_back("PassesDRmu"+catmu);
+    }
+    for(size_t nelc=0;nelc<obj_cats[ele_label].size();nelc++){
+      string catel = obj_cats[ele_label].at(nelc);
+      if (catel.find("Tight")==std::string::npos)continue;
+      addvar.push_back("PassesDRel"+catel);
+    }
+
     //    addvar.push_back("CorrNJets");
     //    addvar.push_back("CorrPartonFlavour");
     
@@ -3242,12 +3288,12 @@ double DMAnalysisTreeMaker::getMCTagEfficiencyFunc(float flavor, float btag, flo
 	//cout << "endpointder "<<endpointer<<endl;
 	//	endpointder=-1;
       }
-      cout <<" xs[5]={";
-      for( int i = 0; i < 5; ++i){cout << xs[i]<<", ";}
-      cout <<"}"<<endl<<" ys[5]={";
-      for( int i = 0; i < 5; ++i){cout << ys[i]<<", ";}
-      cout <<"}"<<endl;
-      cout <<"endpointder="<<endpointder<<endl;
+      //      cout <<" xs[5]={";
+      //      for( int i = 0; i < 5; ++i){cout << xs[i]<<", ";}
+      //      cout <<"}"<<endl<<" ys[5]={";
+      //      for( int i = 0; i < 5; ++i){cout << ys[i]<<", ";}
+      //      cout <<"}"<<endl;
+      //      cout <<"endpointder="<<endpointder<<endl;
       
       TSpline3 sp("sp",xs,ys,5,"sp",0.0,endpointder);
 
@@ -3367,15 +3413,15 @@ float DMAnalysisTreeMaker::getEffRatioFunc(float flavor,float btag,float pt,floa
   if(algo=="CSV" || algo == "CMVA"){
     double btagmin=getWPAlgo(algo,"MIN"),btagmax=getWPAlgo(algo,"MAX");
     double thrloose=getWPAlgo(algo,"L"),thrmedium=getWPAlgo(algo,"M"),thrtight=getWPAlgo(algo,"T");
-    cout << " btagmin "<<btagmin<<" btag "<< btag <<endl;
+    //    cout << " btagmin "<<btagmin<<" btag "<< btag <<endl;
     
     //    localvalue= getMCTagEfficiencyFunc(1,btag,pt, eta, algo,syst,false,false)/getMCTagEfficiencyFunc(flavor,btag,pt,eta,algo,syst,false,false);//Get the MC efficiency ratio
    
     //Spline version:
     localvalue= getMCTagEfficiencyFunc(1,btag,pt, eta, algo,syst,false,true)/getMCTagEfficiencyFunc(flavor,btag,pt,eta,algo,syst,false,true);//Get the MC efficiency ratio
-    cout << " btag "<< btag<<endl;
-    cout<< " eff l "<< getMCTagEfficiencyFunc(1,btag,pt, eta, algo,syst,false,false)<< " eff b "<< getMCTagEfficiencyFunc(flavor,btag,pt,eta,algo,syst,false,false) <<endl;
-    cout<< " lvl "<< localvalue <<endl;
+    //    cout << " btag "<< btag<<endl;
+    //    cout<< " eff l "<< getMCTagEfficiencyFunc(1,btag,pt, eta, algo,syst,false,false)<< " eff b "<< getMCTagEfficiencyFunc(flavor,btag,pt,eta,algo,syst,false,false) <<endl;
+    //    cout<< " lvl "<< localvalue <<endl;
     if( normalize){ 
       //Use analytically evaluated function average to get the reweighting:
       float average=0.;
@@ -3406,20 +3452,20 @@ float DMAnalysisTreeMaker::getEffRatioFunc(float flavor,float btag,float pt,floa
       float denBT1= getMCTagEfficiencyFuncParam(flavor, pt, eta, algo,syst, "b",  "T1");
      
       float averagetot =average;
-      cout << " localvalue before "<< localvalue << endl;
+      //      cout << " localvalue before "<< localvalue << endl;
       //average = -denB0L*avgRatioFunc(btagmin,thrloose,numA0L,numB0L,denA0L,denB0L);
       average = avgRatioFunc(btagmin,thrloose,numA0L,numB0L,denA0L,denB0L);
-            cout<< " average 0L " <<average<<endl;
+      //            cout<< " average 0L " <<average<<endl;
       averagetot +=average;
 	    
       average = -denBLM*avgRatioFunc(thrloose,thrmedium,numALM,numBLM,denALM,denBLM);
       average = avgRatioFunc(thrloose,thrmedium,numALM,numBLM,denALM,denBLM);
-      cout<< " average LM " <<average<<endl;
+      //      cout<< " average LM " <<average<<endl;
       averagetot +=average;
 
       //            average = -denBMT*avgRatioFunc(thrmedium,thrtight,numAMT,numBMT,denAMT,denBMT);
       average = avgRatioFunc(thrmedium,thrtight,numAMT,numBMT,denAMT,denBMT);
-      cout<< " average MT " <<average<<endl;
+      //      cout<< " average MT " <<average<<endl;
       averagetot +=average;
       
       //      average = -denBT1*avgRatioFunc(thrtight,btagmax,numAT1,numBT1,denAT1,denBT1);
@@ -3427,14 +3473,14 @@ float DMAnalysisTreeMaker::getEffRatioFunc(float flavor,float btag,float pt,floa
 
       average = numAT1/denAT1*(btagmax-thrtight);
 
-      cout << " localvalue before "<< localvalue << endl;
-      cout<< " average is " <<average<<endl;
-      cout << "tight "<< thrtight <<" max "<< btagmax<< " numaT1 "<< numAT1<<" numBT1 "<<  numBT1<< " denAT1 "<< denAT1<< " denBT1 "<< denBT1<<endl;
+      //      cout << " localvalue before "<< localvalue << endl;
+      //      cout<< " average is " <<average<<endl;
+      //      cout << "tight "<< thrtight <<" max "<< btagmax<< " numaT1 "<< numAT1<<" numBT1 "<<  numBT1<< " denAT1 "<< denAT1<< " denBT1 "<< denBT1<<endl;
       averagetot +=average;
 
-      cout<< " average tot is " <<averagetot<<endl;
+      //      cout<< " average tot is " <<averagetot<<endl;
       localvalue=localvalue/averagetot;
-      cout << " localvalue after "<< localvalue << endl;
+      //      cout << " localvalue after "<< localvalue << endl;
     }
   }
   

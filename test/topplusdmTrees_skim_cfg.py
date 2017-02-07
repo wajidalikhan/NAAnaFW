@@ -194,16 +194,14 @@ process.GlobalTag.pfnPrefix = cms.untracked.string('frontier://FrontierProd/')
 
 process.TFileService = cms.Service("TFileService", fileName = cms.string(options.outputLabel))
 
-process.load("Analysis.NAAnaFW.topplusdmedmRootTreeMaker_skim_cff")
-#process.load("ttDM.treeDumper.topplusdmedmRootTreeMaker_with_cat_cff")
-#process.load("B2GAnaFW.B2GAnaFW.topplusdmedmRootTreeMaker_cff")
+process.load("Analysis.NAAnaFW.topplusdmedmRootTreeMaker_cff")
 
 process.DMTreesDumper.channelInfo.SingleElTriggers=cms.vstring(SingleElTriggers)
 process.DMTreesDumper.channelInfo.SingleMuTriggers=cms.vstring(SingleMuTriggers)
 process.DMTreesDumper.channelInfo.hadronicTriggers=cms.vstring(hadronTriggers)
 
 
-#process.DMTreesDumper.doPreselection = cms.untracked.bool(False) 
+process.DMTreesDumper.doPreselection = cms.untracked.bool(True) 
 if options.addPartonInfo:
     if options.isData: #G
         process.DMTreesDumper.channelInfo.getPartonW=cms.untracked.bool(True)
@@ -222,7 +220,7 @@ process.DMTreesDumper.lhes =cms.InputTag(options.lhesource)
 process.DMTreesDumper.changeJECs = cms.untracked.bool(options.changeJECs)
 process.DMTreesDumper.isData = cms.untracked.bool(options.isData)#This adds the L2L3Residuals
 process.DMTreesDumper.applyRes = cms.untracked.bool(options.applyRes)#This adds the L2L3Residuals
-
+process.DMTreesDumper.JECVersion=cms.string("")
 #G
 process.DMTreesDumper.channelInfo.useLHE = cms.untracked.bool(True)
 #G
@@ -231,6 +229,7 @@ process.DMTreesDumper.channelInfo.useLHEWeights = cms.untracked.bool(True)
 if options.isData:
     process.DMTreesDumper.channelInfo.useLHE = cms.untracked.bool(False)
     process.DMTreesDumper.channelInfo.useLHEWeights = cms.untracked.bool(False)
+    process.DMTreesDumper.usePrunedGenParticles = cms.untracked.bool(False)
 
 if not options.isData:
     process.DMTreesDumper.channelInfo.useLHE = cms.untracked.bool(True)
@@ -238,13 +237,13 @@ if not options.isData:
 
 
 if not options.isData:
-    process.DMTreesDumper.JECVersion="Spring16_25nsV10"
+      process.DMTreesDumper.JECVersion=cms.string("Spring16_23Sep2016V2")
 
 if options.isData:
-    process.DMTreesDumper.JECVersion="Spring16_25nsV10BCD"
-    if options.channel == "DATA2016E": process.DMTreesDumper.JECVersion="Spring16_25nsV10E"
-    if options.channel == "DATA2016F": process.DMTreesDumper.JECVersion="Spring16_25nsV10F"
-    if options.channel == "DATA2016p2": process.DMTreesDumper.JECVersion="Spring16_25nsV10p2"
+    process.DMTreesDumper.JECVersion=cms.string("Spring16_23Sep2016BCDV2")
+    if options.channel == "DATA2016EF": process.DMTreesDumper.JECVersion=cms.string("Spring16_23Sep2016EFV2")
+    if options.channel == "DATA2016G": process.DMTreesDumper.JECVersion=cms.string("Spring16_23Sep2016GV2")
+    if options.channel == "DATA2016H": process.DMTreesDumper.JECVersion=cms.string("Spring16_23Sep2016HV2")
 
 if options.channel == "ttbar" or options.channel == "ttbar_sd":
     process.DMTreesDumper.getPartonTop  = cms.untracked.bool(True)
@@ -261,7 +260,6 @@ if options.channel == "wzjets":
 if options.channel == "qcd":
     process.DMTreesDumper.channelInfo.useLHE = cms.untracked.bool(False)
     process.DMTreesDumper.channelInfo.useLHEWeights = cms.untracked.bool(False)
-
 
 #if(options.isData): del process.DMTreesDumper.physicsObjects[-1]
 process.analysisPath = cms.Path(
