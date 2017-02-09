@@ -117,6 +117,14 @@ options.register('channel',
                  'channel for weight evaluation'
                  )
 
+options.register('doPreselection',
+                 True,
+                 opts.VarParsing.multiplicity.singleton,
+                 opts.VarParsing.varType.bool,
+                 'doPreselection?')
+
+
+
 options.parseArguments()
 
 if(options.isData):options.LHE = False
@@ -128,15 +136,15 @@ l = l + ["trigger2"+str(s) for s in xrange(15)]
 
 #SingleElTriggers = ["HLT_Ele27_WPTight_Gsf_v2"]
 #SingleElTriggers = SingleElTriggers + ["HLT_Ele32_eta2p1_WPTight_Gsf_v3"]
-SingleElTriggers = ["HLT_Ele32_eta2p1_WPTight_Gsf_v"+str(s) for s in range(2,4)]
-SingleElTriggers = SingleElTriggers + ["HLT_Ele27_eta2p1_WPTight_Gsf_v"+str(s) for s in xrange(2,4)]
+SingleElTriggers = ["HLT_Ele32_eta2p1_WPTight_Gsf_v"+str(s) for s in range(1,5)]
+SingleElTriggers = SingleElTriggers + ["HLT_Ele27_eta2p1_WPTight_Gsf_v"+str(s) for s in xrange(1,5)]
 #SingleElTriggers = SingleElTriggers + ["HLT_Ele27_eta2p1_WPLoose_Gsf_v"+str(s) for s in xrange(2,4)]
 
 PhotonTriggers = [""]
 
 #SingleMuTriggers = ["HLT_IsoMu22_v3","HLT_IsoTkMu22_v3"]
-SingleMuTriggers = ["HLT_IsoMu22_v"+str(s) for s in range(2,4)]
-SingleMuTriggers = SingleMuTriggers + ["HLT_IsoMu24_v"+str(s) for s in range(2,4)]
+SingleMuTriggers = ["HLT_IsoMu22_v"+str(s) for s in range(1,5)]
+SingleMuTriggers = SingleMuTriggers + ["HLT_IsoMu24_v"+str(s) for s in range(1,5)]
 #SingleMuTriggers = SingleMuTriggers + ["HLT_IsoTkMu22_v"+str(s) for s in range(2,3)]
 
 #SingleMuTriggers = SingleMuTriggers + ["HLT_IsoMu24_v2","HLT_IsoTkMu24_v2"]
@@ -200,8 +208,7 @@ process.DMTreesDumper.channelInfo.SingleElTriggers=cms.vstring(SingleElTriggers)
 process.DMTreesDumper.channelInfo.SingleMuTriggers=cms.vstring(SingleMuTriggers)
 process.DMTreesDumper.channelInfo.hadronicTriggers=cms.vstring(hadronTriggers)
 
-
-process.DMTreesDumper.doPreselection = cms.untracked.bool(True) 
+process.DMTreesDumper.doPreselection = cms.untracked.bool(options.doPreselection) 
 if options.addPartonInfo:
     if options.isData: #G
         process.DMTreesDumper.channelInfo.getPartonW=cms.untracked.bool(True)

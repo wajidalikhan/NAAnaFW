@@ -2,9 +2,9 @@ import FWCore.ParameterSet.Config as cms
 import copy
 #from ttDM.treeDumper.topplusdmTrees_Data_V4_cfg import isData
 
-leptonssize = cms.untracked.int32(6)
+leptonssize = cms.untracked.int32(10)
 #jetssize = cms.untracked.int32(20)
-jetssize = cms.untracked.int32(15)
+jetssize = cms.untracked.int32(20)
 genpartsize = cms.untracked.int32(20)
 
 pholabel = cms.string("photons")
@@ -29,7 +29,7 @@ systsToSave = ["noSyst","jes__up","jes__down","jer__up","jer__down"]
 #systsToSave = ["jer__up","jer__down","unclusteredMet__up","unclusteredMet__down"]
 systsToSave = ["noSyst","unclusteredMet__up","unclusteredMet__down"]
 systsToSave = ["noSyst","jes__up","jes__down"]
-#systsToSave = ["noSyst"]
+systsToSave = ["noSyst"]
 
 #systsToSave = ["noSyst","unclusteredMet__up","unclusteredMet__down"]
 #systsToSave = []
@@ -37,13 +37,20 @@ systsToSave = ["noSyst","jes__up","jes__down"]
 
 metFilters = ["Flag_CSCTightHaloFilter","Flag_goodVertices", "Flag_eeBadScFilter"]
 
-catMu = ["Tight","Loose"]
-catEl = ["Tight","Veto"]
+catMu = ["Tight","TightAntiIso","Loose"]
+catEl = ["Tight","TightAntiIso","Veto"]
 catJet = ["Tight"]
+#                    muonsTight_Pt -> Iso <0.15 
+#ttDM__noSyst->Draw("muonsTightIso04_LE_0p06_Pt") -> Iso < 0.06
 
-scanMu = []
+scanMu = ["Iso04_0p15_LE","Iso04_0p06_LE"]
 scanEl = []
-scanJet = ["CorrPt_20","CorrPt_40"]
+scanJet = ["CorrPt_20"]
+
+sysMu = [""]
+sysEl = [""]
+sysJet = ["JESUp","JESDown"]
+
 #scanJet = ["CorrPt_30"]
 #scanJet = ["Pt_30","Pt_40"]
 
@@ -60,15 +67,16 @@ scanJet = ["CorrPt_20","CorrPt_40"]
 addCentrality=False
 
 cutOnTriggers = False
-doPreselectionCuts = True
+doPreselectionCuts = False
 
 #What to use for jets/other variables
 saveBase = cms.untracked.bool(False)
-saveNoCategory = True
+saveNoCategory = False
 j= "jetsAK4CHS"
 jpref= "jetAK4CHS"
 
 doAK8=False
+doPhoton=False
 
 j8= "jetsAK4CHS"
 j8pref= "jetAK4CHS"
@@ -76,11 +84,12 @@ j8pref= "jetAK4CHS"
 sj = "subjetsAK8CHS"
 sjpref = "subjetAK8CHS"
 
-jecVersion = cms.string("Spring16_25nsV10")
 
 #sj = "subjetsCmsTopTag"
 #sjpref = "subjetsCmsTopTag"
 subjetak8label = cms.string(sj)
+
+jecVersion = cms.string("Spring16_25nsV10")
 
 #Initializing the analyzer
 DMTreesDumper = cms.EDAnalyzer(
@@ -94,6 +103,8 @@ DMTreesDumper = cms.EDAnalyzer(
     boostedTopsLabel = jetak8label,
     boostedTopsSubjetsLabel = subjetak8label,
     metLabel = metlabel,
+    genParticles =cms.InputTag( "filteredPrunedGenParticles"),
+    genJets =cms.InputTag("genJetsAK4"),
 #    metNoHFLabel = metNoHFlabel,
     eventLabel = eventlabel,
     JECVersion = jecVersion,
@@ -105,6 +116,7 @@ DMTreesDumper = cms.EDAnalyzer(
             saveBaseVariables = cms.untracked.bool(True),
             categories = cms.vstring(),
             scanCuts = cms.vstring(),
+            systCats = cms.vstring(),
             variablesD = cms.VInputTag(),
             variablesF = cms.VInputTag(
                 cms.InputTag("metFull","metFulluncorPt"),
@@ -143,6 +155,7 @@ DMTreesDumper = cms.EDAnalyzer(
     triggerNames = cms.InputTag("TriggerUserData","triggerNameTree"),
     triggerPrescales = cms.InputTag("TriggerUserData","triggerPrescaleTree"),
     #met filters
+    useMETFilters=cms.untracked.bool(False),
     metBits = cms.InputTag("METUserData","triggerBitTree"),
     metNames = cms.InputTag("METUserData","triggerNameTree"),
     #lumi,run,number
@@ -160,8 +173,8 @@ DMTreesDumper = cms.EDAnalyzer(
     vertexRho =  cms.InputTag("vertexInfo","rho"),
 
     #resolved top part:
-    doResolvedTopHad=cms.untracked.bool(True),
-    doResolvedTopSemiLep=cms.untracked.bool(True),
+    doResolvedTopHad=cms.untracked.bool(False),
+    doResolvedTopSemiLep=cms.untracked.bool(False),
     #cuts for the jet scan
     jetScanCuts=cms.vdouble(30), #Note: the order is important, as the jet collection with the first cut is used for the definition of mt2w.
     
@@ -182,6 +195,8 @@ DMTreesDumper = cms.EDAnalyzer(
         useLHEWeights = cms.untracked.bool(False),#Whether one uses the weights from the LHE in order to get scale uncertaintiesxb
         addLHAPDFWeights = cms.untracked.bool(False), #Whether to add the PDF for uncertainty evaluation (time consuming)
         maxWeights = cms.untracked.int32(111),
+        doTopDecayReshaping = cms.untracked.bool(False),
+        doTopResweighting = cms.untracked.bool(False),
         )
     )
 
@@ -268,43 +283,45 @@ DMTreesDumper.physicsObjects.append(
         singleF = cms.VInputTag(),
         scanCuts = cms.vstring(scanMu),
         categories = cms.vstring(catMu),
+        systCats = cms.vstring(sysMu),
         #        categories = cms.vstring("Tight","Loose"),
         toSave = cms.vstring("muE","muPt","muEta","muPhi","muIso04","muCharge","muIsTightMuon","muIsLooseMuon","allExtra"),
         )
     )
-
-DMTreesDumper.physicsObjects.append( 
-    cms.PSet(
-        label = pholabel,
-        prefix = cms.string("pho"),
-        maxInstances =  leptonssize,
-        saveBaseVariables = cms.untracked.bool(True),
-        categories = cms.vstring(),
-        scanCuts = cms.vstring(),
-        variablesD = cms.VInputTag(),
-        variablesF = cms.VInputTag(
-            cms.InputTag("photons","phoEta"),
-            cms.InputTag("photons","phoPt"),
-            cms.InputTag("photons","phoHoverE"),
-            cms.InputTag("photons","phoSigmaIEtaIEta"),
-            cms.InputTag("photons","phoNeutralHadronIso"),
-            cms.InputTag("photons","phoNeutralHadronIsoEAcorrected"),
-            cms.InputTag("photons","phoChargedHadronIso"),
-            cms.InputTag("photons","phoChargedHadronIsoEAcorrected"),
-            cms.InputTag("photons","phoPhotonIso"),
-            cms.InputTag("photons","phoPhotonIsoEAcorrected"),
-            cms.InputTag("photons","phoHasPixelSeed"),
-            cms.InputTag("photons","phoPassLooseID"),
-            cms.InputTag("photons","phoPassMediumID"),
-            cms.InputTag("photons","phoPassTightID"),
-            ),
-        variablesI = cms.VInputTag(
-            ),
-        singleD = cms.VInputTag(),
-        singleI = cms.VInputTag(),
-        singleF = cms.VInputTag(),
-        toSave = cms.vstring("phoPt","phoHoverE","phoSigmaIEtaIEta","phoNeutralHadronIso","phoNeutralHadronIsoEAcorrected","phoChargedHadronIso","phoChargedHadronIsoEAcorrected","phoPhotonIso","phoPhotonIsoEAcorrected","phoHasPixelSeed","phoPassLooseID","phoPassMediumID","phoPassTightID","allExtra"),
-        )
+if doPhoton:
+    DMTreesDumper.physicsObjects.append( 
+        cms.PSet(
+            label = pholabel,
+            prefix = cms.string("pho"),
+            maxInstances =  leptonssize,
+            saveBaseVariables = cms.untracked.bool(True),
+            categories = cms.vstring(),
+            scanCuts = cms.vstring(),
+            systCats = cms.vstring(),
+            variablesD = cms.VInputTag(),
+            variablesF = cms.VInputTag(
+                cms.InputTag("photons","phoEta"),
+                cms.InputTag("photons","phoPt"),
+                cms.InputTag("photons","phoHoverE"),
+                cms.InputTag("photons","phoSigmaIEtaIEta"),
+                cms.InputTag("photons","phoNeutralHadronIso"),
+                cms.InputTag("photons","phoNeutralHadronIsoEAcorrected"),
+                cms.InputTag("photons","phoChargedHadronIso"),
+                cms.InputTag("photons","phoChargedHadronIsoEAcorrected"),
+                cms.InputTag("photons","phoPhotonIso"),
+                cms.InputTag("photons","phoPhotonIsoEAcorrected"),
+                cms.InputTag("photons","phoHasPixelSeed"),
+                cms.InputTag("photons","phoPassLooseID"),
+                cms.InputTag("photons","phoPassMediumID"),
+                cms.InputTag("photons","phoPassTightID"),
+                ),
+            variablesI = cms.VInputTag(
+                ),
+            singleD = cms.VInputTag(),
+            singleI = cms.VInputTag(),
+            singleF = cms.VInputTag(),
+            toSave = cms.vstring("phoPt","phoHoverE","phoSigmaIEtaIEta","phoNeutralHadronIso","phoNeutralHadronIsoEAcorrected","phoChargedHadronIso","phoChargedHadronIsoEAcorrected","phoPhotonIso","phoPhotonIsoEAcorrected","phoHasPixelSeed","phoPassLooseID","phoPassMediumID","phoPassTightID","allExtra"),
+            )
     )
 DMTreesDumper.physicsObjects.append( 
     cms.PSet(
@@ -335,6 +352,8 @@ DMTreesDumper.physicsObjects.append(
             cms.InputTag("electrons","elvidVeto"),
             cms.InputTag("electrons","elvidTight"),
             cms.InputTag("electrons","elvidMedium"),
+            cms.InputTag("electrons","elDz"),
+            cms.InputTag("electrons","elDxy"),
         ),
         variablesI = cms.VInputTag(
             ),
@@ -343,8 +362,9 @@ DMTreesDumper.physicsObjects.append(
         singleF = cms.VInputTag(),
         scanCuts = cms.vstring(scanEl),
         categories = cms.vstring(catEl),
+        systCats = cms.vstring(sysEl),
 #        categories = cms.vstring("Tight","Veto"),
-        toSave = cms.vstring("elE","elPt","elEta","elPhi","elIso03","elisTight","elisMedium","elisLoose","elisVeto","elscEta","allExtra"),
+        toSave = cms.vstring("elE","elPt","elEta","elPhi","elIso03","elisTight","elCharge","elisMedium","elisLoose","elisVeto","elscEta","allExtra"),
         )
     ) 
 
@@ -444,6 +464,7 @@ DMTreesDumper.physicsObjects.append(
             cms.InputTag(j,jpref+"PartonFlavour"),
             cms.InputTag(j,jpref+"Phi"),
             cms.InputTag(j,jpref+"CSVv2"),
+            cms.InputTag(j,jpref+"CMVAv2"),
             #cms.InputTag(j,jpref+"CSVV1"),
             cms.InputTag(j,jpref+"Charge"),
 #            cms.InputTag(j,jpref+"ChargeMuEnergy"),
@@ -523,8 +544,10 @@ DMTreesDumper.physicsObjects.append(
         #toSave = cms.vstring(jpref+"Eta",jpref+"Phi","allExtra"),
         scanCuts = cms.vstring(scanJet),
         categories = cms.vstring(catJet),
+        systCats = cms.vstring(sysJet),
 #        categories = cms.vstring("Tight"),
-        toSave = cms.vstring(jpref+"E",jpref+"Pt",jpref+"Eta",jpref+"Phi",jpref+"GenJetPt",jpref+"GenJetEta",jpref+"CSVv2",jpref+"PartonFlavour",jpref+"QGL", jpref+"jecFactor0",jpref+"pileupJetIdRMS", jpref+"pileupJetIdbeta", jpref+"pileupJetIdbetaClassic", jpref+"pileupJetIdbetaStar", jpref+"pileupJetIdbetaStarClassic", jpref+"pileupJetIddR2Mean", jpref+"pileupJetIddRMean", jpref+"pileupJetIddZ", jpref+"pileupJetIdfrac01", jpref+"pileupJetIdfrac02", jpref+"pileupJetIdfrac03", jpref+"pileupJetIdfrac04", jpref+"pileupJetIdjetR", jpref+"pileupJetIdjetRchg", jpref+"pileupJetIdmajW", jpref+"pileupJetIdminW", jpref+"pileupJetIdnCharged", jpref+"pileupJetIdnNeutrals", jpref+"pileupJetIdnParticles", jpref+"pileupJetIdptD", jpref+"pileupJetIdpull","allExtra"),
+#        toSave = cms.vstring(jpref+"E",jpref+"Pt",jpref+"Eta",jpref+"Phi",jpref+"GenJetPt",jpref+"GenJetEta",jpref+"CSVv2",jpref+"PartonFlavour",jpref+"QGL", jpref+"jecFactor0",jpref+"pileupJetIdRMS", jpref+"pileupJetIdbeta", jpref+"pileupJetIdbetaClassic", jpref+"pileupJetIdbetaStar", jpref+"pileupJetIdbetaStarClassic", jpref+"pileupJetIddR2Mean", jpref+"pileupJetIddRMean", jpref+"pileupJetIddZ", jpref+"pileupJetIdfrac01", jpref+"pileupJetIdfrac02", jpref+"pileupJetIdfrac03", jpref+"pileupJetIdfrac04", jpref+"pileupJetIdjetR", jpref+"pileupJetIdjetRchg", jpref+"pileupJetIdmajW", jpref+"pileupJetIdminW", jpref+"pileupJetIdnCharged", jpref+"pileupJetIdnNeutrals", jpref+"pileupJetIdnParticles", jpref+"pileupJetIdptD", jpref+"pileupJetIdpull","allExtra"),
+        toSave = cms.vstring(jpref+"E",jpref+"Pt",jpref+"Eta",jpref+"Phi",jpref+"GenJetPt",jpref+"GenJetEta",jpref+"CMVAv2",jpref+"CSVv2",jpref+"HadronFlavour",jpref+"PartonFlavour",jpref+"QGL", jpref+"jecFactor0",jpref+"pileupJetIdRMS", jpref+"pileupJetIdbeta", jpref+"pileupJetIdbetaClassic", jpref+"pileupJetIdbetaStar", jpref+"pileupJetIdbetaStarClassic","allExtra"),
         ),
     )
 
