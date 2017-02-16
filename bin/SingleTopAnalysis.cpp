@@ -79,19 +79,56 @@ int main(int argc, char **argv) {
 
     bool useCSVMSelection = true;
     bool useCSVTSelection = false;
+    bool useCMVATSelection = false;
     //  cout << "cat is "<<endl;
     if(cat=="CSVT"){
         useCSVMSelection = false;
         useCSVTSelection = true;
+        useCMVATSelection = false;
+        }
+
+    if(cat=="CMVAT"){
+        useCSVMSelection = false;
+        useCSVTSelection = false;
+        useCMVATSelection = true;
         }
     
+    string btagalgo="CSVM";
+    
+    if(useCSVMSelection) btagalgo= "CSVM";
+    if(useCSVTSelection) btagalgo= "CSVT";
+    if(useCMVATSelection) btagalgo= "CMVAT";
+
     string reportName = "SelectedEvents_"+channel+"_"+cat+"_"+sample+".txt";
+    string reportName_step0 = "SelectedEvents_"+channel+"_"+cat+"_"+sample+"_step0.txt";
+    string reportName_step1 = "SelectedEvents_"+channel+"_"+cat+"_"+sample+"_step1.txt";
+    string reportName_step2 = "SelectedEvents_"+channel+"_"+cat+"_"+sample+"_step2.txt";
+    string reportName_step3 = "SelectedEvents_"+channel+"_"+cat+"_"+sample+"_step3.txt";
+    string reportName_step4 = "SelectedEvents_"+channel+"_"+cat+"_"+sample+"_step4.txt";
+    string reportName_step5 = "SelectedEvents_"+channel+"_"+cat+"_"+sample+"_step5.txt";
+    string reportName_step6 = "SelectedEvents_"+channel+"_"+cat+"_"+sample+"_step6.txt";
     //  string reportName = "SelectedEvents_"+channel+""cat"_"+sample+".txt";
     ofstream fileout;
+    ofstream fileout_step0;
+    ofstream fileout_step1;
+    ofstream fileout_step2;
+    ofstream fileout_step3;
+    ofstream fileout_step4;
+    ofstream fileout_step5;
+    ofstream fileout_step6;
+
     bool doSynch=sync.find("sync")!=std::string::npos;
     if(doSynch){
         fileout.open(reportName.c_str(),ios::in | ios::out | ios::trunc);
         fileout<<"RunNumber EvtNumber Lumi "<<std::endl;
+        fileout_step0.open(reportName_step0.c_str(),ios::in | ios::out | ios::trunc);
+        fileout_step1.open(reportName_step1.c_str(),ios::in | ios::out | ios::trunc);
+        //fileout_step1<<"RunNumber | EvtNumber | Lumi | #TightMu | #LooseMu | #LooseEl | #Jets | #BJets | TightMu Pt | TightMuRelIso | AddLoose.Mu Pt | Add.LooseEl Pt | 1stJetPt | 2ndJetPt | 1stB Dis.| 2ndB Dis.| MET | MTW | "<<std::endl;
+        fileout_step2.open(reportName_step2.c_str(),ios::in | ios::out | ios::trunc);
+        fileout_step3.open(reportName_step3.c_str(),ios::in | ios::out | ios::trunc);
+        fileout_step4.open(reportName_step4.c_str(),ios::in | ios::out | ios::trunc);
+        fileout_step5.open(reportName_step5.c_str(),ios::in | ios::out | ios::trunc);
+        fileout_step6.open(reportName_step6.c_str(),ios::in | ios::out | ios::trunc);
         }
     
     TString outfile = "test/"+sample + "_"+channel+".root";
@@ -135,13 +172,19 @@ int main(int argc, char **argv) {
     double evtNumber(0.);
     float jetE[sizeMax], jetPt[sizeMax], jetPhi[sizeMax], jetEta[sizeMax];
     float jetReshapeFactorCSV[sizeMax],jetReshapeFactorCSV_SD[sizeMax];
+    float jetReshapeFactorCMVA[sizeMax],jetReshapeFactorCMVA_SD[sizeMax];
     float jetHadronFlavour[sizeMax],jetPartonFlavour[sizeMax];
 
     float jet20E[sizeMax], jet20Pt[sizeMax], jet20Phi[sizeMax], jet20Eta[sizeMax];
     float jetIsCSVL[sizeMax], jetIsCSVM[sizeMax], jetIsCSVT[sizeMax],jetIsLoose[sizeMax],jetIsTight[sizeMax],jetak4chs_csvv2[sizeMax];
+    float jetIsCMVAL[sizeMax], jetIsCMVAM[sizeMax], jetIsCMVAT[sizeMax],jetak4chs_cmvav2[sizeMax];
+    float jetPassesB[sizeMax], jet20PassesB[sizeMax];
     float jet20IsCSVL[sizeMax], jet20IsCSVM[sizeMax], jet20IsCSVT[sizeMax],jet20IsLoose[sizeMax],jet20IsTight[sizeMax],jet20ak4chs_csvv2[sizeMax];
     float jet20ReshapeFactorCSV[sizeMax],jet20ReshapeFactorCSV_SD[sizeMax];
+    float jet20ReshapeFactorCMVA[sizeMax],jet20ReshapeFactorCMVA_SD[sizeMax];
     float jet20HadronFlavour[sizeMax],jet20PartonFlavour[sizeMax];
+
+
 
     float nTightMuons, nTightElectrons, nVetoElectrons, nLooseMuons, nJets,nCSVJets;//, nCSVLJets;
     float nGoodPV, nPV, numTrueInt, w_pu;
@@ -162,11 +205,11 @@ int main(int argc, char **argv) {
 
     float slTrigIsoMu20_v1(0.), slTrigIsoMu20_v2(0.), slTrigIsoMu20_v3(0.);
     float slTrigIsoMu22_v1(0.), slTrigIsoMu22_v2(0.), slTrigIsoMu22_v3(0.);
-    float slTrigIsoMu24_v1(0.), slTrigIsoMu24_v2(0.), slTrigIsoMu24_v3(0.);
+    float slTrigIsoMu24_v1(0.), slTrigIsoMu24_v2(0.), slTrigIsoMu24_v3(0.),slTrigIsoMu24_v4(0.);
 
     float slTrigIsoTkMu20_v1(0.), slTrigIsoTkMu20_v2(0.), slTrigIsoTkMu20_v3(0.);
     float slTrigIsoTkMu22_v1(0.), slTrigIsoTkMu22_v2(0.), slTrigIsoTkMu22_v3(0.);
-    float slTrigIsoTkMu24_v1(0.), slTrigIsoTkMu24_v2(0.), slTrigIsoTkMu24_v3(0.);
+    float slTrigIsoTkMu24_v1(0.), slTrigIsoTkMu24_v2(0.), slTrigIsoTkMu24_v3(0.),slTrigIsoTkMu24_v4(0.);
 
     float slTrigEle_v1(0.), slTrigEle_v2(0.);
     
@@ -298,12 +341,21 @@ int main(int argc, char **argv) {
     chain.SetBranchAddress("jetsAK4CHSTight_CSVv2",  &jetak4chs_csvv2);
     chain.SetBranchAddress("jetsAK4CHSTight_reshapeFactorCSV",  &jetReshapeFactorCSV);
     chain.SetBranchAddress("jetsAK4CHSTight_reshapeFactorCSV_SD",  &jetReshapeFactorCSV_SD);
-
+    chain.SetBranchAddress("jetsAK4CHSTight_reshapeFactorCMVA",  &jetReshapeFactorCMVA);
+    chain.SetBranchAddress("jetsAK4CHSTight_reshapeFactorCMVA_SD",  &jetReshapeFactorCMVA_SD);
+    
     chain.SetBranchAddress("jetsAK4CHSTight_HadronFlavour", &jetHadronFlavour);
     chain.SetBranchAddress("jetsAK4CHSTight_PartonFlavour",  &jetPartonFlavour);
 
     //  float jetReshapeFactorCSV[sizeMax],jetReshapeFactorCSV_SD[sizeMax];
+     chain.SetBranchAddress("jetsAK4CHSTight_IsCMVAL", &jetIsCMVAL);
+     chain.SetBranchAddress("jetsAK4CHSTight_IsCMVAM", &jetIsCMVAM);
+     chain.SetBranchAddress("jetsAK4CHSTight_IsCMVAT", &jetIsCMVAT);
+     chain.SetBranchAddress("jetsAK4CHSTight_CMVAv2",  &jetak4chs_cmvav2);
 
+     chain.SetBranchAddress(("jetsAK4CHSTight_Is"+btagalgo).c_str(),  &jetPassesB);
+     chain.SetBranchAddress(("jetsAK4CHSTight_CorrPt_20_Is"+btagalgo).c_str(),  &jet20PassesB);
+        
 
     chain.SetBranchAddress("jetsAK4CHSTight_CorrPt_20_CorrE",      &jet20E);
     chain.SetBranchAddress("jetsAK4CHSTight_CorrPt_20_CorrPt",     &jet20Pt);
@@ -318,6 +370,10 @@ int main(int argc, char **argv) {
     chain.SetBranchAddress("jetsAK4CHSTight_CorrPt_20_CSVv2",  &jet20ak4chs_csvv2);
     chain.SetBranchAddress("jetsAK4CHSTight_CorrPt_20_reshapeFactorCSV",  &jet20ReshapeFactorCSV);
     chain.SetBranchAddress("jetsAK4CHSTight_CorrPt_20_reshapeFactorCSV_SD",  &jet20ReshapeFactorCSV_SD);
+    chain.SetBranchAddress("jetsAK4CHSTight_CorrPt_20_reshapeFactorCSV",  &jet20ReshapeFactorCMVA);
+    chain.SetBranchAddress("jetsAK4CHSTight_CorrPt_20_reshapeFactorCSV_SD",  &jet20ReshapeFactorCMVA_SD);
+
+    
 
     chain.SetBranchAddress("jetsAK4CHSTight_CorrPt_20_HadronFlavour", &jet20HadronFlavour);
     chain.SetBranchAddress("jetsAK4CHSTight_CorrPt_20_PartonFlavour",  &jet20PartonFlavour);  
@@ -358,101 +414,80 @@ int main(int argc, char **argv) {
     //  float bWeight2CSVM, bWeight2CSVMBTagUp,bWeight2CSVMBTagDown,bWeight2CSVMMisTagUp,bWeight2CSVMMisTagDown;
     //b-weight settings
     
-    if(isData!="DATA"){
-        if(useCSVMSelection){
-            chain.SetBranchAddress("Event_bWeight2CSVMTight", &bWeight2CSVM);
-            chain.SetBranchAddress("Event_bWeightMisTagUp2CSVMTight", &bWeight2CSVMMisTagUp);
-            chain.SetBranchAddress("Event_bWeightMisTagDown2CSVMTight", &bWeight2CSVMMisTagDown);
-            chain.SetBranchAddress("Event_bWeightBTagUp2CSVMTight", &bWeight2CSVMBTagUp);
-            chain.SetBranchAddress("Event_bWeightBTagDown2CSVMTight", &bWeight2CSVMBTagDown);
-            
-            chain.SetBranchAddress("Event_bWeight0CSVMTight", &bWeight0CSVM);
-            
-            chain.SetBranchAddress("Event_bWeightMisTagUp0CSVMTight", &bWeight0CSVMMisTagUp);
-            chain.SetBranchAddress("Event_bWeightMisTagDown0CSVMTight", &bWeight0CSVMMisTagDown);
-            chain.SetBranchAddress("Event_bWeightBTagUp0CSVMTight", &bWeight0CSVMBTagUp);
-            chain.SetBranchAddress("Event_bWeightBTagDown0CSVMTight", &bWeight0CSVMBTagDown);
-            
-            chain.SetBranchAddress("Event_bWeight1CSVMTight", &bWeight1CSVM);
-            chain.SetBranchAddress("Event_bWeightMisTagUp1CSVMTight", &bWeight1CSVMMisTagUp);
-            chain.SetBranchAddress("Event_bWeightMisTagDown1CSVMTight", &bWeight1CSVMMisTagDown);
-            chain.SetBranchAddress("Event_bWeightBTagUp1CSVMTight", &bWeight1CSVMBTagUp);
-            chain.SetBranchAddress("Event_bWeightBTagDown1CSVMTight", &bWeight1CSVMBTagDown);
-            }
 
-        if(useCSVTSelection){
-            chain.SetBranchAddress("Event_bWeight2CSVTTight", &bWeight2CSVM);
-            chain.SetBranchAddress("Event_bWeightMisTagUp2CSVTTight", &bWeight2CSVMMisTagUp);
-            chain.SetBranchAddress("Event_bWeightMisTagDown2CSVTTight", &bWeight2CSVMMisTagDown);
-            chain.SetBranchAddress("Event_bWeightBTagUp2CSVTTight", &bWeight2CSVMBTagUp);
-            chain.SetBranchAddress("Event_bWeightBTagDown2CSVTTight", &bWeight2CSVMBTagDown);
-            
-            chain.SetBranchAddress("Event_bWeight0CSVTTight", &bWeight0CSVM);
-            
-            chain.SetBranchAddress("Event_bWeightMisTagUp0CSVTTight", &bWeight0CSVMMisTagUp);
-            chain.SetBranchAddress("Event_bWeightMisTagDown0CSVTTight", &bWeight0CSVMMisTagDown);
-            chain.SetBranchAddress("Event_bWeightBTagUp0CSVTTight", &bWeight0CSVMBTagUp);
-            chain.SetBranchAddress("Event_bWeightBTagDown0CSVTTight", &bWeight0CSVMBTagDown);
-            
-            chain.SetBranchAddress("Event_bWeight1CSVTTight", &bWeight1CSVM);
-            chain.SetBranchAddress("Event_bWeightMisTagUp1CSVTTight", &bWeight1CSVMMisTagUp);
-            chain.SetBranchAddress("Event_bWeightMisTagDown1CSVTTight", &bWeight1CSVMMisTagDown);
-            chain.SetBranchAddress("Event_bWeightBTagUp1CSVTTight", &bWeight1CSVMBTagUp);
-            chain.SetBranchAddress("Event_bWeightBTagDown1CSVTTight", &bWeight1CSVMBTagDown);
-            }
-        }
+    if(isData!="DATA"){
+      
+      
+     
+      chain.SetBranchAddress(("Event_bWeight2"+btagalgo+"Tight").c_str(), &bWeight2CSVM);
+      chain.SetBranchAddress(("Event_bWeightMisTagUp2"+btagalgo+"Tight").c_str(), &bWeight2CSVMMisTagUp);
+      chain.SetBranchAddress(("Event_bWeightMisTagDown2"+btagalgo+"Tight").c_str(), &bWeight2CSVMMisTagDown);
+      chain.SetBranchAddress(("Event_bWeightBTagUp2"+btagalgo+"Tight").c_str(), &bWeight2CSVMBTagUp);
+      chain.SetBranchAddress(("Event_bWeightBTagDown2"+btagalgo+"Tight").c_str(), &bWeight2CSVMBTagDown);
+      
+      chain.SetBranchAddress(("Event_bWeight0"+btagalgo+"Tight").c_str(), &bWeight0CSVM);
+      
+      chain.SetBranchAddress(("Event_bWeightMisTagUp0"+btagalgo+"Tight").c_str(), &bWeight0CSVMMisTagUp);
+      chain.SetBranchAddress(("Event_bWeightMisTagDown0"+btagalgo+"Tight").c_str(), &bWeight0CSVMMisTagDown);
+      chain.SetBranchAddress(("Event_bWeightBTagUp0"+btagalgo+"Tight").c_str(), &bWeight0CSVMBTagUp);
+      chain.SetBranchAddress(("Event_bWeightBTagDown0"+btagalgo+"Tight").c_str(), &bWeight0CSVMBTagDown);
+      
+      chain.SetBranchAddress(("Event_bWeight1"+btagalgo+"Tight").c_str(), &bWeight1CSVM);
+      chain.SetBranchAddress(("Event_bWeightMisTagUp1"+btagalgo+"Tight").c_str(), &bWeight1CSVMMisTagUp);
+      chain.SetBranchAddress(("Event_bWeightMisTagDown1"+btagalgo+"Tight").c_str(), &bWeight1CSVMMisTagDown);
+      chain.SetBranchAddress(("Event_bWeightBTagUp1"+btagalgo+"Tight").c_str(), &bWeight1CSVMBTagUp);
+      chain.SetBranchAddress(("Event_bWeightBTagDown1"+btagalgo+"Tight").c_str(), &bWeight1CSVMBTagDown);
+      
+    }
 
     if(isData=="MC"){
-        chain.SetBranchAddress("metFull_CorrPt",metPt);
+        chain.SetBranchAddress("metFull_Pt",metPt);
         chain.SetBranchAddress("metFull_CorrPhi",metPhi);}
     else {
-        chain.SetBranchAddress("metFull_CorrPt",metPt);
+        chain.SetBranchAddress("metFull_Pt",metPt);
         chain.SetBranchAddress("metFull_CorrPhi",metPhi);
         }
 
     chain.SetBranchAddress("metFull_Px",metPx);
     chain.SetBranchAddress("metFull_Py",metPy);
-  
+    
     //Muon trigger
-    if(isData=="MC" && false){
-        chain.SetBranchAddress("Event_passesHLT_IsoMu22_v1", &slTrigIsoMu22_v1);
-        chain.SetBranchAddress("Event_passesHLT_IsoMu22_v2", &slTrigIsoMu22_v2);
-        chain.SetBranchAddress("Event_passesHLT_IsoMu22_v3", &slTrigIsoMu22_v3);
-        }
-  else {
-        //string ptmu="20";
-        //if(runNumber>=272023 && runNumber<=274443) ptmu="20";
-        //if(runNumber>=274954 && runNumber<=276811) ptmu="22";
-        //if(runNumber>=276824 && runNumber<=99999999) ptmu="24";
-        //chain.SetBranchAddress(("Event_passesHLT_IsoMu"+ptmu+"_v1").c_str(), &slTrigIsoMu22_v1);
-        //chain.SetBranchAddress(("Event_passesHLT_IsoMu"+ptmu+"_v2").c_str(), &slTrigIsoMu22_v2);
-        //chain.SetBranchAddress(("Event_passesHLT_IsoMu"+ptmu+"_v3").c_str(), &slTrigIsoMu22_v3);
-        //Event_passesHLT_IsoTkMu22_v3
-
-        chain.SetBranchAddress("Event_passesHLT_IsoMu20_v1", &slTrigIsoMu20_v1);
-        chain.SetBranchAddress("Event_passesHLT_IsoMu20_v2", &slTrigIsoMu20_v2);
-        chain.SetBranchAddress("Event_passesHLT_IsoMu20_v3", &slTrigIsoMu20_v3);
+    //string ptmu="20";
+    //if(runNumber>=272023 && runNumber<=274443) ptmu="20";
+    //if(runNumber>=274954 && runNumber<=276811) ptmu="22";
+    //if(runNumber>=276824 && runNumber<=99999999) ptmu="24";
+    //chain.SetBranchAddress(("Event_passesHLT_IsoMu"+ptmu+"_v1").c_str(), &slTrigIsoMu22_v1);
+    //chain.SetBranchAddress(("Event_passesHLT_IsoMu"+ptmu+"_v2").c_str(), &slTrigIsoMu22_v2);
+    //chain.SetBranchAddress(("Event_passesHLT_IsoMu"+ptmu+"_v3").c_str(), &slTrigIsoMu22_v3);
+    //Event_passesHLT_IsoTkMu22_v3
+    
+    chain.SetBranchAddress("Event_passesHLT_IsoMu20_v1", &slTrigIsoMu20_v1);
+    chain.SetBranchAddress("Event_passesHLT_IsoMu20_v2", &slTrigIsoMu20_v2);
+    chain.SetBranchAddress("Event_passesHLT_IsoMu20_v3", &slTrigIsoMu20_v3);
+    
+    chain.SetBranchAddress("Event_passesHLT_IsoMu22_v1", &slTrigIsoMu22_v1);
+    chain.SetBranchAddress("Event_passesHLT_IsoMu22_v2", &slTrigIsoMu22_v2);
+    chain.SetBranchAddress("Event_passesHLT_IsoMu22_v3", &slTrigIsoMu22_v3);
+    
+    chain.SetBranchAddress("Event_passesHLT_IsoMu24_v1", &slTrigIsoMu24_v1);
+    chain.SetBranchAddress("Event_passesHLT_IsoMu24_v2", &slTrigIsoMu24_v2);
+    chain.SetBranchAddress("Event_passesHLT_IsoMu24_v3", &slTrigIsoMu24_v3);
+    //
+    chain.SetBranchAddress("Event_passesHLT_IsoTkMu20_v1", &slTrigIsoTkMu20_v1);
+    chain.SetBranchAddress("Event_passesHLT_IsoTkMu20_v2", &slTrigIsoTkMu20_v2);
+    chain.SetBranchAddress("Event_passesHLT_IsoTkMu20_v3", &slTrigIsoTkMu20_v3);
+    
+    chain.SetBranchAddress("Event_passesHLT_IsoTkMu22_v1", &slTrigIsoTkMu22_v1);
+    chain.SetBranchAddress("Event_passesHLT_IsoTkMu22_v2", &slTrigIsoTkMu22_v2);
+    chain.SetBranchAddress("Event_passesHLT_IsoTkMu22_v3", &slTrigIsoTkMu22_v3);
+    
+    chain.SetBranchAddress("Event_passesHLT_IsoTkMu24_v1", &slTrigIsoTkMu24_v1);
+    chain.SetBranchAddress("Event_passesHLT_IsoTkMu24_v2", &slTrigIsoTkMu24_v2);
+    chain.SetBranchAddress("Event_passesHLT_IsoTkMu24_v3", &slTrigIsoTkMu24_v3);
+    
+    chain.SetBranchAddress("Event_passesHLT_IsoMu24_v4", &slTrigIsoMu24_v4);
+    chain.SetBranchAddress("Event_passesHLT_IsoTkMu24_v4", &slTrigIsoTkMu24_v4);
         
-        chain.SetBranchAddress("Event_passesHLT_IsoMu22_v1", &slTrigIsoMu22_v1);
-        chain.SetBranchAddress("Event_passesHLT_IsoMu22_v2", &slTrigIsoMu22_v2);
-        chain.SetBranchAddress("Event_passesHLT_IsoMu22_v3", &slTrigIsoMu22_v3);
-        
-        chain.SetBranchAddress("Event_passesHLT_IsoMu24_v1", &slTrigIsoMu24_v1);
-        chain.SetBranchAddress("Event_passesHLT_IsoMu24_v2", &slTrigIsoMu24_v2);
-        chain.SetBranchAddress("Event_passesHLT_IsoMu24_v3", &slTrigIsoMu24_v3);
-        //
-        chain.SetBranchAddress("Event_passesHLT_IsoTkMu20_v1", &slTrigIsoTkMu20_v1);
-        chain.SetBranchAddress("Event_passesHLT_IsoTkMu20_v2", &slTrigIsoTkMu20_v2);
-        chain.SetBranchAddress("Event_passesHLT_IsoTkMu20_v3", &slTrigIsoTkMu20_v3);
-        
-        chain.SetBranchAddress("Event_passesHLT_IsoTkMu22_v1", &slTrigIsoTkMu22_v1);
-        chain.SetBranchAddress("Event_passesHLT_IsoTkMu22_v2", &slTrigIsoTkMu22_v2);
-        chain.SetBranchAddress("Event_passesHLT_IsoTkMu22_v3", &slTrigIsoTkMu22_v3);
-        
-        chain.SetBranchAddress("Event_passesHLT_IsoTkMu24_v1", &slTrigIsoTkMu24_v1);
-        chain.SetBranchAddress("Event_passesHLT_IsoTkMu24_v2", &slTrigIsoTkMu24_v2);
-        chain.SetBranchAddress("Event_passesHLT_IsoTkMu24_v3", &slTrigIsoTkMu24_v3);
-        }
 
   
     //Electron Triger
@@ -734,15 +769,18 @@ int main(int argc, char **argv) {
         TrigIsoMu20= false;
         //TrigIsoMu20= (runNumber>=272023 && runNumber<=274443 && (slTrigIsoMu20_v1 || slTrigIsoMu20_v2 || slTrigIsoMu20_v3));
         //TrigIsoMu22= (runNumber>=274954 && runNumber<=276811 && (slTrigIsoMu22_v1 || slTrigIsoMu22_v2 || slTrigIsoMu22_v3));  
-        TrigIsoMu22=(runNumber>=0.0&&runNumber<=276811&&(slTrigIsoMu22_v1 || slTrigIsoMu22_v2 || slTrigIsoMu22_v3 || slTrigIsoTkMu22_v1 || slTrigIsoTkMu22_v2 || slTrigIsoTkMu22_v3));  
-        TrigIsoMu24=(runNumber>=276824&&runNumber<=999999&&(slTrigIsoMu24_v1 || slTrigIsoMu24_v2 || slTrigIsoMu24_v3 ||slTrigIsoTkMu24_v1 || slTrigIsoTkMu24_v2 || slTrigIsoTkMu24_v3));  
+	//        TrigIsoMu22=(runNumber>=0.0&&runNumber<=276811&&(slTrigIsoMu22_v1 || slTrigIsoMu22_v2 || slTrigIsoMu22_v3 || slTrigIsoTkMu22_v1 || slTrigIsoTkMu22_v2 || slTrigIsoTkMu22_v3));  
+	//        TrigIsoMu24=(runNumber>=276824&&runNumber<=999999&&(slTrigIsoMu24_v1 || slTrigIsoMu24_v2 || slTrigIsoMu24_v3 ||slTrigIsoTkMu24_v1 || slTrigIsoTkMu24_v2 || slTrigIsoTkMu24_v3));  
+	//        TrigIsoMu24=((slTrigIsoMu24_v1 || slTrigIsoMu24_v2 || slTrigIsoMu24_v3 || slTrigIsoMu24_v4 ||slTrigIsoTkMu24_v1 || slTrigIsoTkMu24_v2 || slTrigIsoTkMu24_v3|| slTrigIsoTkMu24_v4));  
+        TrigIsoMu24 = slTrigIsoMu24_v1 || slTrigIsoMu24_v2|| slTrigIsoMu24_v3 || slTrigIsoMu24_v4 || slTrigIsoTkMu24_v1 || slTrigIsoTkMu24_v2|| slTrigIsoTkMu24_v3|| slTrigIsoTkMu24_v4;
         }
 
     if(isData=="MC"){
         TrigIsoMu20=false;
         TrigIsoMu24=false;
         TrigIsoMu22= true;//Trigger efficiency:use the measured one atm --> always pass the trigger in MC// (slTrigIsoMu22_v1 || slTrigIsoMu22_v2 || slTrigIsoMu22_v3);  
-        //TrigIsoMu22= slTrigIsoMu22_v2 || slTrigIsoMu22_v3; //ckecking only for QCD if it works 
+        if (doSynch ){TrigIsoMu24 = slTrigIsoMu24_v1 || slTrigIsoMu24_v2|| slTrigIsoMu24_v3 || slTrigIsoMu24_v4 || slTrigIsoTkMu24_v1 || slTrigIsoTkMu24_v2|| slTrigIsoTkMu24_v3|| slTrigIsoTkMu24_v4; TrigIsoMu22=false;}
+	//TrigIsoMu22= slTrigIsoMu22_v2 || slTrigIsoMu22_v3; //ckecking only for QCD if it works 
         }
 
     //if (TrigIsoMu20) cout << "TrigIsoMu20 fired in Event = "<<evt<<" Run Number = "<<runNumber<<endl;
@@ -752,7 +790,10 @@ int main(int argc, char **argv) {
     bool muonTrigger = (TrigIsoMu20 || TrigIsoMu22 || TrigIsoMu24); 
     bool passesAnyTrigger = muonTrigger || muonTrigger;//REMINDER: ADD ALL TRIGGERS HERE 
     if(!passesAnyTrigger)continue;
-  
+    if(doSynch && passesAnyTrigger){
+      fileout_step0<<std::fixed<<std::setprecision(0)<<evtNumber<<std::endl;
+    }
+    
     n_trig += w;
     nev_trig +=1;
 
@@ -803,11 +844,22 @@ int main(int argc, char **argv) {
     }//end loop on electrons     
   
     vector<float> selectedIso;
+
+    vector<float> mindeltaRmuonloop;
     if(channel!="muonantiiso"){
         for(int m= 0; m<maxMuLoop;++m ){
-            if(muPt[m]>20){
+            if(muPt[m]>26 && muEta[m]<2.4 && muIso[m]<0.06){
+                selectedIso.push_back(muIso[m]);
                 mu.SetPtEtaPhiE(muPt[m], muEta[m], muPhi[m],muE[m]);
 	            tightMu.push_back(mu);
+                //------------
+                for (int j = 0; j <maxJetLoop;++j){
+                   TLorentzVector all_jets;
+                   all_jets.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
+                   float dRtemp = deltaR(all_jets.Eta(),all_jets.Phi(),mu.Eta(),mu.Phi());
+                   mindeltaRmuonloop.push_back(dRtemp);
+                   } 
+                 //-----------   
                 }
             }
         }
@@ -815,13 +867,15 @@ int main(int argc, char **argv) {
         for(int m= 0; m<maxMuLoop;++m ){
             bool passesDR=true;
             double dR=1111111;
-            if(muAntiIsoPt[m]>20 && muAntiIsoIso[m]>=0.15){
+            if(muAntiIsoPt[m]>20){
+            //if(muAntiIsoPt[m]>20 && muAntiIsoIso[m]>=0.15){
                 selectedIso.push_back(muAntiIsoIso[m]);
                 mu.SetPtEtaPhiE(muAntiIsoPt[m], muAntiIsoEta[m], muAntiIsoPhi[m],muAntiIsoE[m]);
                 for (int j = 0; j <maxJetLoop;++j){
                     TLorentzVector all_jets;
                     all_jets.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
                     float dRtemp = deltaR(all_jets.Eta(),all_jets.Phi(),mu.Eta(),mu.Phi());
+                    mindeltaRmuonloop.push_back(dRtemp);
                     if(dRtemp<dR){
                         dR=dRtemp;
                         }
@@ -966,6 +1020,7 @@ int main(int argc, char **argv) {
             }
         };
 
+
     struct by_pt_jet{
         bool operator()(btag const &jet1, btag const &jet2){
         return jet2.vect.Pt() < jet2.vect.Pt();
@@ -1016,29 +1071,29 @@ int main(int argc, char **argv) {
      //cout <<"Evt No. after "<<evt<<"   "<<"jet["<<j<< "] "<<jetPt[j]<< " dR(jet,mu) "<< dR <<endl;
      
      jets.push_back(all_jets);
-     bool btagcond = jetIsCSVM[j]>0.;
-     if(useCSVTSelection){
-        btagcond = jetIsCSVT[j]>0.;
-        }
+     //     bool btagcond = jetIsCSVM[j]>0.;
+     //if(useCSVTSelection){
+     bool btagcond = jetPassesB[j]>0.;
+	// }
      
      if(!btagcond){
          jet.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
          jets_nob.push_back(jet);
-         }
+     }
      
-    jetsPhi.push_back(jetPhi[j]);
-    TLorentzVector bjet;
-  
-    if( btagcond && abs(jetEta[j])<2.4){
-        bjet.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
-        bjets.push_back(bjet);
-        btag b;
-        b.vect = bjet;
-        b.csv = jetak4chs_csvv2[j];
-        bvects.push_back(b);
-        }
-        }//End of jet loop
-
+     jetsPhi.push_back(jetPhi[j]);
+     TLorentzVector bjet;
+     
+     if( btagcond && abs(jetEta[j])<2.4){
+       bjet.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
+       bjets.push_back(bjet);
+       btag b;
+       b.vect = bjet;
+       b.csv = jetak4chs_csvv2[j];
+       bvects.push_back(b);
+     }
+    }//End of jet loop
+    
     nJets = jetsPhi.size();
     nCSVJets=bjets.size();
     //  cout <<"passes trig "<<endl; 
@@ -1046,52 +1101,90 @@ int main(int argc, char **argv) {
     std::sort(bvects.begin(), bvects.end(), by_pt_jet()); 
     std::sort(extrajets.begin(), extrajets.end(), by_pt_jet()); 
     //  bool passmuon = muonTrigger && nMu == 1 && muLooseSize==1 && nEl==0 && elLooseSize == 0;
-  
-  bool passmuon = muonTrigger && nMu == 1 ;
-  if(passmuon){n_lepton+=w;nev_lepton+=1;}
-
-  passmuon = passmuon && muLooseSize==1;
-  if(passmuon){ n_loose_veto+=w; nev_loose_veto+=1;}
-  
-  passmuon = passmuon && nEl==0 && elLooseSize == 0;
-  if(passmuon){n_lepton_cross_veto+=w;nev_lepton_cross_veto+=1;}
-
-  if(topsize==1)topcharge=1.;
-  else if(antitopsize==1)topcharge=-1.;
-  //bool passantiisomuon = muonTrigger && nMu == 1 && muLooseSize == 0 && nEl==0 && elLooseSize == 0;
-  //bool passantiisomuon = muonTrigger && muAntiIsoSize==1 && nMu==1 && nEl==0 && elLooseSize == 0;
-  
-  bool passantiisomuon = muonTrigger && muAntiIsoSize==1 && nMu==1 && nEl==0 && elLooseSize == 0;
-  
-  bool passelectron = false;
-  bool passsinglelepton = passmuon || passelectron;
-
-  if(channel=="muonantiiso" && !passantiisomuon) continue;
-  if(channel=="muon" && !passmuon)continue; 
-  //cout <<"Evt No. after "<<evt<<" tightMuons "<<nMu<<" Loose Muons "<<muLooseSize<<endl; 
-  
-  if(channel=="electron" && !passelectron)continue;
-  if(channel=="singlelepton" && !passsinglelepton)continue;
-  
-    if(jets.size() ==2){ n_2j+=w; nev_2j+=1;}
-    if(jets.size() ==2 && bjets.size()==1){ n_2j1t+=w; nev_2j1t+=1;  
-    if(doSynch){
-        if((tightMu.size())==1){
-	        TVector2 met_( met*cos(metPhi[0]), met*sin(metPhi[0]));
-	        float phi_lmet = fabs(deltaPhi(tightMu[0].Phi(), metPhi[0]) );
-	        mt = sqrt(2* tightMu[0].Pt() * met* ( 1- cos(phi_lmet)));
-            }
-        if(mt> 50){
-	        n_2j1tmtw+=w;
-	        nev_2j1tmtw+=1.;
-            }
-        }
+    
+    bool passmuon = muonTrigger && nMu == 1 ;
+    if(passmuon){n_lepton+=w;nev_lepton+=1;}
+    if(doSynch && passmuon){
+      //RunNumber | EvtNumber | Lumi | #TightMu | #LooseMu | #LooseEl | #Jets | #BJets | TightMu Pt | TightMuRelIso | AddLoose.Mu Pt | Add.LooseEl Pt | 1stJetPt | 2ndJetPt | 1stB Dis.| 2ndB Dis.| MET | MTW | 
+      //string spaces ="   ";
+      //fileout_step1<<std::fixed<<std::setprecision(0)<<runNumber<<"   "<<evtNumber<<"   "<<lumiSec<<"   "<<std::setprecision(4)<<muSize<<"   "<<muLooseSize<<"   "<<elLooseSize
+      //<<"   "<<jetSize<<"   "<<bjets.size()<<"   "<<muPt[0]<<"   "<<selectedIso[0]
+      //<<std::endl;
+      fileout_step1<<std::fixed<<std::setprecision(0)<<evtNumber<<endl;
     }
+    
+    passmuon = passmuon && muLooseSize==1;
+    if(passmuon){ n_loose_veto+=w; nev_loose_veto+=1;}
+    if(doSynch && passmuon){
+      fileout_step2<<std::fixed<<std::setprecision(0)<<evtNumber<<std::endl;
+    }
+    
+    passmuon = passmuon && nEl==0 && elLooseSize == 0;
+    if(passmuon){n_lepton_cross_veto+=w;nev_lepton_cross_veto+=1;}
+    if(doSynch && passmuon){
+      fileout_step3<<std::fixed<<std::setprecision(0)<<evtNumber<<std::endl;
+    }
+    
+    if(topsize==1)topcharge=1.;
+    else if(antitopsize==1)topcharge=-1.;
+    //bool passantiisomuon = muonTrigger && nMu == 1 && muLooseSize == 0 && nEl==0 && elLooseSize == 0;
+    //bool passantiisomuon = muonTrigger && muAntiIsoSize==1 && nMu==1 && nEl==0 && elLooseSize == 0;
+    bool passantiisomuon = muonTrigger && muAntiIsoSize==1 && nMu==1 && nEl==0 && elLooseSize == 0;
+    
+    bool passelectron = false;
+    bool passsinglelepton = passmuon || passelectron;
 
+    if(channel=="muonantiiso" && !passantiisomuon) continue;
+    if(channel=="muon" && !passmuon)continue; 
+    //cout <<"Evt No. after "<<evt<<" tightMuons "<<nMu<<" Loose Muons "<<muLooseSize<<endl; 
+    
+    if(channel=="electron" && !passelectron)continue;
+    if(channel=="singlelepton" && !passsinglelepton)continue;
+  
+    
+    if(jets.size() ==2){
+      n_2j+=w; nev_2j+=1;
+      if(doSynch){
+	fileout_step4<<std::fixed<<std::setprecision(0)<<evtNumber<<std::endl;
+      }
+    }
+    
+    if(jets.size() ==2 && bjets.size()==1){ n_2j1t+=w; nev_2j1t+=1;  
+      
+      if(doSynch){
+	fileout_step5<<std::fixed<<std::setprecision(0)<<evtNumber<<std::endl;
+      }
+      if(doSynch){
+	if((tightMu.size())==1){
+	  TVector2 met_( met*cos(metPhi[0]), met*sin(metPhi[0]));
+	  float phi_lmet = fabs(deltaPhi(tightMu[0].Phi(), metPhi[0]) );
+	  mt = sqrt(2* tightMu[0].Pt() * met* ( 1- cos(phi_lmet)));
+	}
+	if(mt> 50){
+	  n_2j1tmtw+=w;
+	  nev_2j1tmtw+=1.;
+	  
+	  if(doSynch){
+	    fileout_step6<<std::fixed<<std::setprecision(0)<<evtNumber<<std::endl;
+	  }
+	  cout <<std::fixed<<std::setprecision(0)<<"---Evt No: "<<evtNumber<<endl;
+	  //cout <<"Jet[0] (pt,eta,E) ("<<jets[0].Pt()<<","<<jets[0].Eta()<<","<<jets[0].E()<<")" 
+	  //<<" | Jet[1] (pt,eta,E) ("<<jets[1].Pt()<<","<<jets[1].Eta()<<","<<jets[1].E()<<")" 
+	  //<<" | Mu[0] (pt,eta,E) "<<tightMu[0].Pt()<<","<<tightMu[0].Eta()<<","<<tightMu[0].E() <<" | RelIso. "<<selectedIso[0]
+	  //<<" | bjet Pt "<<bjets[0].Pt()
+	//<<" | MET "<<met<< " | metPhi "<<metPhi[0]
+	//<<" | mt "<< sqrt(2* tightMu[0].Pt() * met* ( 1- cos(fabs(deltaPhi(tightMu[0].Phi(), metPhi[0]))))) 
+	//<<endl;
+	}
+      }
+    }
+    
+  
+  
     //2j0t 
     if((jets.size() == 2 && bjets.size() == 0)){
-        for(size_t i = 0; i < (size_t)tightMu.size();++i ){
-            if((tightMu.size()) == 1){
+      for(size_t i = 0; i < (size_t)tightMu.size();++i ){
+	if((tightMu.size()) == 1){
             TVector2 met_( met*cos(metPhi[0]), met*sin(metPhi[0]));
             float phi_lmet = fabs(deltaPhi(tightMu[i].Phi(), metPhi[0]) );
             mt = sqrt(2* tightMu[i].Pt() * met* ( 1- cos(phi_lmet)));
@@ -1170,10 +1263,10 @@ int main(int argc, char **argv) {
 
     //define signal enriching condition:
     for (size_t j= 0; j< (size_t)jets.size();++j ){
-      bool btagcond = jetIsCSVM[j]>0.;
-      if(useCSVTSelection){
-          btagcond = jetIsCSVT[j]>0.;
-          }
+      bool btagcond = jetPassesB[j]>0.;
+      //      if(useCSVTSelection){
+      //          btagcond = jetIsCSVT[j]>0.;
+      //          }
       if(!(btagcond)){
 	syst1BM.fillHistogramsSysts(h_2j1t_ljetpt,jets[j].Pt(),w);
 	syst1BM.fillHistogramsSysts(h_2j1t_ljeteta,jets[j].Eta(),w);
@@ -1399,11 +1492,10 @@ int main(int argc, char **argv) {
     }
     for(size_t j=0; j< (size_t)jets.size();++j ){
       //      bool btagcond=false;
-      bool btagcond = jetIsCSVM[j]>0.;
-      if(useCSVTSelection){
-	btagcond = jetIsCSVT[j]>0.;
-      }
+      //      bool btagcond = jetIsCSVM[j]>0.;
 
+      bool btagcond = jetPassesB[j]>0.;
+     
       if(!btagcond){
 	syst2BM.fillHistogramsSysts(h_3j2t_ljetpt,(jets.at(j).Pt()),w);
 	syst2BM.fillHistogramsSysts(h_3j2t_ljeteta,(jets.at(j).Eta()),w);
