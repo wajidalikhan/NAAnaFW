@@ -43,7 +43,7 @@ catJet = ["Tight"]
 #                    muonsTight_Pt -> Iso <0.15 
 #ttDM__noSyst->Draw("muonsTightIso04_LE_0p06_Pt") -> Iso < 0.06
 
-scanMu = ["Iso04_0p15_LE","Iso04_0p06_LE"]
+scanMu = ["Iso04_0p06_LE","Iso04_0p15_LE","Iso04_0p06_GE","Iso04_0p15_GE"]
 scanEl = []
 scanJet = ["CorrPt_20"]
 

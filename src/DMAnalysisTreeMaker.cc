@@ -1729,7 +1729,6 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
  	
 
 	if(iso<0.06){// 2015 Selection
-	  //if(iso<0.15){//NA Selection
 	  ++float_values["Event_nTightMuons"];
 	  TLorentzVector muon;
 	  muon.SetPtEtaPhiE(pt, eta, phi, energy);
@@ -1743,16 +1742,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	  ++lepidx;
 	}
 	if(obj_scanCuts[mu_label].size()>=1) {
-	  if(iso<0.15)fillScanCuts(mu_label,"Tight",mu);
-	}
-	if(iso>0.15){
-	  ++float_values["Event_nTightAntiIsoMuons"];
-	  if(isInVector(obj_cats[mu_label],"TightAntiIso")){
-	    fillCategory(mu_label,"TightAntiIso",mu,float_values["Event_nTightAntiIsoMuons"]-1);
-	    if(obj_scanCuts[mu_label].size()>=1) {
-	      fillScanCuts(mu_label,"TightAntiIso",mu);
-	    }
-	  }
+	  fillScanCuts(mu_label,"Tight",mu);
 	}
       }
 
@@ -1764,16 +1754,14 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	sizes[mu_label+"TightAntiIso"]=(int)float_values["Event_nTightAntiIsoMuons"];
       }
       
-      if(isLoose>0 && pt> 10 && fabs(eta) < 2.4 && iso<0.2){//NA Selection
-      //if( isLoose>0 && pt> 10 && abs(eta) < 2.5 && iso<0.2){//UCL Selection
+      if(isLoose>0 && pt> 10 && fabs(eta) < 2.4 ){//NA Selection
 	if(isInVector(obj_cats[mu_label],"Loose")){
-	  ++float_values["Event_nLooseMuons"];
-	  if(isInVector(obj_cats[mu_label],"Loose")){
-	    fillCategory(mu_label,"Loose",mu,float_values["Event_nLooseMuons"]-1);
-
-	    if(obj_scanCuts[mu_label].size()>=1) {
-	      fillScanCuts(mu_label,"Loose",mu);
+	  if(iso<0.2){
+	    ++float_values["Event_nLooseMuons"];
+	      fillCategory(mu_label,"Loose",mu,float_values["Event_nLooseMuons"]-1);
 	  }
+	  if(obj_scanCuts[mu_label].size()>=1) {
+	    fillScanCuts(mu_label,"Loose",mu);
 	  }
 	}
       }
