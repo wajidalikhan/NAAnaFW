@@ -327,7 +327,7 @@ private:
   edm::Handle<int> ntrpu;
 
   //JEC info
-  bool changeJECs,doT1MET;
+  bool changeJECs,doT1MET, doResol;
   bool isData, applyRes;
   edm::Handle<double> rho;
   double Rho;
@@ -604,6 +604,7 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
   
   addPV = iConfig.getUntrackedParameter<bool>("addPV",true);
   changeJECs = iConfig.getUntrackedParameter<bool>("changeJECs",false);
+  doResol = iConfig.getUntrackedParameter<bool>("doResol",true);
   JECVersion = iConfig.getParameter<std::string >("JECVersion");
   doT1MET = iConfig.getUntrackedParameter<bool>("doT1MET",true);
   recalculateEA = iConfig.getUntrackedParameter<bool>("recalculateEA",true);
@@ -993,6 +994,7 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
     L3Name   = JECVersion+"_DATA_L3Absolute_AK4PFchs.txt";
     L2L3ResName = JECVersion+"_DATA_L2L3Residual_AK4PFchs.txt";
   }
+  if (isData)doResol=false;
   //  string jecDir="JEC/";
   string jecDir="./";
   jecParsL1  = new JetCorrectorParameters(jecDir+L1Name);
@@ -1886,7 +1888,14 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     double maxpt=0.0;
     
     int nTightLeptons = float_values["Event_nTightMuons"]+float_values["Event_nTightElectrons"];
-    int nTightAntiIsoLeptons = float_values["Event_nTightAntiIsoMuons"]+float_values["Event_nTightAntiIsoElectrons"];
+    int nTightAntiIsoLeptons = 0;
+    for(size_t mc =0; mc < obj_cats[mu_label].size();++mc){
+      string cat= obj_cats[mu_label].at(mc);
+      if(cat.find("_Iso04_")!=std::string::npos && cat.find("GE")!=std::string::npos){
+	nTightAntiIsoLeptons+=sizes[cat];
+      }
+    }
+    //float_values["Event_nTightAntiIsoMuons"]+float_values["Event_nTightAntiIsoElectrons"];
     
     for(size_t l =0; l< leptons.size();++l){
       double lpt= leptons.at(l).Pt();
@@ -2060,7 +2069,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	}
 	
 	smearfact = smear(pt, genpt, eta, syst);
-	//	smearfact =1.0;
+	if(!doResol) smearfact =1.0;
 	ptCorr = pt * smearfact;
 	energyCorr = energy * smearfact;
 
@@ -2454,7 +2463,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       //bool metCondition = (metptCorr >100.0);
       passes = passes && nTightJets>=1.0;
       //      passes = passes && nTightLeptons>=1.0;
-      passes = passes && (nTightLeptons+nTightAntiIsoLeptons)>=1.0;
+      passes = passes && (nTightLeptons>=1.0 || nTightAntiIsoLeptons>=1.0);
      
       if (!passes ) {
 	//Reset eventmax weights/#objects
