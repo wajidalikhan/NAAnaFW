@@ -145,7 +145,7 @@ PhotonTriggers = [""]
 #SingleMuTriggers = ["HLT_IsoMu22_v3","HLT_IsoTkMu22_v3"]
 SingleMuTriggers = ["HLT_IsoMu22_v"+str(s) for s in range(1,5)]
 SingleMuTriggers = SingleMuTriggers + ["HLT_IsoMu24_v"+str(s) for s in range(1,5)]
-#SingleMuTriggers = SingleMuTriggers + ["HLT_IsoTkMu22_v"+str(s) for s in range(2,3)]
+SingleMuTriggers = SingleMuTriggers + ["HLT_IsoTkMu24_v"+str(s) for s in range(1,5)]
 
 #SingleMuTriggers = SingleMuTriggers + ["HLT_IsoMu24_v2","HLT_IsoTkMu24_v2"]
 #SingleMuTriggers = SingleMuTriggers + ["HLT_IsoTkMu24_v"+str(s) for s in range(2,3)]

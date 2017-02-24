@@ -1027,7 +1027,8 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
   cmvaeffom = new Weights(file_cmva,"other__loose");
 
 
-  calib = new BTagCalibration("CSVv2", "CSVv2_ichep.csv");
+  //  calib = new BTagCalibration("CSVv2", "CSVv2_ichep.csv");
+  calib = new BTagCalibration("CSVv2", "CSVv2_Moriond17_B_H.csv");
   readerCSVLoose = new BTagCalibrationReader(BTagEntry::OP_LOOSE, "central", {"up", "down"});      
   readerCSVLoose->load(*calib, BTagEntry::FLAV_B,   "comb");
   readerCSVLoose->load(*calib, BTagEntry::FLAV_C,   "comb");
@@ -1053,7 +1054,7 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
   //new combined MVAv2 tagger: pay load taken from: https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation80X
   //cMVAv2_ichep.csv
   
-  calib_cmvav2 = new BTagCalibration("CMVAv2", "cMVAv2_ichep.csv");
+  calib_cmvav2 = new BTagCalibration("CMVAv2", "cMVAv2_Moriond17_B_H.csv");
   readerCMVALoose = new BTagCalibrationReader(BTagEntry::OP_LOOSE, "central", {"up", "down"});      
   readerCMVALoose->load(*calib_cmvav2, BTagEntry::FLAV_B,   "ttbar");
   readerCMVALoose->load(*calib_cmvav2, BTagEntry::FLAV_C,   "ttbar");
