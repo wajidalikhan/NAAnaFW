@@ -1011,7 +1011,7 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
   
   jecCorr = new FactorizedJetCorrector(jecPars);
   jecCorr_L1 = new FactorizedJetCorrector(jecParsL1_vect);
-  jecUnc  = new JetCorrectionUncertainty(*(new JetCorrectorParameters(jecDir+"Spring16_25nsV6_DATA_UncertaintySources_AK4PFchs.txt", "Total")));
+  jecUnc  = new JetCorrectionUncertainty(*(new JetCorrectorParameters(jecDir+"Spring16_23Sep2016BCDV2_DATA_UncertaintySources_AK4PFchs.txt", "Total")));
   filename_cmva="btagging_cmva.root";
   file_cmva= TFile::Open(filename_cmva.c_str());
   cmvaeffbt = new Weights(file_cmva,"b__tight");

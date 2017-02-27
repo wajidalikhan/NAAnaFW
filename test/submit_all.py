@@ -56,44 +56,36 @@ def main():
     config.JobType.psetName = options.config
     config.JobType.allowUndistributedCMSSW = True
     config.JobType.pyCfgParams = ["isData=False", "changeJECs=False"]
-    config.JobType.inputFiles = ["Spring16_25nsV6_MC_L2L3Residual_AK4PFchs.txt",#Old MC
-                                 "Spring16_25nsV6_MC_L3Absolute_AK4PFchs.txt",
-                                 "Spring16_25nsV6_MC_L1FastJet_AK4PFchs.txt",
-                                 "Spring16_25nsV6_MC_L2Relative_AK4PFchs.txt",
-                                 "Spring16_25nsV10_MC_L2L3Residual_AK4PFchs.txt",#New MC
-                                 "Spring16_25nsV10_MC_L3Absolute_AK4PFchs.txt",
-                                 "Spring16_25nsV10_MC_L1FastJet_AK4PFchs.txt",
-                                 "Spring16_25nsV10_MC_L2Relative_AK4PFchs.txt",
-                                 "Spring16_25nsV6_DATA_UncertaintySources_AK4PFchs.txt",#Old Data
-                                 "Spring16_25nsV6_DATA_L1FastJet_AK4PFchs.txt",
-                                 "Spring16_25nsV6_DATA_L1RC_AK4PFchs.txt",
-                                 "Spring16_25nsV6_DATA_L2Relative_AK4PFchs.txt",
-                                 "Spring16_25nsV6_DATA_L3Absolute_AK4PFchs.txt",
-                                 "Spring16_25nsV6_DATA_L2L3Residual_AK4PFchs.txt",
-                                 "Spring16_25nsV10BCD_DATA_UncertaintySources_AK4PFchs.txt",#RunBCD
-                                 "Spring16_25nsV10BCD_DATA_L1FastJet_AK4PFchs.txt",
-                                 "Spring16_25nsV10BCD_DATA_L1RC_AK4PFchs.txt",
-                                 "Spring16_25nsV10BCD_DATA_L2Relative_AK4PFchs.txt",
-                                 "Spring16_25nsV10BCD_DATA_L3Absolute_AK4PFchs.txt",
-                                 "Spring16_25nsV10BCD_DATA_L2L3Residual_AK4PFchs.txt",
-                                 "Spring16_25nsV10E_DATA_UncertaintySources_AK4PFchs.txt",#RunE
-                                 "Spring16_25nsV10E_DATA_L1FastJet_AK4PFchs.txt",
-                                 "Spring16_25nsV10E_DATA_L1RC_AK4PFchs.txt",
-                                 "Spring16_25nsV10E_DATA_L2Relative_AK4PFchs.txt",
-                                 "Spring16_25nsV10E_DATA_L3Absolute_AK4PFchs.txt",
-                                 "Spring16_25nsV10E_DATA_L2L3Residual_AK4PFchs.txt",
-                                 "Spring16_25nsV10F_DATA_UncertaintySources_AK4PFchs.txt",#RunF
-                                 "Spring16_25nsV10F_DATA_L1FastJet_AK4PFchs.txt",
-                                 "Spring16_25nsV10F_DATA_L1RC_AK4PFchs.txt",
-                                 "Spring16_25nsV10F_DATA_L2Relative_AK4PFchs.txt",
-                                 "Spring16_25nsV10F_DATA_L3Absolute_AK4PFchs.txt",
-                                 "Spring16_25nsV10F_DATA_L2L3Residual_AK4PFchs.txt",
-                                 "Spring16_25nsV10p2_DATA_UncertaintySources_AK4PFchs.txt",#RunGH
-                                 "Spring16_25nsV10p2_DATA_L1FastJet_AK4PFchs.txt",
-                                 "Spring16_25nsV10p2_DATA_L1RC_AK4PFchs.txt",
-                                 "Spring16_25nsV10p2_DATA_L2Relative_AK4PFchs.txt",
-                                 "Spring16_25nsV10p2_DATA_L3Absolute_AK4PFchs.txt",
-                                 "Spring16_25nsV10p2_DATA_L2L3Residual_AK4PFchs.txt",
+    jecversion="V2"
+    jecera="Spring16_23Sep2016"
+    config.JobType.inputFiles = [jecera+"BCD"+jecversion+"_DATA_UncertaintySources_AK4PFchs.txt" ,
+                                 jecera+jecversion+"_MC_L2L3Residual_AK4PFchs.txt",#New MC
+                                 jecera+jecversion+"_MC_L3Absolute_AK4PFchs.txt",
+                                 jecera+jecversion+"_MC_L1FastJet_AK4PFchs.txt",
+                                 jecera+jecversion+"_MC_L2Relative_AK4PFchs.txt",
+                                 jecera+"BCD"+jecversion+"_DATA_L1FastJet_AK4PFchs.txt",#RunBCD
+                                 jecera+"BCD"+jecversion+"_DATA_L1RC_AK4PFchs.txt",
+                                 jecera+"BCD"+jecversion+"_DATA_L2Relative_AK4PFchs.txt",
+                                 jecera+"BCD"+jecversion+"_DATA_L3Absolute_AK4PFchs.txt",
+                                 jecera+"BCD"+jecversion+"_DATA_L2L3Residual_AK4PFchs.txt",
+                                 jecera+"EF"+jecversion+"_DATA_UncertaintySources_AK4PFchs.txt",#RunE
+                                 jecera+"EF"+jecversion+"_DATA_L1FastJet_AK4PFchs.txt",
+                                 jecera+"EF"+jecversion+"_DATA_L1RC_AK4PFchs.txt",
+                                 jecera+"EF"+jecversion+"_DATA_L2Relative_AK4PFchs.txt",
+                                 jecera+"EF"+jecversion+"_DATA_L3Absolute_AK4PFchs.txt",
+                                 jecera+"EF"+jecversion+"_DATA_L2L3Residual_AK4PFchs.txt",
+                                 jecera+"G"+jecversion+"_DATA_UncertaintySources_AK4PFchs.txt",#RunF
+                                 jecera+"G"+jecversion+"_DATA_L1FastJet_AK4PFchs.txt",
+                                 jecera+"G"+jecversion+"_DATA_L1RC_AK4PFchs.txt",
+                                 jecera+"G"+jecversion+"_DATA_L2Relative_AK4PFchs.txt",
+                                 jecera+"G"+jecversion+"_DATA_L3Absolute_AK4PFchs.txt",
+                                 jecera+"G"+jecversion+"_DATA_L2L3Residual_AK4PFchs.txt",
+                                 jecera+"H"+jecversion+"_DATA_UncertaintySources_AK4PFchs.txt",#RunGH
+                                 jecera+"H"+jecversion+"_DATA_L1FastJet_AK4PFchs.txt",
+                                 jecera+"H"+jecversion+"_DATA_L1RC_AK4PFchs.txt",
+                                 jecera+"H"+jecversion+"_DATA_L2Relative_AK4PFchs.txt",
+                                 jecera+"H"+jecversion+"_DATA_L3Absolute_AK4PFchs.txt",
+                                 jecera+"H"+jecversion+"_DATA_L2L3Residual_AK4PFchs.txt",
                                  "cMVAv2_Moriond17_B_H.csv",
                                  "CSVv2_Moriond17_B_H.csv",
                                  "btagging_cmva.root",
