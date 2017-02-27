@@ -1112,7 +1112,7 @@ int main(int argc, char **argv) {
      //     bool btagcond = jetIsCSVM[j]>0.;
      //if(useCSVTSelection){
      //bool btagcond = jetPassesB[j]>0.;
-     bool btagcond = jetPassesB[j]>0. && fabs(jets[j].Eta())<2.4;
+     bool btagcond = jetPassesB[j]>0. && fabs(jetEta[j])<2.4;
      
 	// }
      
