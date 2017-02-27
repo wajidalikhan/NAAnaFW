@@ -165,7 +165,7 @@ int main(int argc, char **argv) {
     systWeights systZero,syst0BM,syst1BM,syst2BM; 
     int maxSysts=0; 
     int sizeMax=50;
-    int muSize, elSize, jetSize,jet20Size, muLooseSize,elLooseSize;
+    int muSize, elSize, jetSize,jet20Size, muLooseSize,elLooseSize,muLooseIsoGE0p15Size;
     //float passTrigHT(0.), Ht(0.);
     float Ht(0.), mt(0.);
     float runNumber(0.), lumiSec(0.);
@@ -192,7 +192,10 @@ int main(int argc, char **argv) {
     
     //double met,metpx,metpy;
     float met,metpx,metpy;
-    float muE[sizeMax], muPt[sizeMax], muEta[sizeMax], muIso[sizeMax], muIsTight[sizeMax],muIsLoose[sizeMax], muPhi[sizeMax],elPt[sizeMax],muLoosePhi[sizeMax],muLooseEta[sizeMax];
+    float muE[sizeMax], muPt[sizeMax], muEta[sizeMax], muIso[sizeMax], muIsTight[sizeMax],muIsLoose[sizeMax], muPhi[sizeMax],elPt[sizeMax],muLoosePhi[sizeMax],muLooseEta[sizeMax], muLoosePt[sizeMax],muLooseE[sizeMax], muLooseIso[sizeMax];
+    float muLooseIsoGE0p15Iso[sizeMax],muLooseIsoGE0p15Pt[sizeMax],muLooseIsoGE0p15Eta[sizeMax],muLooseIsoGE0p15Phi[sizeMax],muLooseIsoGE0p15E[sizeMax];
+
+       //    float muE[sizeMax], muPt[sizeMax], muEta[sizeMax], muIso[sizeMax], muIsTight[sizeMax],muIsLoose[sizeMax], muPhi[sizeMax],elPt[sizeMax],muLoosePhi[sizeMax],muLooseEta[sizeMax];
     float muAntiIsoE[sizeMax], muAntiIsoPt[sizeMax], muAntiIsoEta[sizeMax], muAntiIsoIso[sizeMax], muAntiIsoIsTight[sizeMax],muAntiIsoIsLoose[sizeMax], muAntiIsoPhi[sizeMax];
     int   muAntiIsoSize;
     float muCharge[sizeMax], elCharge[sizeMax];
@@ -316,6 +319,15 @@ int main(int argc, char **argv) {
     chain.SetBranchAddress("muonsLoose_size", &muLooseSize);
     chain.SetBranchAddress("muonsLoose_Phi", muLoosePhi);
     chain.SetBranchAddress("muonsLoose_Eta", muLooseEta);
+    chain.SetBranchAddress("muonsLoose_Pt", muLoosePt);
+    chain.SetBranchAddress("muonsLoose_E",  muLooseE);
+    chain.SetBranchAddress("muonsLoose_Iso04", muLooseIso);
+    chain.SetBranchAddress("muonsLoose_Iso04_0p15_GE_Iso04", muLooseIsoGE0p15Iso);
+    chain.SetBranchAddress("muonsLoose_Iso04_0p15_GE_size", &muLooseIsoGE0p15Size);
+    chain.SetBranchAddress("muonsLoose_Iso04_0p15_GE_Pt", muLooseIsoGE0p15Pt);
+    chain.SetBranchAddress("muonsLoose_Iso04_0p15_GE_Eta", muLooseIsoGE0p15Eta);
+    chain.SetBranchAddress("muonsLoose_Iso04_0p15_GE_Phi", muLooseIsoGE0p15Phi);
+    chain.SetBranchAddress("muonsLoose_Iso04_0p15_GE_E", muLooseIsoGE0p15E);
     
     chain.SetBranchAddress("muonsTightAntiIso_E", muAntiIsoE);
     chain.SetBranchAddress("muonsTightAntiIso_Phi", muAntiIsoPhi);
@@ -610,7 +622,7 @@ int main(int argc, char **argv) {
     TH1F *h_2j0t_dR_lepjetpt40_1st[maxSysts];      systZero.initHistogramsSysts(h_2j0t_dR_lepjetpt40_1st,   "h_2j0t_dR_lepjetpt40_1st",  "dR lep-jet ",50,0,10);
     TH1F *h_2j0t_dPhi_lepjetpt40_1st[maxSysts];    systZero.initHistogramsSysts(h_2j0t_dPhi_lepjetpt40_1st,   "h_2j0t_dPhi_lepjetpt40_1st",  "dPhi lep-jet ",50,-3.2,3.2);
     TH1F *h_2j0t_dEta_lepjetpt40_1st[maxSysts];    systZero.initHistogramsSysts(h_2j0t_dEta_lepjetpt40_1st,   "h_2j0t_dEta_lepjetpt40_1st",  "dPhi lep-jet ",50,-3.2,3.2);
-    TH1F *h_2j0t_MuEta[maxSysts];          systZero.initHistogramsSysts(h_2j0t_MuEta,       "h_2j0t_MuEta",      "muon eta ",100,-2.1,2.1); 
+    TH1F *h_2j0t_MuEta[maxSysts];          systZero.initHistogramsSysts(h_2j0t_MuEta,       "h_2j0t_MuEta",      "muon eta ",100,-2.4,2.4); 
     TH1F *h_2j0t_MuPhi[maxSysts];          systZero.initHistogramsSysts(h_2j0t_MuPhi,       "h_2j0t_MuPhi",      "muon phi ",100,-3.2,3.2); 
     TH1F *h_2j0t_jetpt40_1st[maxSysts];    systZero.initHistogramsSysts(h_2j0t_jetpt40_1st,   "h_2j0t_jetpt40_leading","2j0t leading jet Pt ",250,0,500);
     TH1F *h_2j0t_jetpt40_2nd[maxSysts];    systZero.initHistogramsSysts(h_2j0t_jetpt40_2nd,   "h_2j0t_jetpt40_subleading","2j0t Sub. leading jet Pt ",250,0,500);
@@ -1073,7 +1085,9 @@ int main(int argc, char **argv) {
      jets.push_back(all_jets);
      //     bool btagcond = jetIsCSVM[j]>0.;
      //if(useCSVTSelection){
-     bool btagcond = jetPassesB[j]>0.;
+     //bool btagcond = jetPassesB[j]>0.;
+     bool btagcond = jetPassesB[j]>0. && fabs(jets[j].Eta())<2.4;
+     
 	// }
      
      if(!btagcond){
@@ -1084,7 +1098,7 @@ int main(int argc, char **argv) {
      jetsPhi.push_back(jetPhi[j]);
      TLorentzVector bjet;
      
-     if( btagcond && abs(jetEta[j])<2.4){
+     if( btagcond && fabs(jetEta[j])<2.4){
        bjet.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
        bjets.push_back(bjet);
        btag b;
@@ -1263,7 +1277,7 @@ int main(int argc, char **argv) {
 
     //define signal enriching condition:
     for (size_t j= 0; j< (size_t)jets.size();++j ){
-      bool btagcond = jetPassesB[j]>0.;
+      bool btagcond = jetPassesB[j]>0. && fabs(jets[j].Eta())<2.4;
       //      if(useCSVTSelection){
       //          btagcond = jetIsCSVT[j]>0.;
       //          }
@@ -1494,7 +1508,8 @@ int main(int argc, char **argv) {
       //      bool btagcond=false;
       //      bool btagcond = jetIsCSVM[j]>0.;
 
-      bool btagcond = jetPassesB[j]>0.;
+      bool btagcond = jetPassesB[j]>0. && fabs(jets[j].Eta())<2.4;
+
      
       if(!btagcond){
 	syst2BM.fillHistogramsSysts(h_3j2t_ljetpt,(jets.at(j).Pt()),w);
