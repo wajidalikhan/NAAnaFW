@@ -46,6 +46,10 @@ public:
 
   double  topMtw(TLorentzVector, TLorentzVector, float metPx, float metPy);  
   double  topMtw(math::PtEtaPhiELorentzVector lepton, math::PtEtaPhiELorentzVector jet, float metPx, float metPy);  
+  double  mlj(math::PtEtaPhiELorentzVector lepton, math::PtEtaPhiELorentzVector jet);
+  double  mlj(TLorentzVector , TLorentzVector);
+  double mindeltaphi(double metphi,  vector<math::PtEtaPhiELorentzVector> jets);
+  double mindeltaphi(double metphi,  vector<TLorentzVector> jets);
 
     
 
@@ -291,6 +295,35 @@ double  TopUtilities::topMtw(TLorentzVector lepton, TLorentzVector jet, float me
   math::PtEtaPhiELorentzVector lep(lepton.Pt(),lepton.Eta(),lepton.Phi(),lepton.Energy());
   math::PtEtaPhiELorentzVector bjet(jet.Pt(),jet.Eta(),jet.Phi(),jet.Energy());
   return topMtw(lep,bjet,metPx,metPy);
+}
+
+double  TopUtilities::mlj(TLorentzVector lepton, TLorentzVector jet){
+  math::PtEtaPhiELorentzVector lep(lepton.Pt(),lepton.Eta(),lepton.Phi(),lepton.Energy());
+  math::PtEtaPhiELorentzVector bjet(jet.Pt(),jet.Eta(),jet.Phi(),jet.Energy());
+  return mlj(lep,bjet);
+}
+
+double  TopUtilities::mlj(math::PtEtaPhiELorentzVector lepton, math::PtEtaPhiELorentzVector jet){
+  return (lepton + jet).mass();
+}
+
+
+double TopUtilities::mindeltaphi(double metphi,  vector<math::PtEtaPhiELorentzVector> jets){
+  double mindphi = 100.0;
+  for (size_t s =0; s<jets.size();++s){
+    double dphi = deltaPhi(jets.at(s).phi(), metphi);
+    if(fabs(dphi)<mindphi)mindphi = dphi;
+  }
+  return mindphi;
+}
+
+double TopUtilities::mindeltaphi(double metphi,  vector<TLorentzVector> jets){
+  double mindphi = 100.0;
+  for (size_t s =0; s<jets.size();++s){
+    double dphi = deltaPhi(jets.at(s).Phi(), metphi);
+    if(fabs(dphi)<mindphi)mindphi = dphi;
+  }
+  return mindphi;
 }
 
 double  TopUtilities::topMtw(math::PtEtaPhiELorentzVector lepton, math::PtEtaPhiELorentzVector jet, float metPx, float metPy)
