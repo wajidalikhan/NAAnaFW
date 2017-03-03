@@ -30,59 +30,64 @@ print "Current directory is: %s" %os.getcwd()
 list=os.listdir(os.getcwd())
 
 for i in list: 
-  if 'listST_t-channel_top_4f_inclusiveDecays_13TeV-powhegV2-madspin-pythia8_TuneCUETP8M1.txt' in i:
+  if 'listST_t-channel_top_4f' in i:
     print '*** Renaming file', i 
     os.renames(i,"ST_T_tch.txt")
     
-  if 'listST_t-channel_antitop_4f_inclusiveDecays_13TeV-powhegV2-madspin-pythia8_TuneCUETP8M1.txt' in i:
+  if 'listST_t-channel_antitop' in i:
     print '*** Renaming file', i 
     os.renames(i,"ST_Tbar_tch.txt")
 
-  if 'listST_s-channel_4f_leptonDecays_13TeV-amcatnlo-pythia8_TuneCUETP8M1.txt' in i:
+  if 'listST_s-channel_4f' in i:
     print '*** Renaming file', i 
     os.renames(i,"ST_T_sch.txt")
   
-  if 'listST_tW_top_5f_NoFullyHadronicDecays_13TeV-powheg_TuneCUETP8M1.txt' in i:
+  if 'listST_tW_top_5f' in i:
     print '*** Renaming file', i 
     os.renames(i,"ST_T_tW.txt")
   
-  if 'listST_tW_antitop_5f_NoFullyHadronicDecays_13TeV-powheg_TuneCUETP8M1.txt' in i:
+  if 'listST_tW_antitop_5f' in i:
     print '*** Renaming file', i 
     os.renames(i,"ST_Tbar_tW.txt")
 
-  if 'listTT_TuneCUETP8M1_13TeV-powheg-pythia8.txt' in i:
+  if 'listTT' in i:
     print '*** Renaming file', i 
     os.renames(i,"TT.txt")
   
-  if 'listWJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8.txt' in i:
+  if 'listWJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8.txt' in i or "listWToLNu" in i:
     print '*** Renaming file', i 
-    os.renames(i,"WJetsToLNu.txt")
+    firstpart=i.split("_")[0]+i.split("_")[1]
+    os.renames(i, firstpart.replace("list","")+".txt")
+
+#  if 'listWJetsTo' in i:
+#    print '*** Renaming file', i 
+#    os.renames(i,"WJetsToL.txt")
   
-  if 'listDYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8.txt' in i:
+  if 'listDYJetsToLL' in i:
     print '*** Renaming file', i 
     os.renames(i,"DYJetsToLL.txt")
 
-  if 'listWWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8.txt' in i:
+  if 'listWWTo1L1Nu2Q' in i:
     print '*** Renaming file', i 
     os.renames(i,"WWTo1L1Nu2Q.txt")
   
-  if 'listWWTo2L2Nu_13TeV-powheg.txt' in i:
+  if 'listWWTo2L2Nu' in i:
     print '*** Renaming file', i 
     os.renames(i,"WWTo2L2Nu.txt")
 
-  if 'listWZTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8.txt' in i:
+  if 'listWZTo1L1Nu2Q' in i:
     print '*** Renaming file', i 
     os.renames(i,"WZTo1L1Nu2Q.txt")
    
-  if 'listWZTo2L2Q_13TeV_amcatnloFXFX_madspin_pythia8.txt' in i:
+  if 'listWZTo2L2Q' in i:
     print '*** Renaming file', i 
     os.renames(i,"WZTo2L2Q.txt")
     
-  if 'listZZTo2L2Q_13TeV_amcatnloFXFX_madspin_pythia8.txt' in i:
+  if 'listZZTo2L2Q' in i:
     print '*** Renaming file', i 
     os.renames(i,"ZZTo2L2Q.txt")
 
-  if 'listQCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8.txt' in i:
+  if 'listQCD_Pt-20toInf_MuEnrichedPt15' in i:
     print '*** Renaming file', i 
     os.renames(i,"QCDMuEPt20toInf.txt")
 
