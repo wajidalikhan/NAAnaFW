@@ -292,7 +292,11 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
                     if not opt.getSF =="" and not s.label.startswith("Data"):
                         print "sf is ", importedSFs[s.label][var]
                         htmp.Scale(importedSFs[s.label][var])
-                    #print "integral ", htmp.Integral()
+                if c.sigma<0 and not s.label.startswith("Data") and not opt.getSF =="":
+                    if s.label.startswith("DD"):
+                        print "dd sf is ", importedSFs[s.label][var]
+                        htmp.Scale(importedSFs[s.label][var])
+    #print "integral ", htmp.Integral()
                 # If a cutflow print a nice summary!
                 if(var == "h_cutFlow"): writeSummary(c.label, opt.channel, opt.sys, htmp, opt.lumi)
 
@@ -381,6 +385,11 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
                     print "sf is ", importedSFs[s.label][var]
                     scaleFactor*= (importedSFs[s.label][var])
                 htmp.Scale(scaleFactor)
+            if s.sigma<0 and not s.label.startswith("Data") and not opt.getSF =="":
+                if s.label.startswith("DD"):
+                    print "dd sf is ", importedSFs[s.label][var]
+                    htmp.Scale(importedSFs[s.label][var])
+
                 #if(s.label.startswith("TT")):print "====>SF: ", scaleFactor
 
             h.Scale(scaleFactor)
@@ -427,7 +436,7 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
             h.GetHisto().Write()
         outfile.Close()
         
-        print 'Trying to Open file: ',s.label
+        #print 'Trying to Open file: ',s.label
         file=ROOT.TFile.Open(outhistos+"/"+s.label+"_"+opt.channel+".root");
         #file.ls() 
         

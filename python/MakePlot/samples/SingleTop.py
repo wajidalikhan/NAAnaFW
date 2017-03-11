@@ -103,7 +103,7 @@ ST_tW = sample()
 ST_tW.color = ROOT.kOrange+2
 ST_tW.style = 1
 ST_tW.fill = 1001
-ST_tW.leglabel = "Single-top, tW"
+ST_tW.leglabel = "tW"
 ST_tW.label = "ST_tW"
 ST_tW.components = [ST_T_tW,ST_Tbar_tW]
 

@@ -1,0 +1,6 @@
+root://xrootd.ba.infn.it//store/user/oiorio/ttDM/trees/2017/Feb/25Feb//SingleMuon/80xV2_SingleMuonRun2016H-PromptReco-v3_B2GAnaFW_80X_V2p5_new/170227_093912/0000/treesTTJets_3.root
+root://xrootd.ba.infn.it//store/user/oiorio/ttDM/trees/2017/Feb/25Feb//SingleMuon/80xV2_SingleMuonRun2016H-PromptReco-v3_B2GAnaFW_80X_V2p5_new/170227_093912/0000/treesTTJets_4.root
+root://xrootd.ba.infn.it//store/user/oiorio/ttDM/trees/2017/Feb/25Feb//SingleMuon/80xV2_SingleMuonRun2016H-PromptReco-v3_B2GAnaFW_80X_V2p5_new/170227_093912/0000/treesTTJets_5.root
+root://xrootd.ba.infn.it//store/user/oiorio/ttDM/trees/2017/Feb/25Feb//SingleMuon/80xV2_SingleMuonRun2016H-PromptReco-v3_B2GAnaFW_80X_V2p5_new/170227_093912/0000/treesTTJets_2.root
+root://xrootd.ba.infn.it//store/user/oiorio/ttDM/trees/2017/Feb/25Feb//SingleMuon/80xV2_SingleMuonRun2016H-PromptReco-v3_B2GAnaFW_80X_V2p5_new/170227_093912/0000/treesTTJets_1.root
+
