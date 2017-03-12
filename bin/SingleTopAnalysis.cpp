@@ -919,11 +919,10 @@ int main(int argc, char **argv) {
 
     if(isData=="MC"){
         TrigIsoMu20=false;
-        TrigIsoMu24=false;
+        TrigIsoMu24=true;
         TrigIsoMu22=false;//Trigger efficiency:use the measured one atm --> always pass the trigger in MC// (slTrigIsoMu22_v1 || slTrigIsoMu22_v2 || slTrigIsoMu22_v3);  
         if (doSynch ){TrigIsoMu24 = slTrigIsoMu24_v1 || slTrigIsoMu24_v2|| slTrigIsoMu24_v3 || slTrigIsoMu24_v4 || slTrigIsoTkMu24_v1 || slTrigIsoTkMu24_v2|| slTrigIsoTkMu24_v3|| slTrigIsoTkMu24_v4; TrigIsoMu22=false;}
 	//TrigIsoMu22= slTrigIsoMu22_v2 || slTrigIsoMu22_v3; //ckecking only for QCD if it works 
-        
         }
 
     //if (TrigIsoMu20) cout << "TrigIsoMu20 fired in Event = "<<evt<<" Run Number = "<<runNumber<<endl;
@@ -1291,7 +1290,7 @@ int main(int argc, char **argv) {
       //<<"   "<<jetSize<<"   "<<bjets.size()<<"   "<<muPt[0]<<"   "<<selectedIso[0]
       //<<std::endl;
       fileout_step1<<std::fixed<<std::setprecision(0)<<evtNumber<<endl;
-    
+    } 
     
     passmuon = passmuon && muLooseSize==1;
     if(passmuon){ n_loose_veto+=w; nev_loose_veto+=1;}
@@ -1312,9 +1311,6 @@ int main(int argc, char **argv) {
     //bool passantiisomuon = muonTrigger && muAntiIsoSize==1 && nMu==1 && nEl==0 && elLooseSize == 0;
 
     bool passantiisomuon = muonTrigger && nMu==1 && nEl==0 && elLooseSize == 0;
-    if(muonTrigger && nMu==1 && nEl==0 && elLooseSize == 0){
-      cout << " tight mu size is "<< muSize<< " loose mu size is "<< muLooseSize <<endl; 
-    }
 
     bool passelectron = false;
     bool passsinglelepton = passmuon || passelectron;
