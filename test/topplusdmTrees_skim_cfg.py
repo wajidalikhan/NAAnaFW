@@ -123,6 +123,12 @@ options.register('doPreselection',
                  opts.VarParsing.varType.bool,
                  'doPreselection?')
 
+options.register('doSynch',
+                 False,
+                 opts.VarParsing.multiplicity.singleton,
+                 opts.VarParsing.varType.bool,
+                 'doSynch?')
+
 
 
 options.parseArguments()
@@ -136,8 +142,8 @@ l = l + ["trigger2"+str(s) for s in xrange(15)]
 
 #SingleElTriggers = ["HLT_Ele27_WPTight_Gsf_v2"]
 #SingleElTriggers = SingleElTriggers + ["HLT_Ele32_eta2p1_WPTight_Gsf_v3"]
-SingleElTriggers = ["HLT_Ele32_eta2p1_WPTight_Gsf_v"+str(s) for s in range(1,5)]
-SingleElTriggers = SingleElTriggers + ["HLT_Ele27_eta2p1_WPTight_Gsf_v"+str(s) for s in xrange(1,5)]
+SingleElTriggers = ["HLT_Ele32_eta2p1_WPTight_Gsf_v"+str(s) for s in range(1,10)]
+SingleElTriggers = SingleElTriggers + ["HLT_Ele27_eta2p1_WPTight_Gsf_v"+str(s) for s in xrange(1,10)]
 #SingleElTriggers = SingleElTriggers + ["HLT_Ele27_eta2p1_WPLoose_Gsf_v"+str(s) for s in xrange(2,4)]
 
 PhotonTriggers = [""]
@@ -162,7 +168,7 @@ if(options.isData):
     SingleMuTriggers = ["HLT_IsoMu22","HLT_IsoTkMu22"]
     SingleMuTriggers = SingleMuTriggers + ["HLT_IsoMu22_v"+str(s) for s in xrange(10)]
     SingleMuTriggers = SingleMuTriggers + ["HLT_IsoTkMu22_v"+str(s) for s in xrange(10)]
-
+    
     SingleMuTriggers = SingleMuTriggers + ["HLT_IsoMu24","HLT_IsoTkMu24"]
     SingleMuTriggers = SingleMuTriggers + ["HLT_IsoMu24_v"+str(s) for s in xrange(10)]
     SingleMuTriggers = SingleMuTriggers + ["HLT_IsoTkMu24_v"+str(s) for s in xrange(10)]
@@ -186,7 +192,8 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(options.maxE
 process.source = cms.Source("PoolSource",
         fileNames = cms.untracked.vstring(
         options.sample
-        )
+        ),
+#        eventsToProcess=cms.untracked.VEventRange('1:17961939-1:17961939')
 )
 
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff')
@@ -228,6 +235,11 @@ process.DMTreesDumper.changeJECs = cms.untracked.bool(options.changeJECs)
 process.DMTreesDumper.isData = cms.untracked.bool(options.isData)#This adds the L2L3Residuals
 process.DMTreesDumper.applyRes = cms.untracked.bool(options.applyRes)#This adds the L2L3Residuals
 process.DMTreesDumper.JECVersion=cms.string("")
+
+if(options.doSynch):
+    process.DMTreesDumper.doResol = cms.untracked.bool(False)#This adds the L2L3Residuals
+    process.DMTreesDumper.doPreselection = cms.untracked.bool(False)#This adds the L2L3Residuals
+
 #G
 process.DMTreesDumper.channelInfo.useLHE = cms.untracked.bool(True)
 #G

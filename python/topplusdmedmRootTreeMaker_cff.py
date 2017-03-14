@@ -453,6 +453,7 @@ DMTreesDumper.physicsObjects.append(
         maxInstances = jetssize,
         saveBaseVariables = saveBase,
         saveNoCat = cms.untracked.bool(saveNoCategory),
+#        saveNoCat = cms.untracked.bool(True),
         variablesD = cms.VInputTag(),
         variablesF = cms.VInputTag(
             cms.InputTag(j,jpref+"E"),

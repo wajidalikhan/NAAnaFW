@@ -1811,11 +1811,11 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       bool passesTightAntiIsoCuts = false;
 
       if(fabs(scEta)<=1.479){
-	passesTightCuts = isTight >0.0 && iso < 0.0588 ;
-      	passesTightAntiIsoCuts = isTight >0.0 && iso > 0.0588 ;
+	passesTightCuts = ( isTight >0.0 && iso < 0.0588 ) && (fabs(eldz) < 0.10) && (fabs(eldxy) <0.05 ) ;
+	passesTightAntiIsoCuts = isTight >0.0 && iso > 0.0588 ;
 
       } //is barrel electron
-      if (fabs(scEta)>1.479 && fabs(scEta)<2.5){
+      if( ( fabs(scEta)>1.479 && fabs(scEta)<2.5 ) && ( (fabs(eldz) < 0.20) && (fabs(eldxy) < 0.10) ) ){
 	passesTightCuts = isTight >0.0 && iso < 0.0571 ;
 	passesTightAntiIsoCuts = isTight >0.0 && iso > 0.0571 ;
       }
