@@ -10,7 +10,7 @@ echo "Submitting jobs to cluster ... Remember to merge the output with the scrip
 python merge_res.py -l ./res/ -P ST,TT,VJ,VV,QCDMuEPt20toInf --rm True
 
 python merge_res.py -l ./res -P SingleMuon -c "muon,muonantiiso"
-python merge_res.py -l ./res/ -P ST,TT,VJ,VV,QCDMuEPt20toInf -c "muon,muonantiiso"
+python merge_res.py -l ./res/ -P ST,TT,VJ,VV,QCDMu -c "muon,muonantiiso"
 
 python merge_res.py -l ./res/ -P _QCDMuEPt20toInf -c "muon,muonantiiso"
 

@@ -19,7 +19,9 @@ parser.add_option('-S', "--signal",   dest='signal',  action='store_true',  defa
 
 parser.add_option('-p', '--prefix',   dest='prefix',  type='string',  default = '', help='prefix for img files')
 parser.add_option('', '--store',      dest='store',   action='store_true', default = False, help='Store')
-parser.add_option('--focusOn',        dest='focus',   default = None, help='Focus on a single plot')
+#parser.add_option('--focusOn',        dest='focus',   default = None, help='Focus on a single plot')
+parser.add_option('--focusOn',        dest='focus',   default = [], help='h_2j0t_mtw,h_2j1t_mtw,h_3j2t_mtw : N.B. No spaces btw names', type='string')
+
 parser.add_option('', '--getSF',      dest='getSF',   type='string',  default = '', help='type of scale factors from the fit')
 parser.add_option('', '--fileSF',     dest='fileSF',  type='string',  default = './mlfit.root', help='file for the scale factors')
 
@@ -39,9 +41,7 @@ from samples.toPlot import samples
 import plots.common, plots.electron, plots.muon
 
 
-
 import tdrstyle, CMS_lumi
-
 
 def sumerrors(h):
     return sum([h.GetBinError(ib) for ib in xrange(0,h.GetNbinsX()+2)])
@@ -128,13 +128,26 @@ if opt.normData > 0:
 # subset = ['metFinal']
 # settings = { k:settings[k] for k in subset }
 # settings = { k:settings[k] for k in settings if k.startswith('met') }
+listofhistos = []
+for h in opt.focus.split(','):
+  listofhistos.append(h)
+print '\033[1;33mList Of Input Histograms : \033[1;m', listofhistos
+
+for h in opt.focus.split(','):
+  if h in settings.keys():
+    print '\033[1;32mKey Found : \033[1;m',h 
+  else:
+    print '\033[1;31mWarning : \033[1;m', h, '\033[1;31mKey Not Found \033[1;m'
 
 if opt.focus:
-    settings = { k:settings[k] for k in settings if k == opt.focus}
+    #settings = { k:settings[k] for k in settings if k == opt.focus}
+    #settings = { k:settings[k] for k in settings if k in opt.focus}#changed to take in the comma seperated names of histos
+    settings = { k:settings[k] for k in settings if k in opt.focus.split(',')}#changed to take in the comma seperated names of histos
     if not settings:
-        print 'Requested plot \''+opt.focus+'\'not found. Exiting'
-        sys.exit(0)
-
+      #print 'Requested plot \''+opt.focus+'\'not found. Exiting'
+      #print 'Requested plot \''+opt.focus.split(',')+'\'not found. Exiting'
+      print '\033[1;31mExiting ...\033[1;m'
+      sys.exit(0)
 
 # Create output direcotries
 for d in [outhistos, outpdfs, outtxt]:
@@ -763,7 +776,8 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
     else: unit = " fb^{-1}"
     CMS_lumi.lumi_sqrtS = str(lumi)+ unit +" (13 TeV)" # used with iPeriod = 0, e.g. for simulation-only plots (default is an empty string)
     if opt.normData==1:
-        CMS_lumi.lumi_sqrtS = str(lumi)+ unit +" (13 TeV), norm. to data" # used with iPeriod = 0, e.g. for simulation-only plots (default is an empty string)
+        #CMS_lumi.lumi_sqrtS = str(lumi)+ unit +" (13 TeV), norm. to data" # used with iPeriod = 0, e.g. for simulation-only plots (default is an empty string)
+        CMS_lumi.lumi_sqrtS = "Norm. to data" # used with iPeriod = 0, e.g. for simulation-only plots (default is an empty string)
     iPeriod = 0
     iPos = 11
 
