@@ -38,7 +38,8 @@ parser.add_option('-o', '--outpath',        dest='outpath',  type='string',     
 parser.add_option('--merge',   dest='domerge',  action='store_true', default=True)
 parser.add_option('--retryFailed',   dest='doretry',  action='store_true', default=True)
 parser.add_option('--rm',   dest='doremove',  action='store_true', default=False)
-parser.add_option('--rmf',   dest='doforceremove',  action='store_true', default=False)
+parser.add_option('--rmf',   dest='doforceremove', action='store_true', default=False)
+parser.add_option('-t','--doTrees', dest='doTrees', action= 'store_true', default=False)
 
 (opt, args) = parser.parse_args()
 
@@ -47,10 +48,8 @@ parser.add_option('--rmf',   dest='doforceremove',  action='store_true', default
 #define samples, one folder for each mass value
 samples = []
 
+
 samplesfound = formSamples(opt.process)
-
-print "samples are:",samples
-
 
 path = opt.localpath
 if not path.endswith("/"): path = path+"/"
@@ -63,6 +62,12 @@ if not pathout.endswith("/"): pathout = pathout+"/"
 channelstorun=[]
 #pogchamp = []
 for f in (opt.channel).split(","): channelstorun.append(f) 
+if opt.doTrees: 
+    for index, item in enumerate(samplesfound): 
+        s = samplesfound[index]
+        samplesfound[index]  = 'trees_'+s
+        
+print samplesfound
 #print " pogchamp ", pogchamp
 #channelstorun.append(opt.channel)
 #channelstorun=["muonantiiso"]
@@ -70,7 +75,7 @@ syststorun = ["noSyst"]
 
 toretry = opt.doretry
 
-def domerge(samples, channels, toRetry={}):
+def domerge(samples, channels, toRetry={} ):
     samplesToRetry = {}
     systs=[]
     if(len(toRetry)>0): print "retrying ", toRetry

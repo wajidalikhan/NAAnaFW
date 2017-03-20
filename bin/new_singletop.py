@@ -54,6 +54,7 @@ parser.add_option('-s', '--sys',      dest='sys',     type='string',     default
 parser.add_option('',   '--sync',     dest='sync',    type='string',     default = 'noSync',  help='Synchro exercise')
 parser.add_option('-d', '--isData',   dest='isData',  type='string',     default = 'MC',      help='is Data or MC?')
 parser.add_option('-t', '--treesDir',        dest='treesDir',  type='string',  default = "noTrees",        help='trees directory, if blank no tree is generated')
+parser.add_option('--mva',        dest='mva',  type='string',  default = "noMVA",        help='which mva to train')
 
 #Running mode details:
 parser.add_option('-g', '--gdb',      dest='gdb',     action='store_true', default=False)
@@ -164,10 +165,10 @@ for s in samples:
     for d in outDirs:
         if exists(d): continue
         os.makedirs(d)
-        
+      
 #    treescheck = (not (commands.getstatusoutput('ls '+ opt.treesDir)[0]==0))
 #    print "treescheck, command is ",("ls "+opt.treesDir)," result ",treescheck
-    cmd = 'SingleTopAnalysis '+ s + ' ' + sampleFileList  + ' ' + opt.channel + ' ' + opt.cat + ' ' + opt.sys + ' ' + opt.sync + ' ' + isData + ' ' + opt.treesDir
+    cmd = 'SingleTopAnalysis '+ s + ' ' + sampleFileList  + ' ' + opt.channel + ' ' + opt.cat + ' ' + opt.sys + ' ' + opt.sync + ' ' + isData + ' ' + opt.treesDir + ' ' + opt.mva
     print cmd
 
     if opt.gdb:

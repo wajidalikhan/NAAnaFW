@@ -1,0 +1,30 @@
+[variables]
+etajprime
+mlb
+nextrajets
+topMass
+topMassExtra
+topPt
+topY
+leadingextrajetcsv
+leadingextrajetpt
+[signalFiles]
+#
+# Syntax:
+# FileName TreeName [Training/Test] [weight]
+#
+# train
+../treesmerge/trees_ST_T_tch_muon.root events_2j1t_mtwcut Training 1.
+# test
+../treesmerge/trees_ST_T_tch_muon.root events_2j1t_mtwcut Test 1.
+[bgFiles]
+#
+# Syntax:
+# FileName TreeName [Training/Test] [weight]
+#
+# train 
+../treesmerge/trees_TT_muon.root events_2j1t_mtwcut Training 1
+# test
+../treesmerge/trees_TT_muon.root events_2j1t_mtwcut Test 1
+
+
