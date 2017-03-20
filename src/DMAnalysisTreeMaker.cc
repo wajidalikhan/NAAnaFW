@@ -1811,16 +1811,16 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       bool passesTightAntiIsoCuts = false;
 
       if(fabs(scEta)<=1.479){
-	passesTightCuts = ( isTight >0.0 && iso < 0.0588 ) && (fabs(eldz) < 0.10) && (fabs(eldxy) <0.05 ) ;
+	passesTightCuts = ( isTight >0.0 /*&& iso < 0.0588 */) && (fabs(eldz) < 0.10) && (fabs(eldxy) <0.05 ) ;
 	passesTightAntiIsoCuts = isTight >0.0 && iso > 0.0588 ;
 
       } //is barrel electron
       if( ( fabs(scEta)>1.479 && fabs(scEta)<2.5 ) && ( (fabs(eldz) < 0.20) && (fabs(eldxy) < 0.10) ) ){
-	passesTightCuts = isTight >0.0 && iso < 0.0571 ;
+	passesTightCuts = isTight >0.0 /*&& iso < 0.0571*/ ;
 	passesTightAntiIsoCuts = isTight >0.0 && iso > 0.0571 ;
       }
 
-      if(pt> 30 && fabs(eta) < 2.5 ){
+      if(pt> 30 && fabs(eta) < 2.1 ){
 	TLorentzVector ele;
 	ele.SetPtEtaPhiE(pt, eta, phi, energy);	
 	double minDR=999;
@@ -1828,6 +1828,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	for (size_t m = 0; m < (size_t)loosemuons.size(); ++m){
 	  deltaR = ele.DeltaR(loosemuons[m]);
 	  minDR = min(minDR, deltaR);
+	  minDR=999;
 	}
 	if(!loosemuons.size()) minDR=999;
 	if(minDR>0.1){ 
