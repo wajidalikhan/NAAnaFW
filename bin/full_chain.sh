@@ -9,7 +9,7 @@ python script_replacexrd.py -f ./files/renamed/ -o files/final -x xrootd.ba.infn
 echo "Submitting jobs to cluster ... Remember to merge the output with the script:" 
 python merge_res.py -l ./res/ -P ST,TT,VJ,VV,QCDMuEPt20toInf --rm True
 
-python merge_res.py -l ./res -P SingleMuon -c "muon,muonantiiso"
+python merge_res.py -l ./res -P SingleMuon -c "muon,muonantiiso";
 python merge_res.py -l ./res/ -P ST,TT,VJ,VV,QCDMu -c "muon,muonantiiso"
 
 python merge_res.py -l ./res/ -P _QCDMuEPt20toInf -c "muon,muonantiiso"

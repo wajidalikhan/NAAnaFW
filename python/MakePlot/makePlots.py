@@ -16,12 +16,10 @@ parser.add_option('-n', '--normData', dest='normData',type='int',     default = 
 parser.add_option('-r', '--resdir',   dest='resdir',  type='string',  default = './../newTTDManalysis/', help='res directory')
 parser.add_option('-d', '--add-data', dest='data',    action='store_false', default = True,   help='Hide data')
 parser.add_option('-S', "--signal",   dest='signal',  action='store_true',  default = False,  help='Add a signal plot')
-
 parser.add_option('-p', '--prefix',   dest='prefix',  type='string',  default = '', help='prefix for img files')
 parser.add_option('', '--store',      dest='store',   action='store_true', default = False, help='Store')
-#parser.add_option('--focusOn',        dest='focus',   default = None, help='Focus on a single plot')
+#parser.add_option('--focusOn',       dest='focus',   default = None, help='Focus on a single plot')
 parser.add_option('--focusOn',        dest='focus',   default = [], help='h_2j0t_mtw,h_2j1t_mtw,h_3j2t_mtw : N.B. No spaces btw names', type='string')
-
 parser.add_option('', '--getSF',      dest='getSF',   type='string',  default = '', help='type of scale factors from the fit')
 parser.add_option('', '--fileSF',     dest='fileSF',  type='string',  default = './mlfit.root', help='file for the scale factors')
 
@@ -580,7 +578,7 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
         h_bkg_ = stack_bkg._hs.GetStack().Last().Clone("h_bkg_")
         nBkg = h_bkg_.Integral()
         sf_norm = nData/nBkg
-
+        
 #        stack_bkg_=Stack(var,title)
 #        h_bkg = stack_bkg_.GetLast()
         for i in xrange(stack_bkg._hs.GetNhists()):
@@ -688,7 +686,7 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
         ratio.SetStats(0)
         if usrrng is not None:
             ratio.GetXaxis().SetRangeUser( usrrng[0], usrrng[1] )
-
+        
         denom = h_bkg.Clone("denom")
         denom.Sumw2()
 
@@ -697,6 +695,7 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
             ratio.SetMarkerStyle(20)
             #ratio.SetMarkerSize(1.2)
             ratio.SetMarkerSize(0.9)
+            ratio.GetXaxis().SetRangeUser( usrrng[0], usrrng[1] )
             ratio.Draw("epx0e0") #epx0
             ratio.SetTitle("")
 
@@ -710,12 +709,14 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
                 h_bkg_err.SetBinError(i, (h_bkg.GetBinError(i)/h_bkg.GetBinContent(i)))
             else:
                 h_bkg_err.SetBinError(i, 0)
+        #for error on the ratio 
         #h_bkg_err = h_bkg.Clone("h_bkg_err")
         #h_bkg_err.Sumw2()
         #h_bkg_err.Divide(h_bkg);
         #h_bkg_err.Draw("E2same");
         #h_bkg_err.SetMaximum(2.);
         #h_bkg_err.SetMinimum(0);
+        
         h_bkg_err.SetLineWidth(100)
         h_bkg_err.SetFillStyle(3154)
         h_bkg_err.SetMarkerSize(0)

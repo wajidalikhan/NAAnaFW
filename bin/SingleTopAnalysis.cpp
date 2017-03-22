@@ -188,7 +188,7 @@ int main(int argc, char **argv) {
     systWeights systZero,syst0BM,syst1BM,syst2BM; 
     int maxSysts=0; 
     int sizeMax=50;
-    int muSize, elSize, jetSize,jet20Size, muLooseSize,elLooseSize,muLooseIsoGE0p15Size;
+    int muSize, elSize, jetSize,jet20Size, muLooseSize,elLooseSize,muLooseIsoGE0p15Size, muTightIsoGE0p15Size;
     //float passTrigHT(0.), Ht(0.);
     float Ht(0.), mt(0.);
     float runNumber(0.), lumiSec(0.);
@@ -217,6 +217,7 @@ int main(int argc, char **argv) {
     float met,metpx,metpy;
     float muE[sizeMax], muPt[sizeMax], muEta[sizeMax], muIso[sizeMax], muIsTight[sizeMax],muIsLoose[sizeMax], muPhi[sizeMax],elPt[sizeMax],muLoosePhi[sizeMax],muLooseEta[sizeMax], muLoosePt[sizeMax],muLooseE[sizeMax], muLooseIso[sizeMax];
     float muLooseIsoGE0p15Iso[sizeMax],muLooseIsoGE0p15Pt[sizeMax],muLooseIsoGE0p15Eta[sizeMax],muLooseIsoGE0p15Phi[sizeMax],muLooseIsoGE0p15E[sizeMax];
+    float muTightIsoGE0p15Iso[sizeMax],muTightIsoGE0p15Pt[sizeMax],muTightIsoGE0p15Eta[sizeMax],muTightIsoGE0p15Phi[sizeMax],muTightIsoGE0p15E[sizeMax];
 
     float muAntiIsoE[sizeMax], muAntiIsoPt[sizeMax], muAntiIsoEta[sizeMax], muAntiIsoIso[sizeMax], muAntiIsoIsTight[sizeMax],muAntiIsoIsLoose[sizeMax], muAntiIsoPhi[sizeMax];
     int   muAntiIsoSize;
@@ -342,6 +343,14 @@ int main(int argc, char **argv) {
     chain.SetBranchAddress("muonsTight_IsTightMuon", muIsTight);
     chain.SetBranchAddress("muonsTight_IsLooseMuon", muIsLoose);
     chain.SetBranchAddress("muonsTight_size", &muSize);
+    
+    chain.SetBranchAddress("muonsTight_Iso04_0p15_GE_Iso04", muTightIsoGE0p15Iso);
+    chain.SetBranchAddress("muonsTight_Iso04_0p15_GE_size", &muTightIsoGE0p15Size);
+    chain.SetBranchAddress("muonsTight_Iso04_0p15_GE_Pt",    muTightIsoGE0p15Pt);
+    chain.SetBranchAddress("muonsTight_Iso04_0p15_GE_Eta",   muTightIsoGE0p15Eta);
+    chain.SetBranchAddress("muonsTight_Iso04_0p15_GE_Phi",   muTightIsoGE0p15Phi);
+    chain.SetBranchAddress("muonsTight_Iso04_0p15_GE_E",     muTightIsoGE0p15E);
+    
     chain.SetBranchAddress("muonsLoose_size", &muLooseSize);
     chain.SetBranchAddress("muonsLoose_Phi", muLoosePhi);
     chain.SetBranchAddress("muonsLoose_Eta", muLooseEta);
@@ -1007,30 +1016,36 @@ int main(int argc, char **argv) {
 	}
       }
     }
-    else{
-      for(int m= 0; m<maxMuLoop;++m ){
-	bool passesDR=true;
-	double dR=1111111;
-	if(muLooseIsoGE0p15Pt[m]>26 && abs(muLooseIsoGE0p15Eta[m])<2.4 && muLooseIsoGE0p15Iso[m]>0.2){
-	  muloose.SetPtEtaPhiE(muLooseIsoGE0p15Pt[m], muLooseIsoGE0p15Eta[m], muLooseIsoGE0p15Phi[m],muLooseIsoGE0p15E[m]);           
-	  selectedIso.push_back(muLooseIsoGE0p15Iso[m]);
-	  for (int j = 0; j <maxJetLoop;++j){
-	    TLorentzVector all_jets;
-              all_jets.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
-              float dRtemp = deltaR(all_jets.Eta(),all_jets.Phi(),mu.Eta(),mu.Phi());
-              mindeltaRmuonloop.push_back(dRtemp);
-              if(dRtemp<dR){dR=dRtemp;}
-              if(dR<0.4){
-                passesDR=false;
-                continue;
-	      }
-	  }
-	  if(!passesDR)continue;
-	  looseMu.push_back(muloose);
-	  tightMu.push_back(muloose);
-	}          
+  else{
+    for(int m= 0; m<maxMuLoop;++m ){
+      if(muTightIsoGE0p15Pt[m]>26 && abs(muTightIsoGE0p15Eta[m])<2.4 && muTightIsoGE0p15Iso[m]>0.30){
+        selectedIso.push_back(muTightIsoGE0p15Iso[m]);
+        mu.SetPtEtaPhiE(muTightIsoGE0p15Pt[m], muTightIsoGE0p15Eta[m], muTightIsoGE0p15Phi[m],muTightIsoGE0p15E[m]);   
+        tightMu.push_back(mu);
       }
     }
+  //  bool passesDR=true;
+  //  double dR=1111111;
+  //  if(muLooseIsoGE0p15Pt[m]>26 && abs(muLooseIsoGE0p15Eta[m])<2.4 && muLooseIsoGE0p15Iso[m]>0.2){
+  //    muloose.SetPtEtaPhiE(muLooseIsoGE0p15Pt[m], muLooseIsoGE0p15Eta[m], muLooseIsoGE0p15Phi[m],muLooseIsoGE0p15E[m]);           
+  //    selectedIso.push_back(muLooseIsoGE0p15Iso[m]);
+  //    for (int j = 0; j <maxJetLoop;++j){
+  //      TLorentzVector all_jets;
+  //      all_jets.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
+  //      float dRtemp = deltaR(all_jets.Eta(),all_jets.Phi(),mu.Eta(),mu.Phi());
+  //      mindeltaRmuonloop.push_back(dRtemp);
+  //        if(dRtemp<dR){dR=dRtemp;}
+  //          if(dR<0.4){
+  //          passesDR=false;
+  //          continue;
+  //          }
+  //        }
+  //  if(!passesDR)continue;
+  //  looseMu.push_back(muloose);
+  //  tightMu.push_back(muloose);
+  //  }          
+  //}
+  }
     
     nMu = tightMu.size();
     nEl = tightEl.size();
