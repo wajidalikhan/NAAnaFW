@@ -7,7 +7,7 @@ topMassExtra
 topPt
 topY
 #leadingextrajetcsv
-leadingextrajetpt
+#leadingextrajetpt
 [signalFiles]
 #
 # Syntax:

@@ -1797,7 +1797,8 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       isMedium = vfloats_values[makeName(ele_label,pref,"vidMedium")][el];
       isVeto = vfloats_values[makeName(ele_label,pref,"vidVeto")][el];
       float eta = vfloats_values[makeName(ele_label,pref,"Eta")][el];
-      float scEta = vfloats_values[makeName(ele_label,pref,"scEta")][el];
+      //float scEta = vfloats_values[makeName(ele_label,pref,"scEta")][el];
+      float scEta = vfloats_values[makeName(ele_label,pref,"SCEta")][el];
       float phi = vfloats_values[makeName(ele_label,pref,"Phi")][el];
       float energy = vfloats_values[makeName(ele_label,pref,"E")][el];      
       float iso = vfloats_values[makeName(ele_label,pref,"Iso03")][el];
@@ -1811,16 +1812,18 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       bool passesTightAntiIsoCuts = false;
 
       if(fabs(scEta)<=1.479){
-	passesTightCuts = ( isTight >0.0 /*&& iso < 0.0588 */) && (fabs(eldz) < 0.10) && (fabs(eldxy) <0.05 ) ;
+	//passesTightCuts = ( isTight >0.0 /*&& iso < 0.0588 */) && (fabs(eldz) < 0.10) && (fabs(eldxy) <0.05 ) ;
+	passesTightCuts = (isTight >0.0) && (fabs(eldz) < 0.10) && (fabs(eldxy) <0.05 ) && (fabs(scEta)<1.4442 || fabs(scEta)>1.5660);
 	passesTightAntiIsoCuts = isTight >0.0 && iso > 0.0588 ;
 
       } //is barrel electron
-      if( ( fabs(scEta)>1.479 && fabs(scEta)<2.5 ) && ( (fabs(eldz) < 0.20) && (fabs(eldxy) < 0.10) ) ){
+      //if( ( fabs(scEta)>1.479 && fabs(scEta)<2.5 ) && ( (fabs(eldz) < 0.20) && (fabs(eldxy) < 0.10) ) ){
+      if( ( fabs(scEta)>1.479 && fabs(scEta)<2.5 ) && ( (fabs(eldz) < 0.20) && (fabs(eldxy) < 0.10) ) && (fabs(scEta)<1.4442 || fabs(scEta)>1.5660) ){
 	passesTightCuts = isTight >0.0 /*&& iso < 0.0571*/ ;
 	passesTightAntiIsoCuts = isTight >0.0 && iso > 0.0571 ;
       }
 
-      if(pt> 30 && fabs(eta) < 2.1 ){
+      if(pt> 30 && fabs(eta) < 2.1 && ((fabs(scEta)<1.4442 || fabs(scEta)>1.5660))){
 	TLorentzVector ele;
 	ele.SetPtEtaPhiE(pt, eta, phi, energy);	
 	double minDR=999;
@@ -1859,22 +1862,21 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	sizes[ele_label+"TightAntiIso"]=(int)float_values["Event_nTightAntiIsoElectrons"];
       }
 
-      if(isLoose>0 && pt> 30 && fabs(eta) < 2.5){
+      if(isLoose>0 && pt> 30 && fabs(eta) < 2.5 && ((fabs(scEta)<1.4442 || fabs(scEta)>1.5660))){
 	++float_values["Event_nLooseElectrons"];
 
       }
 
-      if(isMedium>0 && pt> 30 && fabs(eta) < 2.5){
+      if(isMedium>0 && pt> 30 && fabs(eta) < 2.5 && ((fabs(scEta)<1.4442 || fabs(scEta)>1.5660)) ){
 	++float_values["Event_nMediumElectrons"]; 
       }
 
 
-      if(isVeto>0 && pt> 15 && fabs(eta) < 2.5 ){
+      if(isVeto>0 && pt> 15 && fabs(eta) < 2.5 && ((fabs(scEta)<1.4442 || fabs(scEta)>1.5660))){
 	  
       //if((fabs(scEta)<=1.479 && (iso<0.175)) || ((fabs(scEta)>1.479 && fabs(scEta)<2.5) && (iso<0.159))){
 	
-	if((fabs(scEta)<=1.479 && (fabs(eldz) < 0.10) && (fabs(eldxy) <0.05 )) 
-	   || ((fabs(scEta)>1.479 && fabs(scEta)<2.5) && (fabs(eldz) < 0.20) && (fabs(eldxy) < 0.10) )){
+	if((fabs(scEta)<=1.479 && (fabs(eldz) < 0.10) && (fabs(eldxy) <0.05 )) || ((fabs(scEta)>1.479 && fabs(scEta)<2.5) && (fabs(eldz) < 0.20) && (fabs(eldxy) < 0.10) )){
 	  ++float_values["Event_nVetoElectrons"]; 
 	  if(isInVector(obj_cats[ele_label],"Veto")){
 	    fillCategory(ele_label,"Veto",el,float_values["Event_nVetoElectrons"]-1);

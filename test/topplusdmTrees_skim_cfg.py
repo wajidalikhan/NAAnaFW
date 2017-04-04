@@ -4,6 +4,7 @@ import commands, os
 ###
 ### cmsRun topplusdmanaEDMntuples_cfg.py maxEvts=N sample="mySample/sample.root" version="1"7 outputLabel="myoutput"
 ### cmsRun topplusdmTrees_cfg.py maxEvts=-1 sample="file:/afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_16/src/Analysis/B2GAnaFW/test/B2GEDMNtuple.root" outputLabel='ntuple.root'
+### nohup cmsRun topplusdmTrees_skim_cfg.py maxEvts=-1 sample="file:/afs/cern.ch/work/w/wajid/public/xWajid/synch/mc_tch_jecv4/B2GSynchMC.root" outputLabel='signal3/ntuple.root' doSynch=True >& log3.txt &
 ### Default values for the options are set:
 ### maxEvts     = -1
 ### sample      = 'file:/scratch/decosa/ttDM/testSample/tlbsm_53x_v3_mc_10_1_qPV.root'

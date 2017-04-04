@@ -364,7 +364,7 @@ DMTreesDumper.physicsObjects.append(
         categories = cms.vstring(catEl),
         systCats = cms.vstring(sysEl),
 #        categories = cms.vstring("Tight","Veto"),
-        toSave = cms.vstring("elE","elPt","elEta","elPhi","elIso03","elisTight","elCharge","elisMedium","elisLoose","elisVeto","elscEta","allExtra"),
+        toSave = cms.vstring("elE","elPt","elEta","elPhi","elIso03","elisTight","elCharge","elisMedium","elisLoose","elisVeto","elSCEta","allExtra","elDz","elDxy"),
         )
     ) 
 

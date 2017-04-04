@@ -194,7 +194,7 @@ int main(int argc, char **argv) {
     systWeights systZero,syst0BM,syst1BM,syst2BM; 
     int maxSysts=0; 
     int sizeMax=50;
-    int muSize, elSize, jetSize,jet20Size, muLooseSize,elLooseSize,muLooseIsoGE0p15Size;
+    int muSize, elSize, jetSize,jet20Size, muLooseSize,elLooseSize,muLooseIsoGE0p15Size,muTightIsoGE0p15Size;
     //float passTrigHT(0.), Ht(0.);
     float Ht(0.), mt(0.);
     float runNumber(0.), lumiSec(0.);
@@ -223,6 +223,7 @@ int main(int argc, char **argv) {
     float met,metpx,metpy;
     float muE[sizeMax], muPt[sizeMax], muEta[sizeMax], muIso[sizeMax], muIsTight[sizeMax],muIsLoose[sizeMax], muPhi[sizeMax],elPt[sizeMax],muLoosePhi[sizeMax],muLooseEta[sizeMax], muLoosePt[sizeMax],muLooseE[sizeMax], muLooseIso[sizeMax];
     float muLooseIsoGE0p15Iso[sizeMax],muLooseIsoGE0p15Pt[sizeMax],muLooseIsoGE0p15Eta[sizeMax],muLooseIsoGE0p15Phi[sizeMax],muLooseIsoGE0p15E[sizeMax];
+    float muTightIsoGE0p15Iso[sizeMax],muTightIsoGE0p15Pt[sizeMax],muTightIsoGE0p15Eta[sizeMax],muTightIsoGE0p15Phi[sizeMax],muTightIsoGE0p15E[sizeMax];
 
     float muAntiIsoE[sizeMax], muAntiIsoPt[sizeMax], muAntiIsoEta[sizeMax], muAntiIsoIso[sizeMax], muAntiIsoIsTight[sizeMax],muAntiIsoIsLoose[sizeMax], muAntiIsoPhi[sizeMax];
     int   muAntiIsoSize;
@@ -362,6 +363,13 @@ int main(int argc, char **argv) {
     chain.SetBranchAddress("muonsLoose_Iso04_0p15_GE_Phi", muLooseIsoGE0p15Phi);
     chain.SetBranchAddress("muonsLoose_Iso04_0p15_GE_E", muLooseIsoGE0p15E);
     
+    chain.SetBranchAddress("muonsTight_Iso04_0p15_GE_Iso04", muTightIsoGE0p15Iso);
+    chain.SetBranchAddress("muonsTight_Iso04_0p15_GE_size", &muTightIsoGE0p15Size);
+    chain.SetBranchAddress("muonsTight_Iso04_0p15_GE_Pt",    muTightIsoGE0p15Pt);
+    chain.SetBranchAddress("muonsTight_Iso04_0p15_GE_Eta",   muTightIsoGE0p15Eta);
+    chain.SetBranchAddress("muonsTight_Iso04_0p15_GE_Phi",   muTightIsoGE0p15Phi);
+    chain.SetBranchAddress("muonsTight_Iso04_0p15_GE_E",     muTightIsoGE0p15E);
+ 
     chain.SetBranchAddress("muonsTightAntiIso_E", muAntiIsoE);
     chain.SetBranchAddress("muonsTightAntiIso_Phi", muAntiIsoPhi);
     chain.SetBranchAddress("muonsTightAntiIso_Eta", muAntiIsoEta);
@@ -586,6 +594,9 @@ int main(int argc, char **argv) {
     float * topMass_2j1t_mtwcut = new float(-999.0); namesToVars["topMass"] = topMass_2j1t_mtwcut;
     float * nextrajets_2j1t_mtwcut = new float(-999.0); namesToVars["nextrajets"] = nextrajets_2j1t_mtwcut;
 
+    float * bdt_st_vs_vj_2j1t_mtwcut = new float(-999.0); 
+    float * bdt_st_vs_tt_2j1t_mtwcut = new float(-999.0); 
+
     //Hipster variables
     float * mindeltaphi_2j1t_mtwcut = new float(-999.0); namesToVars["mindeltaphi"] = mindeltaphi_2j1t_mtwcut;
     float * mindeltaphi20_2j1t_mtwcut = new float(-999.0); namesToVars["mindeltaphi20"] = mindeltaphi20_2j1t_mtwcut;
@@ -649,6 +660,9 @@ int main(int argc, char **argv) {
 
 
       syst1BM.branchTreesSysts(trees1T,"2j1t_mtwcut","w", outTreeFile, w_2j1t_mtwcut);
+      syst1BM.branchTreesSysts(trees1T,"2j1t_mtwcut","bdt_st_vs_vj", outTreeFile, bdt_st_vs_vj_2j1t_mtwcut);
+      syst1BM.branchTreesSysts(trees1T,"2j1t_mtwcut","bdt_st_vs_tt", outTreeFile, bdt_st_vs_tt_2j1t_mtwcut);
+
 
       syst1BM.branchTreesSysts(trees1T,"2j1t_mtwcut","etajprime", outTreeFile, etajprime_2j1t_mtwcut);
       syst1BM.branchTreesSysts(trees1T,"2j1t_mtwcut","topMass", outTreeFile, topMass_2j1t_mtwcut);
@@ -712,14 +726,15 @@ int main(int argc, char **argv) {
     vector<string> AllReaderNames;
     if(doMVA){
       //    AllReaders.push_back(STsd_ST); AllReaderNames.push_back(STsd_ST->GetName());
-    AllReaders.push_back(STsd_VJ); AllReaderNames.push_back(STsd_VJ_name);
+    AllReaders.push_back(ST_VJ); AllReaderNames.push_back(ST_VJ_name);
+    AllReaders.push_back(ST_TT); AllReaderNames.push_back(ST_TT_name);
     }
     if(doMVA){
       //      STsd_ST.AddSpectator("etajprime",&mvavars1);
       for(size_t rd = 0; rd<AllReaders.size();++rd){
 	
 	ifstream varCfgFile;
-	varCfgFile.open("MVA/cfg"+STsd_ST_name+".txt",ifstream::in);
+	varCfgFile.open("MVA/cfg"+AllReaderNames.at(rd)+".txt",ifstream::in);
 	string bas,option;
 	while(std::getline(varCfgFile, bas)) {
 	  if( bas.find("#") != std::string::npos) {
@@ -967,9 +982,12 @@ int main(int argc, char **argv) {
     int maxJet20Loop = min(15, jet20Size);
     
     //  cout << " jet 20 loop size"<< maxJet20Loop <<endl;
+    
     int maxMuLoop = min(6, muSize);
     //if(channel == "muonantiiso") maxMuLoop = min(6, muAntiIsoSize); 
-    if(channel == "muonantiiso") maxMuLoop = min(20, muLooseIsoGE0p15Size);
+    //if(channel == "muonantiiso") maxMuLoop = min(20, muLooseIsoGE0p15Size);
+    if(channel == "muonantiiso") maxMuLoop = min(20, muTightIsoGE0p15Size);
+    //if(muTightIsoGE0p15Size==1)cout << " muon size "<< muSize <<" muTightIsoGE0p15Size "<<muTightIsoGE0p15Size<<" maxMuLoop : "<<maxMuLoop<<endl;
     int maxElLoop = min(6, elSize);
   
     //step 1 Trigger
@@ -991,24 +1009,24 @@ int main(int argc, char **argv) {
         if (doSynch ){
 	  TrigIsoMu24=false;
 	  TrigGSFEl32=false;
+	  //TrigIsoMu24 = true; 
 	  TrigIsoMu24 = slTrigIsoMu24_v1 || slTrigIsoMu24_v2|| slTrigIsoMu24_v3 || slTrigIsoMu24_v4 || slTrigIsoTkMu24_v1 || slTrigIsoTkMu24_v2|| slTrigIsoTkMu24_v3|| slTrigIsoTkMu24_v4;
 	  TrigGSFEl32= slHLTEle32_eta2p1_WPTight_Gsf_v1||slHLTEle32_eta2p1_WPTight_Gsf_v2||slHLTEle32_eta2p1_WPTight_Gsf_v3||slHLTEle32_eta2p1_WPTight_Gsf_v4||slHLTEle32_eta2p1_WPTight_Gsf_v5;
 	}
 	//TrigIsoMu22= slTrigIsoMu22_v2 || slTrigIsoMu22_v3; //ckecking only for QCD if it works 
-
-
-        }
-
+    }
+    //if (TrigGSFEl32) cout << "TrigGSFEl32 fired in Event = "<<evtNumber<<" Run Number = "<<runNumber<<endl;
     //if (TrigIsoMu20) cout << "TrigIsoMu20 fired in Event = "<<evt<<" Run Number = "<<runNumber<<endl;
     //if (TrigIsoMu22) cout << "TrigIsoMu22 fired in Event = "<<evt<<" Run Number = "<<runNumber<<endl;
     //if (TrigIsoMu24) cout << "TrigIsoMu24 fired in Event = "<<evt<<" Run Number = "<<runNumber<<endl;
     //cout << "uffa "<<endl;
     bool muonTrigger = (TrigIsoMu20 || TrigIsoMu22 || TrigIsoMu24); 
     bool electronTrigger = (TrigGSFEl32); 
-    bool passesAnyTrigger = ( muonTrigger && channel== "muon") || (electronTrigger&& channel == "electron");//REMINDER: ADD ALL TRIGGERS HERE 
-    
-    //cout << "uffa "<<endl;
+    //bool passesAnyTrigger = ( muonTrigger && channel== "muon") || (electronTrigger&& channel == "electron");//REMINDER: ADD ALL TRIGGERS HERE 
+    bool passesAnyTrigger = ( muonTrigger && (channel== "muon" || channel== "muonantiiso")) || (electronTrigger&& channel == "electron");//REMINDER: ADD ALL TRIGGERS HERE 
+   
     if(!passesAnyTrigger)continue;
+
     if(doSynch && passesAnyTrigger){
       //      if(muonTrigger && channel=="muon" || electronTrigger && channel =="electron" ) 
 	fileout_step0<<std::fixed<<std::setprecision(0)<<evtNumber<<std::endl;
@@ -1092,27 +1110,38 @@ int main(int argc, char **argv) {
       }
     }
     else{
+      //------------ for qcd syn
       for(int m= 0; m<maxMuLoop;++m ){
-	bool passesDR=true;
-	double dR=1111111;
-	if(muLooseIsoGE0p15Pt[m]>26 && abs(muLooseIsoGE0p15Eta[m])<2.4 && muLooseIsoGE0p15Iso[m]>0.2){
-	  muloose.SetPtEtaPhiE(muLooseIsoGE0p15Pt[m], muLooseIsoGE0p15Eta[m], muLooseIsoGE0p15Phi[m],muLooseIsoGE0p15E[m]);           
-	  selectedIso.push_back(muLooseIsoGE0p15Iso[m]);
-	  for (int j = 0; j <maxJetLoop;++j){
-	    TLorentzVector all_jets;
-              all_jets.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
-              float dRtemp = deltaR(all_jets.Eta(),all_jets.Phi(),mu.Eta(),mu.Phi());
-              mindeltaRmuonloop.push_back(dRtemp);
-              if(dRtemp<dR){dR=dRtemp;}
-              if(dR<0.4){
-                passesDR=false;
-                continue;
-	      }
-	  }
-	  if(!passesDR)continue;
-	  looseMu.push_back(muloose);
-	  tightMu.push_back(muloose);
-	}          
+      if(muTightIsoGE0p15Pt[m]>26 && abs(muTightIsoGE0p15Eta[m])<2.4 && muTightIsoGE0p15Iso[m]>0.15){
+      selectedIso.push_back(muTightIsoGE0p15Iso[m]);
+      mu.SetPtEtaPhiE(muTightIsoGE0p15Pt[m], muTightIsoGE0p15Eta[m], muTightIsoGE0p15Phi[m],muTightIsoGE0p15E[m]);
+      tightMu.push_back(mu);
+      //cout <<" Pt : "<<muTightIsoGE0p15Pt[m]<<" Eta : "<<muTightIsoGE0p15Eta[m]<<" Phi : "<<muTightIsoGE0p15Phi[m]<< " E : "<<muTightIsoGE0p15E[m]<<endl;
+      }
+
+      //                                                            
+      //for(int m= 0; m<maxMuLoop;++m ){
+	  //bool passesDR=true;
+	  //double dR=1111111;
+	  //if(muLooseIsoGE0p15Pt[m]>26 && abs(muLooseIsoGE0p15Eta[m])<2.4 && muLooseIsoGE0p15Iso[m]>0.2){
+	  //muloose.SetPtEtaPhiE(muLooseIsoGE0p15Pt[m], muLooseIsoGE0p15Eta[m], muLooseIsoGE0p15Phi[m],muLooseIsoGE0p15E[m]);           
+	  //selectedIso.push_back(muLooseIsoGE0p15Iso[m]);
+	  //for (int j = 0; j <maxJetLoop;++j){
+	  //  TLorentzVector all_jets;
+      //        all_jets.SetPtEtaPhiE(jetPt[j], jetEta[j], jetPhi[j], jetE[j]);
+      //        float dRtemp = deltaR(all_jets.Eta(),all_jets.Phi(),mu.Eta(),mu.Phi());
+      //        mindeltaRmuonloop.push_back(dRtemp);
+      //        if(dRtemp<dR){dR=dRtemp;}
+      //        if(dR<0.4){
+      //          passesDR=false;
+      //          continue;
+	  //    }
+	  //}
+	  //if(!passesDR)continue;
+	  //looseMu.push_back(muloose);
+	  //tightMu.push_back(muloose);
+	  //  }          
+      //}
       }
     }
     
@@ -1321,17 +1350,17 @@ int main(int argc, char **argv) {
         double dR=0; 
         //--------------------------------------------------------------------------------
 	
-        if(channel=="muonantiiso"){
-	  for (size_t i = 0; i<(size_t)tightMu.size();++i){
+      if(channel=="muonantiiso"){
+	    for (size_t i = 0; i<(size_t)tightMu.size();++i){
 	    //dR = deltaR(jetEta[j],jetPhi[j],tightMu[i].Eta(),tightMu[i].Phi());   
 	    dR= deltaR(all_jets.Eta(),all_jets.Phi(),tightMu[i].Eta(),tightMu[i].Phi());
 	    if (dR<0.4) passesDR=false; //throw away the jet if deltaR btw jet and tightmu in less than 0.4
-	  }
-	  for (size_t i = 0; i<(size_t)muLooseIsoGE0p15Size;++i){ 
+	    }
+	    for (size_t i = 0; i<(size_t)muLooseIsoGE0p15Size;++i){ 
 	    dR= deltaR(all_jets.Eta(),all_jets.Phi(),muLooseIsoGE0p15Eta[i],muLooseIsoGE0p15Phi[i]);   
 	    if (dR<0.4) passesDR=false; //throw away the jet if deltaR btw jet and tightmu in less than 0.4
-	  }
-	} 
+	    }
+	  } 
 	//	passesDR=true;
 	if(!passesDR)continue;
 	//cout <<"Evt No. after "<<evt<<"   "<<"jet["<<j<< "] "<<jetPt[j]<< " dR(jet,mu) "<< dR <<endl;
@@ -1374,7 +1403,7 @@ int main(int argc, char **argv) {
     bool passmuon = muonTrigger && nMu == 1 ;
     bool passelectron = electronTrigger && nEl == 1 ;
 
-    bool passlepton = (passmuon && channel=="muon") || (passelectron && channel=="electron");
+    bool passlepton = (passmuon && ((channel=="muon" || channel=="muonantiiso"))) || ((passelectron && channel=="electron"));
     if(passlepton  ==  true){n_lepton+=w;nev_lepton+=1;}
     //    cout << "nmuons "<<nMu<< " nloosemu "<< muLooseSize << " nlooseEl "<< elLooseSize <<endl;
     //    cout << "passlepton" <<passlepton;
@@ -1387,14 +1416,16 @@ int main(int argc, char **argv) {
       fileout_step1<<std::fixed<<std::setprecision(0)<<evtNumber<<endl;
     }
     
-    passlepton = passlepton && ( (channel=="muon" && muLooseSize==1) || (channel =="electron" && muLooseSize==0) );
+    //passlepton = passlepton && ( ( (channel=="muon" || channel=="muonantiiso")  && muLooseSize==1) || (channel =="electron" && muLooseSize==0) );
+    passlepton = passlepton && ( ( (channel=="muon" || channel=="muonantiiso")  && muLooseSize==1) || (channel =="electron" && elLooseSize==1) );
     //    cout << "passlepton after lep step" <<passlepton;
     if(passlepton){ n_loose_veto+=w; nev_loose_veto+=1;}
     if(doSynch && passlepton){
       fileout_step2<<std::fixed<<std::setprecision(0)<<evtNumber<<std::endl;
     }
     
-    passlepton = passlepton && ( ( channel=="muon" && elLooseSize == 0 ) || (channel =="electron" && elLooseSize==1) );
+    //passlepton = passlepton && ( ( (channel=="muon" || channel=="muonantiiso") && elLooseSize == 0 ) || (channel =="electron" && elLooseSize==0) );
+    passlepton = passlepton && ( ( (channel=="muon" || channel=="muonantiiso") && elLooseSize == 0 ) || (channel =="electron" && muLooseSize==0) );
     //    cout << "passlepton after lep 2 step" <<passlepton;
     if(passlepton){n_lepton_cross_veto+=w;nev_lepton_cross_veto+=1;}
     if(doSynch && passlepton){
@@ -1443,7 +1474,6 @@ int main(int argc, char **argv) {
 	  if(doSynch){
 	    fileout_step6<<std::fixed<<std::setprecision(0)<<evtNumber<<std::endl;
 	  }
-	  cout <<std::fixed<<std::setprecision(0)<<"---Evt No: "<<evtNumber<<endl;
 	  //cout <<"Jet[0] (pt,eta,E) ("<<jets[0].Pt()<<","<<jets[0].Eta()<<","<<jets[0].E()<<")" 
 	  //<<" | Jet[1] (pt,eta,E) ("<<jets[1].Pt()<<","<<jets[1].Eta()<<","<<jets[1].E()<<")" 
 	  //<<" | Mu[0] (pt,eta,E) "<<tightLep[0].Pt()<<","<<tightLep[0].Eta()<<","<<tightLep[0].E() <<" | RelIso. "<<selectedIso[0]
@@ -1756,13 +1786,21 @@ int main(int argc, char **argv) {
     }
     if(qcddepleted){
       *w_2j1t_mtwcut=w;
-      if(addTrees)syst1BM.fillTreesSysts(trees1T,"2j1t_mtwcut");
       if(doMVA){
 	for(size_t rd =0; rd < AllReaders.size();++rd){
-	  cout<< " reader "<< AllReaderNames.at(rd)<< " value "<< endl;
-	  cout << AllReaders.at(rd)->EvaluateMVA("BDTG")<<endl;
+	  //cout<< " reader "<< AllReaderNames.at(rd)<< " value "<< endl;
+	  //cout << AllReaders.at(rd)->EvaluateMVA("BDTG")<<endl;
+	  if(AllReaderNames.at(rd)==("ST_vs_VJ")) {
+	    *bdt_st_vs_vj_2j1t_mtwcut = AllReaders.at(rd)->EvaluateMVA("BDTG");
+	    //	    syst1BM.fillHistogramsSysts(blabla);
+	  }
+	  if(AllReaderNames.at(rd)==("ST_vs_TT")) {
+	    *bdt_st_vs_tt_2j1t_mtwcut = AllReaders.at(rd)->EvaluateMVA("BDTG");
+	  }
 	}
       }
+      if(addTrees)syst1BM.fillTreesSysts(trees1T,"2j1t_mtwcut");
+
     }
     if(signalenriched && qcddepleted) {
       *w_2j1t_mtwcut_sr=w;
