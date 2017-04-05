@@ -38,10 +38,12 @@ parser.add_option('-n', '--dryrun',   dest='dryrun',  action='store_true', defau
 namesAndCfgs = {}  
 discriminants=[]
 #discriminants.append("ST_vs_TT")
-discriminants.append("ST_vs_VJ")
+#discriminants.append("ST_vs_VJ")
 #discriminants.append("STsd_vs_VJ")
 #discriminants.append("STsd_vs_TT")
 #discriminants.append("STsd_vs_ST")
+discriminants.append("STsd_vs_VJ")
+#discriminants.append("STsd_vs_ST_test")
 for d in discriminants:
     namesAndCfgs[d]="cfg"+d+".txt"
     os.system("root -l -b -q 'trainTMVA.C(\""+d+"\",\""+namesAndCfgs[d]+"\")' >& train"+d+".log &")
