@@ -15,8 +15,11 @@ leadingextrajetpt
 #
 # train
 ../treesmerge/trees_ST_T_tch_muon.root events_2j1t_mtwcut Training 1.
+../treesmerge/trees_ST_Tbar_tch_muon.root events_2j1t_mtwcut Training 1.
+
 # test
 ../treesmerge/trees_ST_T_tch_muon.root events_2j1t_mtwcut Test 1.
+../treesmerge/trees_ST_Tbar_tch_muon.root events_2j1t_mtwcut Test 1.
 [bgFiles]
 #
 # Syntax:

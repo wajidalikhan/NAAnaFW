@@ -13,7 +13,7 @@ struct systWeights{
 
   //Trees parts
   void initTreesSysts(TTree ** trees, TFile * file);
-  void initTreeSysts(TTree * tree);
+  void initTreeSysts(TTree * tree,bool isEventBasedSyst=false);
   
   void branchTreesSysts(TTree ** trees, TString selection, TString name, TFile * file, float * f);
   void fillTreesSysts(TTree ** trees, TString selection);
@@ -28,6 +28,10 @@ struct systWeights{
   //  TFile** initFilesSysts();
   void setSystValue(string name, double value, bool mult=false);
   void setSystValue(int systPlace, double value, bool mult=false);
+
+  float getSystValue(string name);
+  float getSystValue(int systPlace);
+
   void setPDFWeights(float * wpdfs, int numPDFs, float wzero=1.0,bool mult=true);
   void setQ2Weights(float q2up, float q2down, float wzero=1.0,bool mult=true);
   void setTWeight(float tweight, float wtotsample=1.0,bool mult=true);
@@ -36,7 +40,8 @@ struct systWeights{
   double getPDFValue(int numPDF);
   void setWeight(string name, double value, bool mult=false);
   void setWeight(int systPlace, double value, bool mult=false);
-  void prepareDefault(bool addDefault, bool addPDF, bool addQ2, bool addTopPt, bool addVHF, bool addTTSplit, int numPDF=102);
+  void prepareDefault(bool addDefault, bool addPDF, bool addQ2, bool addTopPt, bool addJES, bool addJER, bool addVHF, bool addTTSplit, int numPDF=102);
+  void addEventBasedSyst(string name);
   void addSyst(string name);
   void addSystNonPDF(string name);
   void setWCats(double *wcats);
@@ -51,14 +56,25 @@ struct systWeights{
   void copySysts(systWeights sys,bool copySelections=false);
   void calcPDFHisto(TH1F** histos, TH1F* singleHisto, double scalefactor=1.0, int c = 0);
   void setOnlyNominal(bool useOnlyNominal=false);
+  //Event based systs:
+  bool isEventBasedSyst(int sy);
+  bool isEventBasedSelection(int sy);
+  //  int getBaseSelection(int sy);
+  void setScenario(string scenario);
+  void setEventBasedDefault();
+
   bool onlyNominal;
-  bool addPDF, addQ2, addTopPt, addVHF, addTTSplit;
+  bool addPDF, addQ2, addTopPt, addVHF, addTTSplit,addJER,addJES;
   int maxSysts, maxSystsNonPDF;
   int nPDF;
   int nCategories;
   int nSelections;
+  int nEventBasedSysts;
   float weightedSysts[150];
+  string eventBasedScenario;
   double wCats[10];
+  string eventBasedNames[10];
+  int baseSelections[20];
   string weightedNames[150];
   string selectionsNames[20];
   string categoriesNames[10];
@@ -118,7 +134,10 @@ void systWeights::setOnlyNominal(bool useOnlyNominal){
 }
 void systWeights::setSystValue(string name, double value, bool mult){
   float zerofact=1.0;
-  if(mult)zerofact=this->weightedSysts[0];
+  if(mult){
+    zerofact=this->weightedSysts[0];
+    //    cout << " mult is"  << endl;
+  }
   int MAX = this->maxSysts;
   for(int sy=0;sy<(int)MAX;++sy){
     if(this->weightedNames[(int)sy] ==name){
@@ -134,6 +153,24 @@ void systWeights::setSystValue(int place, double value, bool mult){
   this->weightedSysts[place] =value*zerofact;
 }
 
+
+float systWeights::getSystValue(string name){
+  float val=0.0;
+  int MAX = this->maxSysts;
+  for(int sy=0;sy<(int)MAX;++sy){
+    if(this->weightedNames[(int)sy] ==name){
+      val = this->weightedSysts[(int)sy];
+    }
+  }
+  return val;
+}
+
+float systWeights::getSystValue(int place){
+  //  float val=0.0;
+  return this->weightedSysts[place] ;
+}
+
+
 void systWeights::setWeight(string name, double value, bool mult){
   this->setSystValue(name, value, mult);
 }
@@ -147,13 +184,15 @@ void systWeights::initTreesSysts(TTree ** trees, TFile * file){
   file->cd();
   for(int s =0;s<this->nSelections;++s){
     trees[s]= new TTree(("events_"+this->selectionsNames[s]).c_str(),"");
-    this->initTreeSysts(trees[s]);
+    bool isEventBasedSelection=this->isEventBasedSelection(s);
+    this->initTreeSysts(trees[s],isEventBasedSelection);
   }
 }
 
-void systWeights::initTreeSysts(TTree * tree){
+void systWeights::initTreeSysts(TTree * tree, bool isEventBasedSyst){
   int MAX = this->maxSysts;
   for(int sy=0;sy<(int)MAX;++sy){
+    if(isEventBasedSyst&&sy>0)continue;
     TString ns= (this->weightedNames[sy]).c_str();
     if(sy==0)ns = "w_nominal";
     tree->Branch(ns,&(this->weightedSysts[(int)sy]));
@@ -169,11 +208,23 @@ void systWeights::branchTreesSysts(TTree ** trees, TString selection, TString na
   file->cd();
   for(int s =0;s<this->nSelections;++s){
     if(selection == this->selectionsNames[s]) trees[s]->Branch(name,f);
+    //    if((this->selectionsNames[s].find(selection)!=std::string::npos)&&this->isEventBasedSelection(s)){
+    if(this->isEventBasedSelection(s)){
+      //      cout<<" selection is "<< selection <<" s is "<<  this->selectionsNames[s] << " base selection " << this->selectionsNames[this->baseSelections[s]]<<endl;
+      if(selection == this->selectionsNames[this->baseSelections[s]])trees[s]->Branch(name,f);
+    }//need to improve this
   }
 }
 void systWeights::fillTreesSysts(TTree ** trees, TString selection){
   for(int s =0;s<this->nSelections;++s){
-    if(selection == this->selectionsNames[s]) trees[s]->Fill();
+    if(selection == this->selectionsNames[s] && !this->isEventBasedSelection(s) && this->eventBasedScenario=="nominal")trees[s]->Fill();
+    //    cout << " selection is "<< this->selectionsNames[s]<< " is event based? "<< this->isEventBasedSelection(s)<<endl;
+    //    cout << " contains the scenario? " << (selection.Contains(this->eventBasedScenario))<<endl;
+    //    if(selection == this->selectionsNames[this->baseSelections[s]])trees[s]->Branch(name,f);
+    if(this->isEventBasedSelection(s)){	
+      if(this->selectionsNames[s].find(this->eventBasedScenario)!=std::string::npos &&
+	 selection == this->selectionsNames[this->baseSelections[s]])trees[s]->Fill();
+    }
   }
 }
 void systWeights::writeTreesSysts(TTree ** trees, TFile * file){
@@ -200,7 +251,7 @@ void systWeights::initHistogramsSysts(TH1F** histo,TString name, TString title, 
           if(c==0)histo[sy+(MAX+1)*c]=new TH1F(name+"_"+ns,title,nbins,min,max);
           else histo[sy+(MAX+1)*c]=new TH1F(name+"_"+ns+"_"+cname,title,nbins,min,max);
           }
-          //cout << " initialized histogram "<< histo[sy+(MAX+1)*c]->GetName() <<" sy " << sy << " c  "<< c <<" location " << sy+(MAX+1)*c << endl;
+      //      cout << " initialized histogram "<< histo[sy+(MAX+1)*c]->GetName() <<" sy " << sy << " c  "<< c <<" location " << sy+(MAX+1)*c << endl;
     }
   }
 }
@@ -274,7 +325,6 @@ int MAX= this->maxSystsNonPDF;
 
   }
 }
-
 void systWeights::writeHistogramsSysts(TH1F** histo, TFile **filesout){
   int MAX= this->maxSystsNonPDF;
   int MAXTOT= this->maxSysts;
@@ -287,36 +337,35 @@ void systWeights::writeHistogramsSysts(TH1F** histo, TFile **filesout){
       
       //cout << " writing histo "<< histo[sy+(MAXTOT+1)*c]->GetName()<< " in file "<< filesout[sy+(MAX+1)*c]->GetName()<<endl;;
       
-      //TString ns= weightedSystsNames((weightedSysts)sy);
+      //      TString ns= weightedSystsNames((weightedSysts)sy);
       if(!(!useOnlyNominal || sy==0)) continue;
       filesout[(int)sy+(MAX+1)*(c)]->cd();
       if(this->addPDF){
-      //if(this->weightedNames[sy]=="pdf_totalUp")calcPDFHisto(histo, histo[sy+(MAXTOT+1)*(c)],1.0,c);
-      //if(this->weightedNames[sy]=="pdf_totalDown")calcPDFHisto(histo, histo[sy+(MAXTOT+1)*(c)],-1.0,c);
-      ;      //this->
-      }
-
-      histo[sy+(MAXTOT+1)*c]->Write(histo[0]->GetName());
-      //histo[sy]=new TH1F(name+ns,name+ns,nbins,min,max);
+	if(this->weightedNames[sy]=="pdf_totalUp")calcPDFHisto(histo, histo[sy+(MAXTOT+1)*(c)],1.0,c);
+	if(this->weightedNames[sy]=="pdf_totalDown")calcPDFHisto(histo, histo[sy+(MAXTOT+1)*(c)],-1.0,c);
+	
+	;      //this->
       }
       
-      if(this->addPDF){
+      histo[sy+(MAXTOT+1)*c]->Write(histo[0]->GetName());
+      //histo[sy]=new TH1F(name+ns,name+ns,nbins,min,max);
+    }
+    
+    if(this->addPDF){
       if(!useOnlyNominal){
         filesout[MAX+(MAX+1)*(c)]->cd();
         //cout << " file max is "<< filesout[MAX+(MAX+1)*c]->GetName()<<endl;
         //int npdf=this->maxSysts-this->maxSystsNonPdf;
         int MAXPDF=this->maxSysts;
         for(int sy=MAX;sy<MAXPDF;++sy){
-        //    cout << " writing sy "<<sy+(MAXTOT+1)*c<<endl;
+	  //    cout << " writing sy "<<sy+(MAXTOT+1)*c<<endl;
         //    cout << " histo is there? "<< histo[sy+(MAXTOT+1)*c]<<endl;
-        histo[sy+(MAXTOT+1)*(c)]->Write();
-        //    cout << " written sy "<< histo[sy+(MAXTOT+1)*c]->GetName()<<endl;
+	  histo[sy+(MAXTOT+1)*(c)]->Write();
+	  //    cout << " written sy "<< histo[sy+(MAXTOT+1)*c]->GetName()<<endl;
         }
       }
     }
-
   }
-
 }
 
 void systWeights::createFilesSysts(  TFile ** allFiles, TString basename, TString opt){
@@ -328,19 +377,19 @@ void systWeights::createFilesSysts(  TFile ** allFiles, TString basename, TStrin
     if (c!=0) cname= "_"+cname;
     for(int sy=0;sy<(int)MAX;++sy){
       TString ns= (this->weightedNames[(int)sy]);
-      cout << " creating file for syst "<< ns<<endl;
-      if (c!=0)     cout << " category is "<< c<<endl;
-      cout << "onlynominal is "<<useOnlyNominal<<endl;
+      //cout << " creating file for syst "<< ns<<endl;
+      //      if (c!=0)     cout << " category is "<< c<<endl;
+      //      cout << "onlynominal is "<<useOnlyNominal<<endl;
 
       if(sy==0){
-	      cout<<" filename is "<< basename+ns+cname+".root"<<endl;
+	//	      cout<<" filename is "<< basename+ns+cname+".root"<<endl;
 	      allFiles[sy+(MAX+1)*c]= TFile::Open((basename+ns+cname+".root"), opt);
         }
       
       else{
 	      if(!useOnlyNominal){
 	          //if((ns!="1lep") && (ns!="2lep")&& (ns!="0lep")){
-	          cout<<" filename is "<< basename+ns+cname+".root"<<endl;
+		//        cout<<" filename is "<< basename+ns+cname+".root"<<endl;
 	          allFiles[sy+(MAX+1)*c]= TFile::Open((basename+"_"+ns+cname+".root"), opt);
 	          }
           }
@@ -351,7 +400,7 @@ void systWeights::createFilesSysts(  TFile ** allFiles, TString basename, TStrin
       if(this->addPDF){
       if(!useOnlyNominal)allFiles[MAX+((MAX+1)*c)]= TFile::Open((basename+"_pdf"+cname+".root"), opt);
       //cout << " created file at c "<< c << " s "<< MAX+(MAX+1)*c << " location "<< MAX+(MAX+1)*c<<endl;
-      cout<< " fname "<<allFiles[MAX+(MAXTOT+1)*c]->GetName()<<endl;
+      //      cout<< " fname "<<allFiles[MAX+(MAXTOT+1)*c]->GetName()<<endl;
         }
       }
     //return allFiles;
@@ -366,8 +415,8 @@ void systWeights::fillHistogramsSysts(TH1F** histo, float v, float w, double * w
   }
   for (int c = 0; c < this->nCategories; c++){
     if(verbose){
-      cout<< " in cat loop "<< c<<endl;
-      cout<< " value "<< wcats[c] <<endl;
+      //      cout<< " in cat loop "<< c<<endl;
+      //      cout<< " value "<< wcats[c] <<endl;
     }
     int MAX = this->maxSysts;
     bool useOnlyNominal = this->onlyNominal;
@@ -376,6 +425,11 @@ void systWeights::fillHistogramsSysts(TH1F** histo, float v, float w, double * w
 	cout<< " in syst loop "<< sy<< endl;
 	cout<<" value "<< this->weightedSysts[(int)sy] <<endl ;
       }
+      if(this->eventBasedScenario!="nominal"){
+       	if(!this->isEventBasedSyst(sy))continue;
+	if(this->weightedNames[sy]!=this->eventBasedScenario)continue;
+      }
+      else if(this->isEventBasedSyst(sy))continue;
       if(sy!=0&& useOnlyNominal)continue;
       float ws = (this->weightedSysts[(int)sy])*wcats[c];
       if(verbose)cout << " filling histogram "<< histo[(int)sy]->GetName() << " with value "<< v <<" and weight "<< w <<" ws "<< ws<<endl;
@@ -391,6 +445,30 @@ void systWeights::fillHistogramsSysts(TH1F** histo, float v, float w, double * w
 //          }
 //        }
 
+bool systWeights::isEventBasedSelection(int sy){
+  bool isEventBased=false;
+  for(int e = 0; e < this->nEventBasedSysts;++e){
+    if(this->selectionsNames[sy].find(this->eventBasedNames[e])!=std::string::npos){
+      isEventBased=true;
+      return true;
+    }
+  }
+  return isEventBased;
+}
+bool systWeights::isEventBasedSyst(int sy){
+  bool isEventBased=false;
+  for(int e = 0; e < this->nEventBasedSysts;++e){
+    if(this->weightedNames[sy]==this->eventBasedNames[e]){
+      isEventBased=true;
+      return true;
+    }
+  }
+    return isEventBased;
+}
+  
+
+
+
 void systWeights::setWCats(double * wcats){
   for(int i =0;i<this->nCategories;++i){
     //   cout << "setting wcat #"<< i << " to be "<<wcats[i]<<endl;
@@ -399,18 +477,53 @@ void systWeights::setWCats(double * wcats){
  
 }
 
+void systWeights::addSyst(string name){
+  this->weightedNames[this->maxSysts]= name;
+  this->setMax(maxSysts+1);
+  if(name.find("pdf")!=std::string::npos)this->setMaxNonPDF(maxSysts+1);
+  this->weightedNames[this->maxSysts]= "";
+}
+
+void systWeights::addSystNonPDF(string name){
+  this->weightedNames[this->maxSystsNonPDF]= name;
+  this->setMaxNonPDF(maxSystsNonPDF+1);
+  int nPDF=this->nPDF;
+  for(int i =0; i < nPDF;++i){
+    stringstream ss;
+    ss<< i+1;
+    this->weightedNames[i+this->maxSystsNonPDF]= "pdf"+ss.str();
+  }
+  this->setMax(maxSystsNonPDF+nPDF);
+  this->weightedNames[this->maxSysts]= "";
+}
+
+void systWeights::addEventBasedSyst(string name){
+  this->addSystNonPDF(name);
+  this->eventBasedNames[this->nEventBasedSysts]=name;
+  this->nEventBasedSysts=this->nEventBasedSysts+1;
+}
+
+void systWeights::setScenario(string scenario){
+  this->eventBasedScenario=scenario;
+  //  cout << " event based scenario is "<<this->eventBasedScenario<<endl;
+}
+
 void systWeights::addSelection(string selection){
   this->selectionsNames[this->nSelections]=selection;
-  this ->nSelections = this->nSelections+1;
+  int initSelection=this->nSelections;
+  this->nSelections = this->nSelections+1;
+  for(int sc=0; sc<this->nEventBasedSysts;sc++){
+    this->selectionsNames[this->nSelections]=selection+"_"+this->eventBasedNames[sc];
+    this->baseSelections[this->nSelections]=initSelection;
+    this->nSelections = this->nSelections+1;
+  }
 }
 
 void systWeights::setSelectionsNames(string * selections){
   for(int s =0;s<this->nSelections;++s){
     this->selectionsNames[s]=selections[s];
-
     //   cout << "setting wcat #"<< i << " to be "<<wcats[i]<<endl;
   }
- 
 }
 
 void systWeights::copySysts(systWeights sys, bool copySelections){
@@ -418,6 +531,11 @@ void systWeights::copySysts(systWeights sys, bool copySelections){
     this->weightedNames[i]=sys.weightedNames[i];
     this->weightedSysts[i]=sys.weightedSysts[i];
   }
+  this->nEventBasedSysts=sys.nEventBasedSysts;
+  for(int i =0; i < sys.nEventBasedSysts;++i){
+    this->eventBasedNames[i]=sys.eventBasedNames[i];
+  }
+  this->eventBasedScenario=sys.eventBasedScenario;
   this->setOnlyNominal(sys.onlyNominal);
   this->setMax(sys.maxSysts);
   this->setMaxNonPDF(sys.maxSystsNonPDF);
@@ -425,6 +543,8 @@ void systWeights::copySysts(systWeights sys, bool copySelections){
   this->nCategories=sys.nCategories;  
   if(copySelections)this->nSelections=sys.nSelections;  
   this->addQ2=sys.addQ2;
+  this->addJES=sys.addJES;
+  this->addJER=sys.addJER;
   this->addPDF=sys.addPDF;
   this->addTopPt=sys.addTopPt;
   this->addVHF=sys.addVHF;
@@ -441,9 +561,11 @@ void systWeights::setMaxNonPDF(int max){
   this->maxSystsNonPDF =  max;
   }
 
-void systWeights::prepareDefault(bool addDefault, bool addQ2, bool addPDF, bool addTopPt,bool addVHF, bool addTTSplit, int numPDF){ 
+void systWeights::prepareDefault(bool addDefault, bool addQ2, bool addPDF, bool addTopPt, bool addJES, bool addJER, bool addVHF, bool addTTSplit, int numPDF){ 
   this->addPDF=addPDF;
   this->addQ2=addQ2;
+  this->addJES=addJES;
+  this->addJER=addJER;
   this->addTopPt=addTopPt;
   this->addVHF=addVHF;
   this->addTTSplit=addTTSplit;
@@ -452,6 +574,8 @@ void systWeights::prepareDefault(bool addDefault, bool addQ2, bool addPDF, bool 
   categoriesNames[0]="";
   this->wCats[0]=1.0;
   this->nSelections=0;
+  this->eventBasedScenario="nominal";
+  nEventBasedSysts=0;
   if(addDefault){
     this->weightedNames[0]="";
     this->weightedNames[1]="btagUp";
@@ -472,8 +596,31 @@ void systWeights::prepareDefault(bool addDefault, bool addQ2, bool addPDF, bool 
     this->setMax(this->maxSysts+2);
     this->setMaxNonPDF(this->maxSystsNonPDF+2);
     this->weightedNames[this->maxSysts]= "";
+    
   }
+  if(addJES){
+    this->weightedNames[this->maxSysts]= "jesUp";
+    this->weightedNames[this->maxSysts+1]= "jesDown";
+    this->setMax(this->maxSysts+2);
+    this->setMaxNonPDF(this->maxSystsNonPDF+2);
+    this->weightedNames[this->maxSysts]= "";
+    //Consider that it is event based:
+    this->eventBasedNames[this->nEventBasedSysts]="jesUp";
+    this->eventBasedNames[this->nEventBasedSysts+1]="jesDown";
+    nEventBasedSysts=this->nEventBasedSysts+2;
 
+  }
+  if(addJER){
+    this->weightedNames[this->maxSysts]= "jerUp";
+    this->weightedNames[this->maxSysts+1]= "jerDown";
+    this->setMax(this->maxSysts+2);
+    this->setMaxNonPDF(this->maxSystsNonPDF+2);
+    this->weightedNames[this->maxSysts]= "";
+    //Consider that it is event based:
+    this->eventBasedNames[this->nEventBasedSysts]="jerUp";
+    this->eventBasedNames[this->nEventBasedSysts+1]="jerDown";
+    nEventBasedSysts=this->nEventBasedSysts+2;
+  }
   if(addTopPt){
     this->weightedNames[this->maxSysts]="topPtWeightUp";
     this->weightedNames[this->maxSysts+1]="topPtWeightDown";
@@ -518,6 +665,8 @@ void systWeights::prepareDefault(bool addDefault, bool addQ2, bool addPDF, bool 
     this->setMax(maxSysts+nPDF);
     this->weightedNames[this->maxSysts]= "";
     }
+
+  this->setEventBasedDefault();
 }
 
 TString  weightedSystsNames (weightedSysts sy){
@@ -567,6 +716,20 @@ void systWeights::writeSingleHistogramSysts(TH1F* histo, TFile **filesout){
   }
 }
 
+void systWeights::setEventBasedDefault(){
+  int MAX= this->maxSysts;
+  for(int sy=0;sy<(int)MAX;++sy){
+    if(this->isEventBasedSyst(sy)){
+      //      bool multi=true;
+      //      cout << "value 0 is "<< this->weightedSysts[0];
+      this->setSystValue(sy,1,true);//this->weightedSysts[0]);
+      //      cout << " value gotten for syst " << this->weightedNames[sy]<<" is "<< this->weightedSysts[sy]<<endl;
+    }
+  }
+      
+      
+}
+
 
 void systWeights::setPDFWeights(float * wpdfs, int numPDFs, float wzero,bool mult){
   float zerofact=1.0;
@@ -602,7 +765,6 @@ void systWeights::setVHFWeight(int vhf,bool mult,double shiftval){
   this->setSystValue("VHFWeightDown", zerofact*(1-w_shift));
 }
 
-
 void systWeights::setQ2Weights(float q2up, float q2down, float wzero, bool mult){
   float zerofact=1.0;
   if(mult){
@@ -628,6 +790,7 @@ void systWeights::setPDFValue(int numPDF, double w){
 
 }
 
+//if(this->weightedNames[sy]=="pdf_totalUp")calcPDFHisto(histo, histo[sy+(MAXTOT+1)*(c)],1.0,c);
 void systWeights::calcPDFHisto(TH1F** histo, TH1F* singleHisto, double scalefactor, int c){//EXPERIMENTAL
   if(!addPDF){ cout << "error! No PDF used, this will do nothing."<<endl;return;}
   int MAX = this->maxSysts;

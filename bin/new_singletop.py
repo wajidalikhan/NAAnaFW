@@ -40,6 +40,8 @@ filepath='/afs/cern.ch/work/w/wajid/NapoliFW/CMSSW_8_0_20/src/Analysis/NAAnaFW/b
 
 usage = ''
 parser = optparse.OptionParser(usage)
+#Output files/directory
+parser.add_option('-o', '--outputpath',        dest='outputpath',  type='string',     default = '.',  help='output for root files')
 
 #Input files:
 parser.add_option('-f', '--filepath',        dest='filepath',  type='string',     default = './files/final/',      help='files with the trees location, default to the afs area where the latest version is always located')
@@ -158,8 +160,13 @@ for s in samples:
     with open(sampleFileList,'w') as sl:
         sl.write('\n'.join(files))
     
-        
-    outDirs = ['res','trees']
+    if opt.outputpath:
+      #opath='/afs/cern.ch/work/w/wajid/public/xWajid'
+      outDirs = [opt.outputpath + '/' + 'res', opt.outputpath + '/' + 'trees']
+    else:
+      outDirs = ['res','trees']
+    
+    #outDirs = ['res','trees']
 
     if (opt.treesDir!="./" and opt.treesDir!='noTrees'): outDirs.append(opt.treesDir)
     for d in outDirs:
@@ -168,7 +175,7 @@ for s in samples:
       
 #    treescheck = (not (commands.getstatusoutput('ls '+ opt.treesDir)[0]==0))
 #    print "treescheck, command is ",("ls "+opt.treesDir)," result ",treescheck
-    cmd = 'SingleTopAnalysis '+ s + ' ' + sampleFileList  + ' ' + opt.channel + ' ' + opt.cat + ' ' + opt.sys + ' ' + opt.sync + ' ' + isData + ' ' + opt.treesDir + ' ' + opt.mva
+    cmd = 'SingleTopAnalysis '+ s + ' ' + sampleFileList  + ' ' + opt.channel + ' ' + opt.cat + ' ' + opt.sys + ' ' + opt.sync + ' ' + isData + ' ' + opt.treesDir + ' ' + opt.mva + ' ' + opt.outputpath
     print cmd
 
     if opt.gdb:

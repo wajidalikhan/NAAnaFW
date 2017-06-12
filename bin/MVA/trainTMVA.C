@@ -95,13 +95,13 @@ void trainTMVA(string inputname, string cfgfile){
 
   factory.PrepareTrainingAndTestTree(preselection_sig, preselection_bkg, TString("nTrain_Signal=nTrainSignal:nTrain_Background=nTrainBackground:nTest_Signal=nTestSignal:nTest_Background=nTestBackground:SplitMode=Block:VerboseLevel=Info"));
 
-  factory.BookMethod(TMVA::Types::kBDT, "BDT", "!H:!V:NTrees=800:MinNodeSize=0.05:BoostType=AdaBoost:SeparationType=GiniIndex:PruneMethod=CostComplexity:MaxDepth=3:PruningValFraction=0.3:PruneStrength=-1:UseRandomisedTrees=True");
+  //factory.BookMethod(TMVA::Types::kBDT, "BDT", "!H:!V:NTrees=800:MinNodeSize=0.02:BoostType=AdaBoost:AdaBoostBeta=0.5:SeparationType=GiniIndex:PruneMethod=CostComplexity:MaxDepth=3:PruningValFraction=0.3:PruneStrength=-1:UseRandomisedTrees=True:nCuts=-1");
 
   //Normal settings
   //factory.BookMethod(TMVA::Types::kBDT, "BDT", "!H:!V:NTrees=800:MinNodeSize=0.05:BoostType=AdaBoost:SeparationType=GiniIndex:PruneMethod=CostComplexity:MaxDepth=3:PruningValFraction=0.3:PruneStrength=-1");
   
   //Adding UseRandomisedTrees=True
-  //factory.BookMethod(TMVA::Types::kBDT, "BDT", "!H:!V:NTrees=800:MinNodeSize=0.05:BoostType=AdaBoost:SeparationType=GiniIndex:PruneMethod=CostComplexity:MaxDepth=3:PruningValFraction=0.3:PruneStrength=-1:UseRandomisedTrees=True");
+  factory.BookMethod(TMVA::Types::kBDT, "BDT", "!H:!V:NTrees=800:MinNodeSize=0.05:BoostType=AdaBoost:SeparationType=GiniIndex:PruneMethod=CostComplexity:MaxDepth=3:PruningValFraction=0.3:PruneStrength=-1:UseRandomisedTrees=True");
   
   //Adding AdaBoostBeta=0.5
   //factory.BookMethod(TMVA::Types::kBDT, "BDT", "!H:!V:NTrees=800:MinNodeSize=0.05:BoostType=AdaBoost:AdaBoostBeta=0.5:SeparationType=GiniIndex:PruneMethod=CostComplexity:MaxDepth=3:PruningValFraction=0.3:PruneStrength=-1:UseRandomisedTrees=True");

@@ -1,2 +1,2 @@
 samples=[]
-samples.append("QCDMuEPt20toInf")
+samples.append("QCDMuPt20toInf")

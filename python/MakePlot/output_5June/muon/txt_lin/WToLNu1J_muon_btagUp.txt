@@ -1,0 +1,13 @@
+Lumi: 35.9
+---> WToLNu1J
+Events before selection   : 296594944.00
+Events after trigger      : 85510872.00
+Events after lepton cut   : 37772472.00
+Events after jet cut      : 57510140.00
+Events after bjet cut     : 57336148.00
+Events after met160 cut   : 1618908.88
+Events after met320 cut   : 15765.15
+Events after mt cut       : 0.00
+Events after mt2w cut     : 0.00
+Events after minDPhi cut  : 0.00
+Selection efficiency      : 0.00

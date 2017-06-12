@@ -1,0 +1,13 @@
+Lumi: 35.9
+---> SingleMuon_Run2016H-PromptReco-v3_B2GAnaFW_80X_V2p5_new
+Events before selection   : 4389914.00
+Events after trigger      : 362311.00
+Events after lepton cut   : 351905.00
+Events after jet cut      : 337011.00
+Events after bjet cut     : 285784.00
+Events after met160 cut   : 50554.00
+Events after met320 cut   : 3466.00
+Events after mt cut       : 0.00
+Events after mt2w cut     : 0.00
+Events after minDPhi cut  : 0.00
+Selection efficiency      : 0.00

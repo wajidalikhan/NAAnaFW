@@ -1,0 +1,9 @@
+Lumi: 35.9
+---> WWTo1L1Nu2Q
+Events before selection   : 1645556.50
+Events after trigger      : 688596.19
+Events after lepton cut   : 227497.11
+Events after jet cut      : 17307.72
+Events after bjet cut     : 16052.03
+Events after met160 cut   : 3585.07
+Events after met320 cut   : 21.03

@@ -2,7 +2,7 @@
 #########################################################
 ############ Macro for plots with ratio pad #############
 #########################################################
-
+import collections
 import optparse
 
 # Partse command line before ANY action
@@ -11,6 +11,8 @@ parser = optparse.OptionParser(usage)
 
 parser.add_option('-l', '--lumi',     dest='lumi',    type='float',   default = '1.26',  help='Luminosity')
 parser.add_option('-c', '--channel',  dest='channel', type='string',  default = 'muon',  help='Channel to analyze: muon or electron')
+parser.add_option('',   '--chLabel',  dest='chLabel', type='string',  default = '#mu/e', help='Channel label: #mu or e')
+parser.add_option('-j', '--jbin',     dest='jbin',    type='string',  default = 'MjNt',  help='mjnt : e.g, 2j1t, 3j2t, 2j0t')
 parser.add_option('-s', '--sys',      dest='sys',     type='string',  default = 'noSys', help='Systematics: noSys, jesUp, jesDown')
 parser.add_option('-n', '--normData', dest='normData',type='int',     default = '0',     help='Normalise to data?')
 parser.add_option('-r', '--resdir',   dest='resdir',  type='string',  default = './../newTTDManalysis/', help='res directory')
@@ -21,6 +23,7 @@ parser.add_option('-p', '--prefix',   dest='prefix',  type='string',  default = 
 parser.add_option('', '--store',      dest='store',   action='store_true', default = False, help='Store')
 parser.add_option('--focusOn',        dest='focus',   default = None, help='Focus on a single plot')
 parser.add_option('', '--getSF',      dest='getSF',   type='string',  default = '', help='type of scale factors from the fit')
+parser.add_option('', '--qcdSF',      dest='qcdSF',   type='string',  default = '1.0', help='QCD scale factor from the fit')
 parser.add_option('', '--fileSF',     dest='fileSF',  type='string',  default = './mlfit.root', help='file for the scale factors')
 
 (opt, args) = parser.parse_args()
@@ -32,14 +35,11 @@ import copy
 import commands, os.path
 import numpy as n
 import array 
-
+from ROOT import TH1F
 # from plots.services import Histo, Stack, Legend, deltaPhi, Histo1
 from plots.services import deltaPhi
 from samples.toPlot import samples
 import plots.common, plots.electron, plots.muon
-
-
-
 import tdrstyle, CMS_lumi
 
 
@@ -166,11 +166,12 @@ for var in settings.iteritems():
 print "var keys"
 for v in list(settings.keys()):
     print v
+#gnoreRegions=True
 importedSFs={}
 if not opt.getSF =="":
     from postFitUtilsC import postFitUtilities as PFUtils
-    regions = ["2j0t","2j1t","3j2t","3j1t"]
-#    regions = ["2j0t"]
+    #regions = ["2j0t","2j1t","3j2t","3j1t"]
+    regions = ["2j1t","2j0t"]
     rf = opt.fileSF
 #    rf="./mlfit.root"
     print "rootfile is " , rf
@@ -189,6 +190,14 @@ if not opt.getSF =="":
     print sampleslist
     importedSFs=postFit.importScaleFactors(variables=keylist, samples=sampleslist,defaultSF="no_region")
     print importedSFs
+
+sampleslist = []
+for s in samples.itervalues():
+    sampleslist.append(s.label)
+    #    list(samples.keys())
+    #print "Printing samples ==== ", sampleslist
+print 'Sample List: ',sampleslist
+
 
 #parser.add_option('', '--getSF', dest='getSF', type='string', default = '', help='type of scale factors from the fit')
 #parser.add_option('', '--fileSF', dest='fileSF', type='string', default = './mlfit.root', help='file for the scale factors')
@@ -213,16 +222,24 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
 
     stack_bkg_norm = Stack(var,title)
     
+    histograms = []
     histos_bkg = []
     histos_data = []
    
     #Update the legend postion 
-    leg = Legend((.51, .58, .92, .86),0.055)
-    leg_sh = Legend((.51, .58, .92, .86),0.055)    
-    leg_sign = ROOT.TLegend(0.7,0.7,0.9,0.9)
+    #leg = Legend((.51, .58, .92, .86),0.055)
+    #leg_sh = Legend((.51, .58, .92, .86),0.055)    
+    #leg_sign = ROOT.TLegend(0.7,0.7,0.9,0.9) # original setting - before wajid
+    
+    leg = Legend((0.7, 0.5, 0.9, 0.85),0.055)
+    leg_sh = Legend((0.7, 0.5, 0.9, 0.85),0.055)
+    leg_sign = ROOT.TLegend(0.5,0.5,0.9,0.9)
 
+    h = None
     h1 = None
     #print " prepare for trouble "
+    
+    #samples = collections.OrderedDict(reversed(list(samples.items())))
     for s in samples.itervalues():
         nEntries = 0
         #if(s.label.startswith("TT_")): print "+ sample" , s.label
@@ -278,6 +295,7 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
                     continue
 
                 htmp = hin.Clone()
+                htmpnew = hin.Clone() 
 
                 # Ensure the error structure is activated before doing anything else
                 htmp.Sumw2()
@@ -292,7 +310,19 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
                     if not opt.getSF =="" and not s.label.startswith("Data"):
                         print "sf is ", importedSFs[s.label][var]
                         htmp.Scale(importedSFs[s.label][var])
-                    #print "integral ", htmp.Integral()
+                if c.sigma<0 and not s.label.startswith("Data") and not opt.getSF =="":
+                #if c.sigma<0 and not s.label.startswith("Data") and opt.getSF =="":
+                    if s.label.startswith("DD"):
+                        print "dd sf is ", importedSFs[s.label][var]
+                        htmp.Scale(importedSFs[s.label][var])
+                        #htmp.Scale(0.345)
+                        #htmp.Scale(0.392)
+                        #htmp.Scale(0.145)
+                if c.sigma<0 and not s.label.startswith("Data") and opt.getSF =="":
+                  if s.label.startswith("DD"):
+                    print "Using DD qcd SF:", float(opt.qcdSF)
+                    htmp.Scale(float(opt.qcdSF))
+    #print "integral ", htmp.Integral()
                 # If a cutflow print a nice summary!
                 if(var == "h_cutFlow"): writeSummary(c.label, opt.channel, opt.sys, htmp, opt.lumi)
 
@@ -318,7 +348,6 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
             # h = Histo1(h1)
             #print 'h1 has sumw2', h1.GetSumw2().GetSize()
             h = Histo.fromTH1(h1)
-            
         else:
             #sample does not have components
             #print "sample label ", s.label
@@ -357,12 +386,11 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
                 raise RuntimeError('Failed to load histogram %s from %s' % (filename, var))
 
             htmp = hin.Clone()
+            htmpnew = hin.Clone()
 
             # Ensure the error structure is activated before doing anything else
             htmp.Sumw2()
-
             htmp.SetMarkerStyle(20)
-            #htmp.SetMarkerSize(1.2)
             htmp.SetMarkerSize(0.9)
 
             if(s.label.startswith("DM")):
@@ -370,10 +398,9 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
 
             # Create the Histo wrapper
             h = Histo.fromTH1(htmp)
-            
             scaleFactor = 1.
 
-#            if (nEntries != 0  and not(s.label.startswith("SingleMu") or s.label.startswith("SingleEl") or s.label.startswith("JetHT") or s.label.startswith("MET"))):
+            #if (nEntries != 0  and not(s.label.startswith("SingleMu") or s.label.startswith("SingleEl") or s.label.startswith("JetHT") or s.label.startswith("MET"))):
             #if (sigma == -1): scaleFactor =1.
             if not s.sigma<0: 
                 scaleFactor = 1./nEntries * s.skimEff * s.sigma * 1000.* float(opt.lumi)
@@ -381,8 +408,21 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
                     print "sf is ", importedSFs[s.label][var]
                     scaleFactor*= (importedSFs[s.label][var])
                 htmp.Scale(scaleFactor)
+            if s.sigma<0 and not s.label.startswith("Data") and not opt.getSF =="":
+            #if s.sigma<0 and not s.label.startswith("Data") and opt.getSF =="":
+                if s.label.startswith("DD"):
+                    print "dd sf is ", importedSFs[s.label][var]
+                    htmp.Scale(importedSFs[s.label][var])
+                    #htmp.Scale(0.345)
+                    #htmp.Scale(0.392)
+                    #htmp.Scale(0.145)
                 #if(s.label.startswith("TT")):print "====>SF: ", scaleFactor
 
+            if c.sigma<0 and not s.label.startswith("Data") and opt.getSF =="":
+              if s.label.startswith("DD"):
+                print "Using DD qcd SF:", float(opt.qcdSF)
+                htmp.Scale(float(opt.qcdSF))
+            
             h.Scale(scaleFactor)
             #print "integral ", htmp.Integral()
         ### Apply rebin
@@ -406,7 +446,6 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
                 h.Shrink(uFirst, uLast)
                 
         ### Set style and create stack plots
-        #h.SetStyle(s.color, s.style, s.fill)
         h.SetStyle(s.color, s.style, s.fill)
         
         if (s.label=="DMtt_ps_Mchi1Mphi100"):
@@ -426,11 +465,7 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
             h.GetHisto().SetName(var)
             h.GetHisto().Write()
         outfile.Close()
-        
-        print 'Trying to Open file: ',s.label
-        file=ROOT.TFile.Open(outhistos+"/"+s.label+"_"+opt.channel+".root");
-        #file.ls() 
-        
+     
         #adding histo in bkg, sign and data categories
         if (s.label=="DMtt_ps_Mchi1Mphi100"):
             stack_sig.Add(h)
@@ -446,12 +481,11 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
         elif ( not(s.label.startswith("DM") or s.label.startswith("Data"))) :
             stack_bkg.Add(h)
             histos_bkg.append(h)
-            leg.AddEntry(h, s.leglabel, "f")
+            h.GetHisto().SetName(s.leglabel)
+            histograms.append(h)
+            # Change the legends entries to display in reverse order
+            #leg.AddEntry(h, s.leglabel, "f")
 
-        if ((opt.channel == 'muonantiiso') and (not(s.label.startswith("Data") or s.label=="DD-QCD" ))):
-          stack_qcd.Add(h)
-
-        
         ### Make a summary
         if(var == "h_cutFlow"): writeSummary(s.label, opt.channel,opt.sys, h, opt.lumi)
 
@@ -461,8 +495,11 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
         
         leg_sh.AddEntry(h_norm, s.leglabel, "l")
         stack_sh.Add(h_norm)
-    
     ### End of samples loop
+    
+    # Added to change the ordering of legend
+    for i in reversed(histograms):
+      leg.AddEntry(i, i.GetHisto().GetName(), "f")
     
     #print " and make it double "
     if opt.data:
@@ -480,9 +517,9 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
     tdrstyle.setTDRStyle();
 
     # Update the legend's stype
-    leg._leg.SetNColumns(2)
+    #leg._leg.SetNColumns(2)
+    #leg_sign.SetNColumns(2)
     
-    leg_sign.SetNColumns(2)
     leg_sign.SetFillColor(0)
     leg_sign.SetFillStyle(0)
     leg_sign.SetTextFont(40)
@@ -547,18 +584,18 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
 
     h_data = stack_data.GetLast()
     h_bkg = stack_bkg.GetLast()
-    print type(h_bkg)
+
     # Normalizing to data
-    print "title bef", stack_bkg_norm._title
+    #print "title bef", stack_bkg_norm._title
 
     if(opt.normData>0):
 #    if(False):
-        h_data_ = stack_data._hs.GetStack().Last().Clone("h_data_")
+        h_data_ = stack_data._hs.GetStack().GetLast().Clone("h_data_")
         nData = h_data_.Integral()
-        h_bkg_ = stack_bkg._hs.GetStack().Last().Clone("h_bkg_")
+        h_bkg_ = stack_bkg._hs.GetStack().GetLast().Clone("h_bkg_")
         nBkg = h_bkg_.Integral()
         sf_norm = nData/nBkg
-
+        
 #        stack_bkg_=Stack(var,title)
 #        h_bkg = stack_bkg_.GetLast()
         for i in xrange(stack_bkg._hs.GetNhists()):
@@ -612,9 +649,7 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
         stack_bkg_norm.SetMinimum(0.01)
 
     #Drawing THStacks
-    
     stack_bkg_norm.DrawStackUnit(lumi = opt.lumi)
-    #stack_bkg_norm.DrawStackUnit(lumi = opt.lumi)
     if opt.signal:
         stack_sig.DrawStackUnit(lumi = opt.lumi, opt = "nostack, SAME")
 
@@ -627,6 +662,11 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
     h_err.SetMarkerSize(0)
     h_err.SetFillColor(ROOT.kGray+2)
     h_err.Draw("e2same0")
+    
+    # Adding Unc. in legend
+    h_unc = Histo.fromTH1(h_err)
+    h_unc.GetHisto().SetName('Stat. Unc.')
+    leg.AddEntry(h_unc,h_unc.GetHisto().GetName(),"f")
 
     if opt.data:
         # h_data.Sumw2()
@@ -666,7 +706,7 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
         ratio.SetStats(0)
         if usrrng is not None:
             ratio.GetXaxis().SetRangeUser( usrrng[0], usrrng[1] )
-
+        
         denom = h_bkg.Clone("denom")
         denom.Sumw2()
 
@@ -675,6 +715,7 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
             ratio.SetMarkerStyle(20)
             #ratio.SetMarkerSize(1.2)
             ratio.SetMarkerSize(0.9)
+            ratio.GetXaxis().SetRangeUser( usrrng[0], usrrng[1] )
             ratio.Draw("epx0e0") #epx0
             ratio.SetTitle("")
 
@@ -688,12 +729,15 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
                 h_bkg_err.SetBinError(i, (h_bkg.GetBinError(i)/h_bkg.GetBinContent(i)))
             else:
                 h_bkg_err.SetBinError(i, 0)
-        #h_bkg_err = h_bkg.Clone("h_bkg_err")
-        #h_bkg_err.Sumw2()
-        #h_bkg_err.Divide(h_bkg);
-        #h_bkg_err.Draw("E2same");
-        #h_bkg_err.SetMaximum(2.);
-        #h_bkg_err.SetMinimum(0);
+        
+        #for error on the ratio 
+        h_bkg_err = h_bkg.Clone("h_bkg_err")
+        h_bkg_err.Sumw2()
+        h_bkg_err.Divide(h_bkg);
+        h_bkg_err.Draw("E2same");
+        h_bkg_err.SetMaximum(2.);
+        h_bkg_err.SetMinimum(0);
+        
         h_bkg_err.SetLineWidth(100)
         h_bkg_err.SetFillStyle(3154)
         h_bkg_err.SetMarkerSize(0)
@@ -752,9 +796,10 @@ for var,(title,scale,rebin, usrrng) in settings.iteritems():
         lumi = lumi*1000
         unit = " pb^{-1}"
     else: unit = " fb^{-1}"
-    CMS_lumi.lumi_sqrtS = str(lumi)+ unit +" (13 TeV)" # used with iPeriod = 0, e.g. for simulation-only plots (default is an empty string)
+    CMS_lumi.lumi_sqrtS = opt.chLabel+ "-" +opt.jbin+ ", " + str(lumi) + unit +" (13 TeV)" # used with iPeriod = 0, e.g. for simulation-only plots (default is an empty string)
     if opt.normData==1:
-        CMS_lumi.lumi_sqrtS = str(lumi)+ unit +" (13 TeV), norm. to data" # used with iPeriod = 0, e.g. for simulation-only plots (default is an empty string)
+        #CMS_lumi.lumi_sqrtS = str(lumi)+ unit +" (13 TeV), norm. to data" # used with iPeriod = 0, e.g. for simulation-only plots (default is an empty string)
+        CMS_lumi.lumi_sqrtS = "Norm. to data" # used with iPeriod = 0, e.g. for simulation-only plots (default is an empty string)
     iPeriod = 0
     iPos = 11
 

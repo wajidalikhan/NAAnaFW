@@ -1,0 +1,13 @@
+Lumi: 35.9
+---> VV
+Events before selection   : 2783377.25
+Events after trigger      : 1147597.75
+Events after lepton cut   : 626767.62
+Events after jet cut      : 908673.38
+Events after bjet cut     : 810874.69
+Events after met160 cut   : 234756.19
+Events after met320 cut   : 6472.25
+Events after mt cut       : 0.00
+Events after mt2w cut     : 0.00
+Events after minDPhi cut  : 0.00
+Selection efficiency      : 0.00

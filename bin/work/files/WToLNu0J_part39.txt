@@ -1,0 +1,3 @@
+root://cms-xrd-global.cern.ch//store/user/oiorio/SingleTop/2017/May/20May//WToLNu_0J_13TeV-amcatnloFXFX-pythia8/80xV2_WToLNu_0J_13TeV-amcatnloFXFX-pythia8/170520_181400/0000/treesTTJets_2.root
+root://cms-xrd-global.cern.ch//store/user/oiorio/SingleTop/2017/May/20May//WToLNu_0J_13TeV-amcatnloFXFX-pythia8/80xV2_WToLNu_0J_13TeV-amcatnloFXFX-pythia8/170520_181400/0000/treesTTJets_85.root
+root://cms-xrd-global.cern.ch//store/user/oiorio/SingleTop/2017/May/20May//WToLNu_0J_13TeV-amcatnloFXFX-pythia8/80xV2_WToLNu_0J_13TeV-amcatnloFXFX-pythia8/170520_181400/0000/treesTTJets_97.root

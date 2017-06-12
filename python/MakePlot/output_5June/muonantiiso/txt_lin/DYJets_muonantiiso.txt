@@ -1,0 +1,9 @@
+Lumi: 35.9
+---> DYJets
+Events before selection   : 206920208.00
+Events after trigger      : 53678500.00
+Events after lepton cut   : 14871246.00
+Events after jet cut      : 3678290.25
+Events after bjet cut     : 398344.81
+Events after met160 cut   : 23576.47
+Events after met320 cut   : 595.99

@@ -4,7 +4,7 @@ import errno
 os.seteuid(os.geteuid())
 import optparse 
 from utils import *
-#usage: python script_rename.py -s ~oiorio/public/xWajid/files/trees/nov09/ -d files/renamed 
+#usage: python script_rename.py -s /afs/cern.ch/user/w/wajid/public/xWajid/files/01Jun/ -d files/final
 
 usage = 'usage: python script_rename.py -s ~oiorio/public/xWajid/files/trees/nov09/ -d files/renamed '
 parser = optparse.OptionParser(usage)
@@ -89,7 +89,7 @@ for i in list:
 
   if 'listQCD_Pt-20toInf_MuEnrichedPt15' in i:
     print '*** Renaming file', i 
-    os.renames(i,"QCDMuEPt20toInf.txt")
+    os.renames(i,"QCDMuPt20toInf.txt")
 
   if 'listRun2016' in i:
     print '*** Renaming file', i 

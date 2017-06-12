@@ -136,6 +136,7 @@ private:
   float getReshapedBTagValue(float flavor, float btag, float pt, float eta, string algo, string syst);
   
   //  helpers
+  double getPhi(double px, double py);
   double getMCTagEfficiencyFuncParam(float flavor, float ptCorr, float eta, string algo,string syst, string wp, string region);
   float avgRatioFunc(float x0,float x1,float a1, float b1 , float a2, float b2);
   float getEffRatioFunc(float flavor,float btag,float pt, float eta, string algo ,string syst,bool normalize);
@@ -196,6 +197,8 @@ private:
   edm::EDGetTokenT< std::vector<float> > jetAK8topSubjetIndex2;
   edm::EDGetTokenT< std::vector<float> > jetAK8topSubjetIndex3;
 
+  edm::EDGetTokenT <std::vector<std::vector<int>>> t_jetKeys_, t_muKeys_;
+  
   //  edm::EDGetTokenT<edm::Association<reco::GenParticleCollection> > t_genParticles;
   edm::EDGetTokenT< reco::GenParticleCollection> t_genParticles_;
   edm::EDGetTokenT< reco::GenJetCollection> t_genJets_;
@@ -313,6 +316,11 @@ private:
   edm::Handle<std::vector<float> > ak8jetSubjetIndex1;
   edm::Handle<std::vector<float> > ak8jetSubjetIndex2;
   edm::Handle<std::vector<float> > ak8jetSubjetIndex3;
+  
+
+
+edm::Handle<std::vector<std::vector<int>>> jetKeys;
+edm::Handle<std::vector<std::vector<int>>> muKeys;
   
   //  edm::InputTag partID_,partStatus_,partMomID_,partPt_;
   edm::Handle<std::vector<float> > partID;
@@ -691,7 +699,7 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
     std::vector<std::string > scanCuts = itPsets->getParameter<std::vector<std::string> >("scanCuts");
     std::vector<std::string > systCats = itPsets->getParameter<std::vector<std::string> >("systCats");
     std::vector<std::string > toSave= itPsets->getParameter<std::vector<std::string> >("toSave");
-        
+    
     std::vector<edm::InputTag >::const_iterator itF = variablesFloat.begin();
     std::vector<edm::InputTag >::const_iterator itI = variablesInt.begin();
     
@@ -736,8 +744,14 @@ DMAnalysisTreeMaker::DMAnalysisTreeMaker(const edm::ParameterSet& iConfig){
     max_instances[namelabel]=maxI;
     string nameobs = namelabel;
     string prefix = nameprefix;
-
-
+    
+    //    if(changeJECs){
+      edm::InputTag jetKeys_ = iConfig.getParameter<edm::InputTag >("jetKeysAK4CHS");
+      edm::InputTag muKeys_ = iConfig.getParameter<edm::InputTag >("muonKeys");
+      t_jetKeys_ = consumes<std::vector<std::vector<int> > > (jetKeys_);
+      t_muKeys_ = consumes<std::vector<std::vector<int> > > (muKeys_);
+  
+      //    }
     if(saveNoCat) trees["noSyst"]->Branch((nameobs+"_size").c_str(), &sizes[nameobs]);
     for(size_t sc = 0; sc< obj_cats[namelabel].size() ;++sc){
       string category = obj_cats[namelabel].at(sc);
@@ -1119,6 +1133,11 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
   if(addLHAPDFWeights){
     iEvent.getByToken(t_genprod_, genprod);
   }
+  
+  //  if(changeJECs){
+    iEvent.getByToken(t_jetKeys_, jetKeys);
+    iEvent.getByToken(t_muKeys_, muKeys);
+    //  }
   
   vector<TLorentzVector> genlep,gentop,genantitop,genw,gennu,genz,gena;
   vector<TLorentzVector> pare,parebar,parmu,parmubar,parnumu,parnumubar,partau,partaubar,parnue,parnuebar,parnutau,parnutaubar,parz,parw;
@@ -1630,7 +1649,8 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     //    cout << "syst"<< systematics.at(s)<<endl;
 
     int nb=0,nc=0,nudsg=0;
-    int ncsvl_tags=0,ncsvt_tags=0,ncsvm_tags=0;//, njets_tottag=0;
+    //    int ncsvl_tags=0,ncsvt_tags=0 
+    int ncsvm_tags=0;//, njets_tottag=0;
     getEventTriggers();
 
     photons.clear();
@@ -1729,8 +1749,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       
       //if(isTight>0 && pt> 24 && abs(eta) < 2.4 /*&& iso <0.15 Isolation added afterwards*/){//UCL Selection
       if(isTight>0 && pt> 26 && fabs(eta) < 2.4 /*&& iso <0.15 Isolation added afterwards*/){//NA Selection
- 	
-
+	
 	if(iso<0.06){// 2015 Selection
 	  ++float_values["Event_nTightMuons"];
 	  TLorentzVector muon;
@@ -1793,6 +1812,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       float isVeto = vfloats_values[makeName(ele_label,pref,"isVeto")][el];
       
       isTight = vfloats_values[makeName(ele_label,pref,"vidTight")][el];
+      float isTightnoiso = vfloats_values[makeName(ele_label,pref,"vidTightnoiso")][el];
       isLoose = vfloats_values[makeName(ele_label,pref,"vidLoose")][el];
       isMedium = vfloats_values[makeName(ele_label,pref,"vidMedium")][el];
       isVeto = vfloats_values[makeName(ele_label,pref,"vidVeto")][el];
@@ -1814,13 +1834,15 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       if(fabs(scEta)<=1.479){
 	//passesTightCuts = ( isTight >0.0 /*&& iso < 0.0588 */) && (fabs(eldz) < 0.10) && (fabs(eldxy) <0.05 ) ;
 	passesTightCuts = (isTight >0.0) && (fabs(eldz) < 0.10) && (fabs(eldxy) <0.05 ) && (fabs(scEta)<1.4442 || fabs(scEta)>1.5660);
-	passesTightAntiIsoCuts = isTight >0.0 && iso > 0.0588 ;
-
+	//passesTightAntiIsoCuts = iso > 0.0588 ;
+	passesTightAntiIsoCuts = isTightnoiso && iso > 0.2 ;
       } //is barrel electron
       //if( ( fabs(scEta)>1.479 && fabs(scEta)<2.5 ) && ( (fabs(eldz) < 0.20) && (fabs(eldxy) < 0.10) ) ){
       if( ( fabs(scEta)>1.479 && fabs(scEta)<2.5 ) && ( (fabs(eldz) < 0.20) && (fabs(eldxy) < 0.10) ) && (fabs(scEta)<1.4442 || fabs(scEta)>1.5660) ){
-	passesTightCuts = isTight >0.0 /*&& iso < 0.0571*/ ;
-	passesTightAntiIsoCuts = isTight >0.0 && iso > 0.0571 ;
+	//passesTightCuts = isTight >0.0 /*&& iso < 0.0571*/ ;
+	//passesTightAntiIsoCuts = isTight >0.0 && iso > 0.0571 ;
+	//passesTightAntiIsoCuts = iso > 0.0571 ;
+	passesTightAntiIsoCuts = isTightnoiso && iso > 0.2 ;
       }
 
       if(pt> 30 && fabs(eta) < 2.1 && ((fabs(scEta)<1.4442 || fabs(scEta)>1.5660))){
@@ -1895,10 +1917,11 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     int nTightAntiIsoLeptons = 0;
     for(size_t mc =0; mc < obj_cats[mu_label].size();++mc){
       string cat= obj_cats[mu_label].at(mc);
-      if(cat.find("_Iso04_")!=std::string::npos && cat.find("GE")!=std::string::npos){
-	nTightAntiIsoLeptons+=sizes[cat];
+      if(cat.find("_Iso04_")!=std::string::npos && cat.find("GE")!=std::string::npos && cat.find("Tight")!=std::string::npos){
+	//	cout<< " cat " << 
+	nTightAntiIsoLeptons+=sizes[mu_label+cat];
       }
-    }
+    } 
     //float_values["Event_nTightAntiIsoMuons"]+float_values["Event_nTightAntiIsoElectrons"];
     
     for(size_t l =0; l< leptons.size();++l){
@@ -1963,8 +1986,29 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     float metZeroCorrX = metZeroCorrPt*cos(metZeroCorrPhi);
 
     //    cout << " max jets "<<max_instances[jets_label]<<endl;
+    //met uncorrected;
+    float metptunc = vfloats_values[makeName(met_label,prefm,"uncorPt")][0];
+    float metphiunc = vfloats_values[makeName(met_label,prefm,"uncorPhi")][0];
+    
+    float metT1Py = metptunc*sin(metphiunc);
+    float metT1Px = metptunc*cos(metphiunc);
 
+    
+    for (size_t ju = 0; ju < obj_systCats[jets_label].size();++ju){
+      string systjet=obj_systCats[jets_label].at(ju);
+      if (systjet.find("JES")!=std::string::npos || 
+	  systjet.find("JER")!=std::string::npos ){
+	//	vfloats_values[makeName(met_label,prefm,"CorrT1Px"+systjet)][0]=metT1Px;
+	//vfloats_values[makeName(met_label,prefm,"CorrT1Py"+systjet)][0]=metT1Py;
+	vfloats_values[makeName(met_label,prefm,"CorrT1Px"+systjet)][0]=0;
+	vfloats_values[makeName(met_label,prefm,"CorrT1Py"+systjet)][0]=0;
+      }
+    }    
+    //    if(isInVector(obj_cats[met_label],"CorrT1")){
+    //  fillCategory(met_label,"CorrT1",0,sizes[met_label+"CorrT1"]);
+    //}	    
 
+    
     for (size_t ju = 0; ju < obj_cats[jets_label].size();++ju){
       if (obj_cats[jets_label].at(ju).find("JES")!=std::string::npos || 
 	  obj_cats[jets_label].at(ju).find("JER")!=std::string::npos){  
@@ -2006,16 +2050,42 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 
       if(pt>0){
 	
-	TLorentzVector jetUncorr_, jetCorr, jetUncorrNoMu_,jetCorrNoMu, jetL1Corr;
+	TLorentzVector jetUncorr_, jetCorr, jetUncorrNoMu_,jetCorrNoMu, jetL1Corr, jetWithUncCorr_;
 	TLorentzVector T1Corr;
 	T1Corr.SetPtEtaPhiE(0,0,0,0);	
 	
 	jetUncorr_.SetPtEtaPhiE(pt,eta,phi,energy);
 	jetUncorrNoMu_.SetPtEtaPhiE(pt,eta,phi,energy);
-	
+
 	jetUncorr_= jetUncorr_*jecscale;
 	jetUncorrNoMu_= jetUncorrNoMu_*jecscale;
 	
+	//Insert no mu
+	
+	for( size_t c=0;c<jetKeys->at(j).size();++c){
+	  for( size_t mk=0;mk<muKeys->size();++mk){
+	    if(muKeys->at(mk).size()>0){
+	      if(muKeys->at(mk).at(0)  == jetKeys->at(j).at(c)){
+		  
+		string prefmu = obj_to_pref[mu_label];
+		float mupt = vfloats_values[makeName(mu_label,prefmu,"Pt")][mk];
+		float mueta = vfloats_values[makeName(mu_label,prefmu,"Eta")][mk];
+		float muphi = vfloats_values[makeName(mu_label,prefmu,"Phi")][mk];
+		float mue = vfloats_values[makeName(mu_label,prefmu,"E")][mk];
+		float muIsGlobal = vfloats_values[makeName(mu_label,prefmu,"IsGlobalMuon")][mk];
+		float muIsTK = vfloats_values[makeName(mu_label,prefmu,"IsTrackerMuon")][mk];
+		float muISSAOnly = ((!muIsGlobal && !muIsTK));
+		  
+		if(muIsGlobal || muISSAOnly){
+		  TLorentzVector muP4_;
+		  muP4_.SetPtEtaPhiE(mupt,mueta,muphi,mue);
+		  jetUncorrNoMu_ -=muP4_;
+		      
+		} 
+	      }
+	    }
+	  }    
+	}  
 	DUnclusteredMETPx+=jetUncorr_.Pt()*cos(phi);
 	DUnclusteredMETPy+=jetUncorr_.Pt()*sin(phi);
 	
@@ -2051,7 +2121,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	    
 	    double recorrMu =  jecCorr->getCorrection();
 	    jetCorrNoMu = jetUncorrNoMu_ *recorrMu;
-	      
+	    
 	    //// Jet corrections for level 1
 	    jecCorr_L1->setJetPhi(jetUncorrNoMu_.Phi()); /// deve essere raw
 	    jecCorr_L1->setJetEta(jetUncorrNoMu_.Eta());
@@ -2065,8 +2135,55 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	    jetL1Corr = jetUncorrNoMu_ *recorr_L1;
 	      
 	    ptnomu = jetCorrNoMu.Pt();
-	    if(pt>15.0 && ( chEmEnFrac+  neuEmEnFrac <0.9)){ T1Corr += jetCorrNoMu - jetL1Corr;
+	    if(ptnomu>15.0 && ( chEmEnFrac+  neuEmEnFrac <0.9)){ T1Corr += jetCorrNoMu - jetL1Corr;
 	      ptCorr_mL1 = T1Corr.Pt();
+	      
+	    }
+	    for (size_t ju = 0; ju < obj_systCats[jets_label].size();++ju){
+	      string systjet=obj_systCats[jets_label].at(ju);
+	      if (systjet.find("JES")!=std::string::npos || 
+		  systjet.find("JER")!=std::string::npos ){
+
+		float pxCorrJet=jetCorr.Px()*jetUncertainty(jetCorr.Pt(),jetCorr.Eta(),systjet);
+		float pyCorrJet=jetCorr.Py()*jetUncertainty(jetCorr.Pt(),jetCorr.Eta(),systjet);
+		
+		vfloats_values[makeName(met_label,prefm,"CorrT1Px"+systjet)][0]-=pxCorrJet;
+		vfloats_values[makeName(met_label,prefm,"CorrT1Py"+systjet)][0]-=pyCorrJet;
+
+
+	      }
+	    }
+	    for (size_t ju = 0; ju < obj_systCats[jets_label].size();++ju){
+	      continue;
+	      string systjet=obj_systCats[jets_label].at(ju);
+	      if (systjet.find("JES")!=std::string::npos || 
+		  systjet.find("JER")!=std::string::npos ){
+		float smearfactJet= smear(ptnomu, genpt, eta,systjet);
+		
+		float uncJet=jetUncertainty(ptnomu,jetCorrNoMu.Eta(),systjet);
+		//		uncJet=0;
+		float ptCorrJet = ptnomu * (1+uncJet);// * smearfactJet;
+		float energyCorrJet = jetCorrNoMu.E() * (1+uncJet);// * smearfactJet;
+		float phinomu = jetCorrNoMu.Phi();
+		jetWithUncCorr_.SetPtEtaPhiE(ptCorrJet,jetCorrNoMu.Eta(),phinomu,energyCorrJet);
+
+		float pxCorrJet=(jetWithUncCorr_-jetL1Corr).Px();
+		float pyCorrJet=(jetWithUncCorr_-jetL1Corr).Py();
+
+		//		float ptCorrJet=(jetWithUncCorr_-jetL1Corr).Perp();
+		//float phiCorrJet=(jetWithUncCorr_-jetL1Corr).Phi();
+		//		cout << " jet unc absolute value " << ptnomu * (uncJet)*cos(phinomu)  << " contribution to la "<< pxCorrJet-(jetCorrNoMu-jetL1Corr).Px() <<endl;
+
+		if(ptnomu*(1+uncJet)>15.0 && ( chEmEnFrac+  neuEmEnFrac <0.9)){ 
+		  //cout << ptnomu * (1+uncJet)<< endl;
+		  vfloats_values[makeName(met_label,prefm,"CorrT1Px"+systjet)][0]-=pxCorrJet;
+		  vfloats_values[makeName(met_label,prefm,"CorrT1Py"+systjet)][0]-=pyCorrJet;
+		  float pxt=vfloats_values[makeName(met_label,prefm,"CorrT1Px"+systjet)][0];
+		  float pyt=vfloats_values[makeName(met_label,prefm,"CorrT1Py"+systjet)][0];
+		  float ptt=sqrt(pxt*pxt +pyt*pyt);
+		  vfloats_values[makeName(met_label,prefm,"CorrT1Pt"+systjet)][0]=ptt;
+		}
+	      }
 	    }
 	  }
 	  else ptnomu=pt;
@@ -2098,10 +2215,10 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	    vfloats_values[makeName(jets_label,pref,"CorrE"+systjet)][j]=energyCorrJet;
 	    //	    cout <<" value after "<<vfloats_values[makeName(jets_label,pref,"CorrPt"+systjet)][j]<<endl;
 	    //setCatCategoryValue(jets_label,systjet,sizes[jets_label+systjet],"CorrPt",ptCorrJet);
+	
 	  }
 	}
 	
-
 	ptCorr = ptCorr * (1 + unc);
 	energyCorr = energyCorr * (1 + unc);
 
@@ -2117,14 +2234,18 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	  corrBaseMetPy -=(sin(phi)*(ptCorrSmearZero-ptzero));
 	}
 	
+	
+
       	if( ptCorrSmearZeroNoMu>15.0 && jetCorrNoMu.Pt()>0.0 &&doT1MET){ 
 	  //Adding in T1 corrections
 	  corrMetT1Px -=(T1Corr.Px());
 	  corrMetT1Py -=(T1Corr.Py());
+	
 	  
+  
 	  //Correcting by jes uncertainty if available
-	  corrMetT1Px -=(cos(phi)*(pt*unc_nosmear));
-	  corrMetT1Py -=(sin(phi)*(pt*unc_nosmear));
+	  //	  corrMetT1Px -=(cos(phi)*(pt*unc_nosmear));
+	  //rrMetT1Py -=(sin(phi)*(pt*unc_nosmear));
 	}
 
       }
@@ -2226,7 +2347,9 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
 	    ( (fabs(eta)<=2.4 && chHadEnFrac>0 && chMulti>0 && chEmEnFrac<0.99) || fabs(eta)>2.4);
         }
 	else if( (fabs(eta) >2.7) && (fabs(eta)<=3.0)) {
-          passesID = neuEmEnFrac<0.90 && neuMulti>2. ;
+          //passesID = neuEmEnFrac<0.90 && neuMulti>2. ;
+	  // spotted during the sync exe. https://twiki.cern.ch/twiki/bin/view/CMS/JetID13TeVRun2016: For 2.7<|eta|<= 3.0 Apply
+	  passesID = neuEmEnFrac > 0.01 && neuHadEnFrac < 0.98 && neuMulti > 2.;
 	}
         else if(fabs(eta)>3.0){
           passesID = neuEmEnFrac<0.90 && neuMulti>10. ;
@@ -2370,7 +2493,8 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
       //      }//ENDS HERE
       
     }
-    
+    fillSysts(met_label,"CorrT1",0,"","");
+
     if(isInVector(obj_cats[jets_label],"Tight")){
       sizes[jets_label+"Tight"]=(int)nTightJets;
       setEventBTagSF(jets_label,"Tight","CSV");
@@ -2398,6 +2522,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     }
     
     //Met and mt
+
     string pref = obj_to_pref[met_label];
     float metpt = vfloats_values[makeName(met_label,pref,"Pt")][0];
     float metphi = vfloats_values[makeName(met_label,pref,"Phi")][0];
@@ -2413,12 +2538,7 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     float metPx = metPxCorr;
     float metPy = metPyCorr;
 
-    float metptunc = vfloats_values[makeName(met_label,pref,"uncorPt")][0];
-    float metphiunc = vfloats_values[makeName(met_label,pref,"uncorPhi")][0];
-
-    float metT1Py = metptunc*sin(metphiunc);
-    float metT1Px = metptunc*cos(metphiunc);
-
+    
     if( doT1MET){
       //Correcting the pt
       metT1Px+=corrMetT1Px; metT1Py+=corrMetT1Py; // add JEC/JER contribution
@@ -2426,6 +2546,22 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     float metptT1Corr = sqrt(metT1Px*metT1Px + metT1Py*metT1Py);
     vfloats_values[met_label+"_CorrT1Pt"][0]=metptT1Corr;
     
+    for (size_t ju = 0; ju < obj_systCats[jets_label].size();++ju){
+      string systjet=obj_systCats[jets_label].at(ju);
+      if (systjet.find("JES")!=std::string::npos || 
+	  systjet.find("JER")!=std::string::npos ){
+	vfloats_values[makeName(met_label,prefm,"CorrT1Px"+systjet)][0]+=metT1Px;
+	vfloats_values[makeName(met_label,prefm,"CorrT1Py"+systjet)][0]+=metT1Py;
+	float pxt=vfloats_values[makeName(met_label,prefm,"CorrT1Px"+systjet)][0];
+	float pyt=vfloats_values[makeName(met_label,prefm,"CorrT1Py"+systjet)][0];
+	float ptt=sqrt(pxt*pxt +pyt*pyt);
+	vfloats_values[makeName(met_label,prefm,"CorrT1Pt"+systjet)][0]=ptt;
+	vfloats_values[makeName(met_label,prefm,"CorrT1Phi"+systjet)][0] = getPhi(pxt,pyt);
+
+      }
+    }
+
+
     float metptCorr = sqrt(metPxCorr*metPxCorr + metPyCorr*metPyCorr);
     vfloats_values[met_label+"_CorrPt"][0]=metptCorr;
 
@@ -2434,26 +2570,31 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     
     //Correcting the phi
     float metphiCorr = metphi;
-    if(metPx<0){
-      if(metPy>0)metphiCorr = atan(metPy/metPx)+3.141592;
-      if(metPy<0)metphiCorr = atan(metPy/metPx)-3.141592;
-    }
-    else  metphiCorr = (atan(metPy/metPx));
+    metphiCorr=getPhi(metPx,metPy);
+    //    if(metPx<0){
+    //      if(metPy>0)metphiCorr = atan(metPy/metPx)+3.141592;
+    //      if(metPy<0)metphiCorr = atan(metPy/metPx)-3.141592;
+    //    }
+    //    else  metphiCorr = (atan(metPy/metPx));
 
     float metphiCorrBase = metphi;
-    if(metPxCorrBase<0){
+    metphiCorrBase=getPhi(metPxCorrBase,metPyCorrBase);
+    /*    if(metPxCorrBase<0){
       if(metPyCorrBase>0)metphiCorrBase = atan(metPyCorrBase/metPxCorrBase)+3.141592;
       if(metPyCorrBase<0)metphiCorrBase = atan(metPyCorrBase/metPxCorrBase)-3.141592;
     }
     else  metphiCorrBase = (atan(metPyCorrBase/metPxCorrBase));
+    */
 
     float metphiCorrT1 = metphi;
-    if(metT1Px<0){
+    metphiCorrT1 = getPhi(metT1Px,metT1Py);
+
+    /*    if(metT1Px<0){
       if(metT1Py>0)metphiCorrT1 = atan(metT1Py/metT1Px)+3.141592;
       if(metT1Py<0)metphiCorrT1 = atan(metT1Py/metT1Px)-3.141592;
     }
     else  metphiCorr = (atan(metPyCorr/metPxCorr));
-
+    */
     vfloats_values[met_label+"_CorrPhi"][0]=metphiCorr;
     vfloats_values[met_label+"_CorrBasePhi"][0]=metphiCorrBase;
     vfloats_values[met_label+"_CorrT1Phi"][0]=metphiCorrT1;
@@ -2461,11 +2602,22 @@ void DMAnalysisTreeMaker::analyze(const edm::Event& iEvent, const edm::EventSetu
     //Preselection part
 
     //    cout << " before preselection "<<endl;
-		       
+    float nJetsForCut=nTightJets;
+    for(size_t mc =0; mc < obj_cats[jets_label].size();++mc){
+      string cat= obj_cats[jets_label].at(mc);
+      if (isSysCat(jets_label,cat) && ! isScanCut(jets_label,cat)){
+	//	cout << " cat "<< cat  << " is systcat, nTightJets "<< nTightJets << " size "<< sizes[jets_label+cat] << endl; 
+	nJetsForCut=min(nTightJets,(float)sizes[jets_label+cat]);
+	//	cout << " njetsforcut "<<nJetsForCut<<endl;
+      }
+    }
+  
+  
     if(doPreselection){
       bool passes = true;
       //bool metCondition = (metptCorr >100.0);
-      passes = passes && nTightJets>=1.0;
+      //      passes = passes && nTightJets>=1.0;
+      passes = passes && nJetsForCut>=2.0;
       //      passes = passes && nTightLeptons>=1.0;
       passes = passes && (nTightLeptons>=1.0 || nTightAntiIsoLeptons>=1.0);
      
@@ -2714,20 +2866,21 @@ void DMAnalysisTreeMaker::fillSystCategory(string label, string category, string
   string catsys = category+sys+scancut;
   sizes[label+catsys]=pos_cat+1;//Update the size with the latest position filled
 
-
+  
   for (size_t obj =0; obj< obj_to_floats[label].size(); ++obj){
     
     string var = obj_to_floats[label].at(obj);
     
     string varCat = makeBranchNameCat(label,catsys,label+"_",var);
-    //    cout << " var "<< var << " varcat "<< varCat<<endl;
-    //    cout << " poscat "<< pos_cat << " posnocat "<< pos_nocat<<endl;
+    //    if(label == met_label){  cout << " var "<< var << " varcat "<< varCat<<endl;
+    //      cout << " poscat "<< pos_cat << " posnocat "<< pos_nocat<<endl;}
     vfloats_values[varCat][pos_cat]= vfloats_values[var][pos_nocat];
   }
   for (size_t obj =0; obj< obj_to_floats[label].size(); ++obj){
     string var = obj_to_floats[label].at(obj);    
- if(var.find(sys)!=std::string::npos){
-   string varnew = var;
+    //    if(label == met_label)cout << " var is "<< var <<" sys is "<< sys<<endl;
+    if(var.find(sys)!=std::string::npos){
+      string varnew = var;
       varnew.replace(varnew.find(sys),sys.length(),"");
       string varCat = makeBranchNameCat(label,catsys,label+"_",varnew);
       vfloats_values[varCat][pos_cat]= vfloats_values[var][pos_nocat];
@@ -2787,9 +2940,10 @@ void DMAnalysisTreeMaker::fillSysts(string label,string category,int pos_nocat, 
     string sysCat = obj_systCats[label].at(syCat);
     string finalcut = (variable+sysCat+"_"+cut);
     //    cout << " sy is  "<< sysCat << " cut is "<< cut << " final cut is "<<finalcut<< " pf "<< postfix<<endl;
-    //    cout << " posnocat "<<pos_nocat<<" value "<< vfloats_values[label+category+"_"+variable+sysCat][pos_nocat]<<endl;
-    
-    if(passesScanCut(label,category,finalcut,pos_nocat)){
+    //cout << " posnocat "<<pos_nocat<<" value "<< vfloats_values[label+category+"_"+variable+sysCat][pos_nocat]<<endl;
+    bool passesCut = (cut== "" && variable == "");
+    if(!passesCut){passesCut= passesScanCut(label,category,finalcut,pos_nocat);}
+    if(passesCut){
       //      cout<< " passes! filling cat "<< label+category+sysCat<< " pos "<< sizes[label+category+sysCat]<<endl; 
       int pos_cat=sizes[label+category+sysCat+postfix];// the size is the position of the last element
       //      cout << " posnocat "<<pos_nocat<<endl;
@@ -2913,6 +3067,19 @@ vector<string> DMAnalysisTreeMaker::additionalVariables(string object){
     addvar.push_back("CorrBasePhi");
     addvar.push_back("CorrT1Pt");
     addvar.push_back("CorrT1Phi");
+
+    addvar.push_back("CorrT1Px");
+    addvar.push_back("CorrT1Py");
+    addvar.push_back("CorrPx");
+    addvar.push_back("CorrPy");
+    for(size_t sccut = 0; sccut< obj_systCats[jets_label].size() ;++sccut){
+      string syCat=obj_systCats[jets_label].at(sccut);
+      addvar.push_back("CorrT1Pt"+syCat);
+      addvar.push_back("CorrT1Phi"+syCat);
+      addvar.push_back("CorrT1Px"+syCat);
+      addvar.push_back("CorrT1Py"+syCat);
+    }
+
     //    addvar.push_back("CorrPtNoHF");
     // addvar.push_back("CorrPhiNoHF");
   }
@@ -3357,6 +3524,16 @@ double DMAnalysisTreeMaker::getMCTagEfficiencyFuncInt(float flavor, float ptCorr
   return integral;
 }
 
+
+double DMAnalysisTreeMaker::getPhi(double px, double py){
+  double phi = -10;
+  if(px<0){
+      if(py>0)phi = atan(py/px)+3.141592;
+      if(py<0)phi = atan(py/px)-3.141592;
+  }
+  else  phi= (atan(py/px));
+  return phi;
+}
 
 float DMAnalysisTreeMaker::getReshapedBTagValue(float flavor, float btag, float pt, float eta, string algo, string syst){
   if (fabs(eta)>2.4)return 1.;

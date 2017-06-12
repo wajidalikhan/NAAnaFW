@@ -1,0 +1,3 @@
+root://cms-xrd-global.cern.ch//store/user/oiorio/SingleTop/2017/May/26May/SingleMuon//80xV2_SingleMuonRun2016F-03Feb2017-v1_B2GAnaFW_80X_V3p1/170525_153419/0000/treesTTJets_28.root
+root://cms-xrd-global.cern.ch//store/user/oiorio/SingleTop/2017/May/26May/SingleMuon//80xV2_SingleMuonRun2016F-03Feb2017-v1_B2GAnaFW_80X_V3p1/170525_153419/0000/treesTTJets_39.root
+root://cms-xrd-global.cern.ch//store/user/oiorio/SingleTop/2017/May/26May/SingleMuon//80xV2_SingleMuonRun2016F-03Feb2017-v1_B2GAnaFW_80X_V3p1/170525_153419/0000/treesTTJets_107.root

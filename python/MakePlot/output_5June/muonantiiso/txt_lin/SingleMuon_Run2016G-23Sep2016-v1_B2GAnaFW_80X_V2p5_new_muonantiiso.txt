@@ -1,0 +1,9 @@
+Lumi: 35.9
+---> SingleMuon_Run2016G-23Sep2016-v1_B2GAnaFW_80X_V2p5_new
+Events before selection   : 147174384.00
+Events after trigger      : 44847840.00
+Events after lepton cut   : 27932370.00
+Events after jet cut      : 5338325.00
+Events after bjet cut     : 5008353.00
+Events after met160 cut   : 423296.00
+Events after met320 cut   : 43583.00

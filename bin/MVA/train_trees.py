@@ -37,12 +37,13 @@ parser.add_option('-n', '--dryrun',   dest='dryrun',  action='store_true', defau
 #define samples, one folder for each mass value
 namesAndCfgs = {}  
 discriminants=[]
+discriminants.append("ST_vs_QCDMu")
 #discriminants.append("ST_vs_TT")
 #discriminants.append("ST_vs_VJ")
 #discriminants.append("STsd_vs_VJ")
 #discriminants.append("STsd_vs_TT")
 #discriminants.append("STsd_vs_ST")
-discriminants.append("STsd_vs_VJ")
+#discriminants.append("STsd_vs_VJ")
 #discriminants.append("STsd_vs_ST_test")
 for d in discriminants:
     namesAndCfgs[d]="cfg"+d+".txt"

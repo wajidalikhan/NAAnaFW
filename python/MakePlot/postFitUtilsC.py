@@ -37,7 +37,7 @@ class postFitUtilities:
 	        return 1.0
 	    if format=="combine":
 	        hdirprefit= 'shapes_prefit'
-                #	        print hdirprefit+'/'+channel+"_"+region+'/'+process
+                print hdirprefit+'/'+channel+"_"+region+'/'+process
                 hprefit = fileFit.Get(hdirprefit+'/'+channel+"_"+region+'/'+process).Clone("prefit_"+region+"_process")
 	        hdirpostfit= 'shapes_fit_s'
 	        hpostfit = fileFit.Get(hdirpostfit+'/'+channel+"_"+region+'/'+process).Clone("postfit_"+region+"_process")

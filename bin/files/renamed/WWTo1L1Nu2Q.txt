@@ -1,0 +1,16 @@
+root://xrootd-cms.infn.it//store/user/oiorio/ttDM/trees/2017/Feb/24Feb//WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/80xV2_WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/170225_145328/0000/treesTTJets_13.root
+root://xrootd-cms.infn.it//store/user/oiorio/ttDM/trees/2017/Feb/24Feb//WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/80xV2_WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/170225_145328/0000/treesTTJets_10.root
+root://xrootd-cms.infn.it//store/user/oiorio/ttDM/trees/2017/Feb/24Feb//WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/80xV2_WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/170225_145328/0000/treesTTJets_15.root
+root://xrootd-cms.infn.it//store/user/oiorio/ttDM/trees/2017/Feb/24Feb//WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/80xV2_WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/170225_145328/0000/treesTTJets_14.root
+root://xrootd-cms.infn.it//store/user/oiorio/ttDM/trees/2017/Feb/24Feb//WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/80xV2_WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/170225_145328/0000/treesTTJets_12.root
+root://xrootd-cms.infn.it//store/user/oiorio/ttDM/trees/2017/Feb/24Feb//WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/80xV2_WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/170225_145328/0000/treesTTJets_16.root
+root://xrootd-cms.infn.it//store/user/oiorio/ttDM/trees/2017/Feb/24Feb//WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/80xV2_WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/170225_145328/0000/treesTTJets_1.root
+root://xrootd-cms.infn.it//store/user/oiorio/ttDM/trees/2017/Feb/24Feb//WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/80xV2_WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/170225_145328/0000/treesTTJets_3.root
+root://xrootd-cms.infn.it//store/user/oiorio/ttDM/trees/2017/Feb/24Feb//WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/80xV2_WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/170225_145328/0000/treesTTJets_2.root
+root://xrootd-cms.infn.it//store/user/oiorio/ttDM/trees/2017/Feb/24Feb//WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/80xV2_WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/170225_145328/0000/treesTTJets_9.root
+root://xrootd-cms.infn.it//store/user/oiorio/ttDM/trees/2017/Feb/24Feb//WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/80xV2_WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/170225_145328/0000/treesTTJets_11.root
+root://xrootd-cms.infn.it//store/user/oiorio/ttDM/trees/2017/Feb/24Feb//WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/80xV2_WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/170225_145328/0000/treesTTJets_8.root
+root://xrootd-cms.infn.it//store/user/oiorio/ttDM/trees/2017/Feb/24Feb//WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/80xV2_WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/170225_145328/0000/treesTTJets_6.root
+root://xrootd-cms.infn.it//store/user/oiorio/ttDM/trees/2017/Feb/24Feb//WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/80xV2_WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/170225_145328/0000/treesTTJets_5.root
+root://xrootd-cms.infn.it//store/user/oiorio/ttDM/trees/2017/Feb/24Feb//WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/80xV2_WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/170225_145328/0000/treesTTJets_7.root
+root://xrootd-cms.infn.it//store/user/oiorio/ttDM/trees/2017/Feb/24Feb//WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/80xV2_WWTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8/170225_145328/0000/treesTTJets_4.root

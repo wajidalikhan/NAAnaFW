@@ -14,25 +14,5 @@ python merge_res.py -l ./res/ -P ST,TT,VJ,VV,QCDMuEPt20toInf -c "muon,muonantiis
 
 python merge_res.py -l ./res/ -P _QCDMuEPt20toInf -c "muon,muonantiiso"
 
+nohup python merge_res.py -l /afs/cern.ch/work/w/wajid/public/xWajid/res -P SingleMuon,ST,TT,VJ,VV,QCDMu -c "muon" -o /afs/cern.ch/work/w/wajid/public/xWajid/mergeres >& mergemuon.log &
 
-#Running over muon and muonantiiso channel for MC
-python new_singletop.py -c muon -s noSys --t3batch -f files/final/ -P ST,TT,VJ,VV,QCDMuEPt20toInf -S 10
-python new_singletop.py -c muonantiiso -s noSys --t3batch -f files/final/ -P ST,TT,VJ,VV,QCDMuEPt20toInf -S 10
-
-#Running if for Data and DDriven QCD
-python new_singletop.py -c muon -s noSys --t3batch -f files/final/ -P SingleMuon -d DATA -S 10
-python new_singletop.py -c muonantiiso -s noSys --t3batch -f files/final/ -P SingleMuon -d DATA -S 10
-
-
-
-#Running over the MC 
-#python new_singletop.py --t3batch -f files/final/ -P ST,TT,VJ,VV -S 10
-
-#Running over muonantiiso
-#python new_singletop.py -c muonantiiso -s noSys --t3batch -f files/final/ -P ST,TT,VJ,VV,QCDMuEPt20toInf -S 10
-
-#Running over the data
-#python new_singletop.py --t3batch -f files/final/ -P SingleMuon -d DATA -S 10
-
-#Running if for Data Driven QCD
-#python new_singletop.py -c muonantiiso -s noSys --t3batch -f files/final/ -P SingleMuon -d DATA -S 10

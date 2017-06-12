@@ -419,8 +419,8 @@ class Legend(object):
         print '---------> Legend Coords',coords, 'Text Size ',textSize
         self._leg = ROOT.TLegend(*coords)
 
-#        self._leg = ROOT.TLegend(.51, .58, .92, .86)
-        self._leg.SetNColumns(4)
+        #self._leg = ROOT.TLegend(.51, .58, .92, .86)
+        self._leg.SetNColumns(1)
         self._leg.SetFillColor(0)
         self._leg.SetFillStyle(0)
         self._leg.SetTextSize(textSize)

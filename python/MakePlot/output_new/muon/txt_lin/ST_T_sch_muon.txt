@@ -1,0 +1,13 @@
+Lumi: 35.9
+---> ST_T_sch
+Events before selection   : 370384.81
+Events after trigger      : 140466.77
+Events after lepton cut   : 78036.88
+Events after jet cut      : 43744.75
+Events after bjet cut     : 43297.25
+Events after met160 cut   : 17943.52
+Events after met320 cut   : 8293.41
+Events after mt cut       : 0.00
+Events after mt2w cut     : 0.00
+Events after minDPhi cut  : 0.00
+Selection efficiency      : 0.00

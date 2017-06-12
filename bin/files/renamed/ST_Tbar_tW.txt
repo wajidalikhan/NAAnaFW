@@ -1,0 +1,1 @@
+root://xrootd-cms.infn.it//store/user/oiorio/ttDM/trees/2017/Feb/24Feb//ST_tW_antitop_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M2T4/80xV2_ST_tW_antitop_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M2T4/170225_145107/0000/treesTTJets_1.root

@@ -9,7 +9,7 @@ from utils import *
 import commands
 #Usage:python script_replacexrd.py -f ./files/renamed/ -o files/final -x xrootd.ba.infn.it -P ST,VV,VJ,TT,SingleMuon 
 
-usage = 'python script_replacexrd.py -f ./files/renamed/ -o files/final -x xrootd.ba.infn.it -P ST,VV,VJ,TT,SingleMuon'
+usage = 'python script_replacexrd.py -f ./files/renamed/ -o files/final -x xrootd.ba.infn.it -P ST,VV,VJ,TT,QCDMu,SingleMuon'
 parser = optparse.OptionParser(usage)
 
 parser.add_option('-f', '--filepath',        dest='filepath',  type='string',     default = './files/trees/mc/')

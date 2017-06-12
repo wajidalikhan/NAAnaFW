@@ -1,0 +1,13 @@
+Lumi: 35.9
+---> ST_Tbar_tch
+Events before selection   : 2905295.50
+Events after trigger      : 340883.03
+Events after lepton cut   : 303753.75
+Events after jet cut      : 401403.53
+Events after bjet cut     : 397931.25
+Events after met160 cut   : 166113.81
+Events after met320 cut   : 73895.42
+Events after mt cut       : 0.00
+Events after mt2w cut     : 0.00
+Events after minDPhi cut  : 0.00
+Selection efficiency      : 0.00
